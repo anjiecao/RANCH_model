@@ -1,0 +1,8 @@
+"0","d %>% 
+  filter(!is.na(stimulus_id)) %>% 
+  group_by(stimulus_id, id) %>% 
+  summarise(n = n()) %>% 
+  ggplot(aes(x = stimulus_id, y = n)) + 
+  stat_summary(fun.data = ""mean_cl_boot"")
+"
+"2","`summarise()` has grouped output by 'stimulus_id'. You can override using the `.groups` argument."
