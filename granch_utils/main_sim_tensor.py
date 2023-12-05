@@ -6,12 +6,14 @@ import numpy as np
 #import ipdb
 
 # main simulation function
-def granch_main_simulation(params, model, stimuli): 
+def granch_main_simulation(params, model, stimuli):
+    print("running main sim") 
 
     stimulus_idx = 0
     t = 0 # following python tradition we are using 0-indexed
     current_stim_t = 0
     while t < params.max_observation and stimulus_idx < stimuli.n_trial: 
+        print(t)
 
         # update model behavior with current t and current stimulus_idx 
         model.current_t = t 
@@ -58,74 +60,9 @@ def granch_main_simulation(params, model, stimuli):
         #eig = torch.clamp(eig, min=0)
 
         model.update_model_eig(eig.item())
+        stimulus_idx, current_stim_t = model.make_decision(params, stimulus_idx, current_stim_t, eig)
 
-        model.make_decision(params)
-
-        # if forced exposure is not nan
-        if ~np.isnan(params.forced_exposure_max): 
-            # if it's not the last trial, you still have to look
-            if (stimulus_idx < (stimuli.n_trial - 1)) & (current_stim_t < params.forced_exposure_max - 1):
-                model.update_model_decision(False)
-
-            # if i'm in a fam trial and i reached the max exposure, i have to look away (to go to next stimulus)
-            elif (stimulus_idx < (stimuli.n_trial - 1)) & (current_stim_t == params.forced_exposure_max - 1):
-                model.update_model_decision(True)
-                stimulus_idx += 1
-                current_stim_t = -1 
-
-            else:
-                p_look_away = max(min(params.world_EIGs / (eig.item() + params.world_EIGs), 1), 0)
-                #p_look_away = params.world_EIGs / (eig.item() + params.world_EIGs)
-
-                if not ((p_look_away >= 0) & (p_look_away <= 1)):
-                    print("p_look_away")
-                    print(p_look_away)
-                    print("params.world_EIGs")
-                    print(params.world_EIGs)
-                    print("eig.item()")
-                    print(eig.item())
-                    
-                if (np.random.binomial(1, p_look_away) == 1): 
-            # if the model is looking away, increment stimulus
-                    stimulus_idx = stimulus_idx + 1
-                    current_stim_t = -1 # -1 so it starts with 0 when incremented 
-                    model.update_model_decision(True)
-                else: 
-                # otherwise keep looking at this one
-                    model.update_model_decision(False)
-                
-                # if (eig < params.world_EIGs): 
-                # # if EIG below threshold, increment stimulus
-                #     stimulus_idx += 1
-                #     current_stim_t = -1 # -1 so it starts with 0 when incremented 
-                #     model.update_model_decision(True)
-                # else: 
-                # # otherwise keep looking at this one
-                #     model.update_model_decision(False)
-
-        # if it's a self-paced paradigm
-        else:
-            # luce's choice rule 
-            p_look_away = max(min(params.world_EIGs / (eig.item() + params.world_EIGs), 1), 0)
-            #p_look_away = params.world_EIGs / (eig.item() + params.world_EIGs)
-            
-            if not ((p_look_away >= 0) & (p_look_away <= 1)):
-                print("p_look_away")
-                print(p_look_away)
-                print("params.world_EIGs")
-                print(params.world_EIGs)
-                print("eig.item()")
-                print(eig.item())
-
-            if (np.random.binomial(1, p_look_away) == 1): 
-            # if the model is looking away, increment stimulus
-                stimulus_idx = stimulus_idx + 1
-                current_stim_t = -1 # -1 so it starts with 0 when incremented 
-                model.update_model_decision(True)
-            else: 
-            # otherwise keep looking at this one
-                model.update_model_decision(False)
-
+    
         t += 1  
         current_stim_t += 1 
     
@@ -137,6 +74,7 @@ def granch_main_simulation(params, model, stimuli):
     
     model.output = output_df[["sample_n"]]
 
+    print("end one run of main sim")
     return(model)
 
 

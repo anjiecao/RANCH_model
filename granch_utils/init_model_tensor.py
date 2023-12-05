@@ -145,6 +145,8 @@ class granch_model:
             # otherwise keep looking at this one
                 self.update_model_decision(False)
 
+        return (stimulus_idx, current_stim_t)
+
 
 
         
