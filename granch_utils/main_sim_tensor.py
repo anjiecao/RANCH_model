@@ -59,6 +59,8 @@ def granch_main_simulation(params, model, stimuli):
 
         model.update_model_eig(eig.item())
 
+        model.make_decision(params)
+
         # if forced exposure is not nan
         if ~np.isnan(params.forced_exposure_max): 
             # if it's not the last trial, you still have to look
@@ -126,6 +128,14 @@ def granch_main_simulation(params, model, stimuli):
 
         t += 1  
         current_stim_t += 1 
+    
+    # end of while loop
+    output  = model.behavior.groupby("stimulus_id").size()
+    output_df = output.reset_index(name='sample_n')
+    # only saving the last because we are in the forced exposure paradigm
+    output_df = output_df.tail(1)
+    
+    model.output = output_df[["sample_n"]]
 
     return(model)
 

@@ -16,6 +16,23 @@ class granch_stimuli:
         self.n_trial = len(sequence_scheme)
         self.sequence_scheme = sequence_scheme
 
+    def add_stimuli_sequence(self, b, d):         
+        idx = 0 
+        stimuli_sequence = {}
+        while idx < self.n_trial: 
+            if(self.sequence_scheme[idx] == "B"): 
+                stimuli_sequence[idx] = b
+            elif(self.sequence_scheme[idx] == "D"): 
+                stimuli_sequence[idx] = d
+            else: 
+                warn("Wrong sequence scheme ")
+            idx = idx + 1
+
+        self.stimuli_sequence = stimuli_sequence
+        self.b_val = b
+        self.d_val = d
+
+
     def add_toy_example(self, b, d): 
         
 

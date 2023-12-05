@@ -23,6 +23,7 @@ class granch_model:
         self.behavior = pd.DataFrame(None, index=np.arange(max_observation),
                                      columns=["stimulus_id", "EIG", "Look_away"])
         
+        
         self.behavior["surprisal"] = np.nan
         self.behavior["kl"] = np.nan
         self.behavior["prob"] = np.nan
@@ -103,6 +104,47 @@ class granch_model:
 
         last_t_stimulus = max(self.behavior[pd.notnull(self.behavior["stimulus_id"])]["stimulus_id"])
         return (self.current_stimulus_idx == last_t_stimulus)
+    
+    def make_decision(self, params, stimulus_idx, current_stim_t, eig):
+        
+        if ~np.isnan(params.forced_exposure_max): 
+            # if it's not the last trial, you still have to look
+            if (stimulus_idx < (self.stimuli.n_trial - 1)) & (current_stim_t < params.forced_exposure_max - 1):
+                self.update_model_decision(False)
+
+            # if i'm in a fam trial and i reached the max exposure, i have to look away (to go to next stimulus)
+            elif (stimulus_idx < (self.stimuli.n_trial - 1)) & (current_stim_t == params.forced_exposure_max - 1):
+                self.update_model_decision(True)
+                stimulus_idx += 1
+                current_stim_t = -1 
+
+            else:
+                p_look_away = max(min(params.world_EIGs / (eig.item() + params.world_EIGs), 1), 0)
+                    
+                if (np.random.binomial(1, p_look_away) == 1): 
+            # if the model is looking away, increment stimulus
+                    stimulus_idx = stimulus_idx + 1
+                    current_stim_t = -1 # -1 so it starts with 0 when incremented 
+                    self.update_model_decision(True)
+                else: 
+                # otherwise keep looking at this one
+                    self.update_model_decision(False)
+
+        # if it's a self-paced paradigm
+        else:
+            # luce's choice rule 
+            p_look_away = max(min(params.world_EIGs / (eig.item() + params.world_EIGs), 1), 0)
+            #p_look_away = params.world_EIGs / (eig.item() + params.world_EIGs)
+         
+            if (np.random.binomial(1, p_look_away) == 1): 
+            # if the model is looking away, increment stimulus
+                stimulus_idx = stimulus_idx + 1
+                current_stim_t = -1 # -1 so it starts with 0 when incremented 
+                self.update_model_decision(True)
+            else: 
+            # otherwise keep looking at this one
+                self.update_model_decision(False)
+
 
 
         
