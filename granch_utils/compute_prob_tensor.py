@@ -292,8 +292,8 @@ def score_mu_sigma(input_x, input_sigma, mu, nu, alpha, beta, device):
     inv_gamma_distribution = helper.InverseGamma(alpha, beta)
 
     res = (
-        Normal(mu, torch.sqrt(input_sigma ** 2 / nu)).log_prob(input_x)  + 
-        inv_gamma_distribution.log_prob(input_sigma ** 2)
+        Normal(mu, torch.sqrt(input_sigma ** 2 / nu)).log_prob(input_x) + 
+        inv_gamma_distribution.log_prob(input_sigma.to("cpu") ** 2).to(device)
     )
     
     return res
