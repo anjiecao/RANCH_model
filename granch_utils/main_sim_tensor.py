@@ -7,13 +7,11 @@ import numpy as np
 
 # main simulation function
 def granch_main_simulation(params, model, stimuli):
-    print("running main sim") 
 
     stimulus_idx = 0
     t = 0 # following python tradition we are using 0-indexed
     current_stim_t = 0
     while t < params.max_observation and stimulus_idx < stimuli.n_trial: 
-        print(t)
 
         # update model behavior with current t and current stimulus_idx 
         model.current_t = t 
