@@ -49,6 +49,7 @@ def granch_proxy_sim(params, model, stimuli):
         # can calculate surprisal here 
         
         if params.linking_hypothesis == "surprisal": 
+            print("run surprisal")
             surprisal = compute_prob_tensor.score_surprisal(model, params, prev_observation_posterior)
             model.update_model_surprisal(surprisal.item())
         
@@ -68,8 +69,9 @@ def granch_proxy_sim(params, model, stimuli):
         # experiment with surpirsal function here 
         f_s = surprisal.item() 
 
-        a = -5  # Assuming the parabola opens downwards
-        f_s = math.exp(a * (f_s - 0.8)**2)
+        #a = -5  # Assuming the parabola opens downwards
+        #f_s = math.exp(a * (f_s - 0.8)**2)
+        f_s = math.exp(f_s)
         #world_eig = params.world_EIGs
         world_eig = math.exp(-4)
         
@@ -135,4 +137,11 @@ def granch_proxy_sim(params, model, stimuli):
         current_stim_t += 1 
 
     #return(model)
+        # end of while loop
+    output  = model.behavior.groupby("stimulus_id").size()
+    output_df = output.reset_index(name='sample_n')
+    # only saving the last because we are in the forced exposure paradigm
+    output_df = output_df.tail(1)
+    
+    model.output = output_df[["sample_n"]]
     return (model)
