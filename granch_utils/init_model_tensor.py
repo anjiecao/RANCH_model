@@ -105,7 +105,7 @@ class granch_model:
         last_t_stimulus = max(self.behavior[pd.notnull(self.behavior["stimulus_id"])]["stimulus_id"])
         return (self.current_stimulus_idx == last_t_stimulus)
     
-    def make_decision(self, params, stimulus_idx, current_stim_t, eig):
+    def make_decision(self, params, stimulus_idx, current_stim_t, metric):
         
         if ~np.isnan(params.forced_exposure_max): 
             # if it's not the last trial, you still have to look
@@ -119,7 +119,7 @@ class granch_model:
                 current_stim_t = -1 
 
             else:
-                p_look_away = max(min(params.world_EIGs / (eig.item() + params.world_EIGs), 1), 0)
+                p_look_away = max(min(params.world_EIGs / (metric.item() + params.world_EIGs), 1), 0)
                     
                 if (np.random.binomial(1, p_look_away) == 1): 
             # if the model is looking away, increment stimulus
@@ -133,7 +133,7 @@ class granch_model:
         # if it's a self-paced paradigm
         else:
             # luce's choice rule 
-            p_look_away = max(min(params.world_EIGs / (eig.item() + params.world_EIGs), 1), 0)
+            p_look_away = max(min(params.world_EIGs / (metric.item() + params.world_EIGs), 1), 0)
             #p_look_away = params.world_EIGs / (eig.item() + params.world_EIGs)
          
             if (np.random.binomial(1, p_look_away) == 1): 
