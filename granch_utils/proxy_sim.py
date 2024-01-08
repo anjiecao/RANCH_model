@@ -4,6 +4,7 @@ from . import compute_prob_tensor
 import numpy as np
 import pandas as pd
 import math
+import ipdb
 
 def granch_proxy_sim(params, model, stimuli): 
 
@@ -15,8 +16,6 @@ def granch_proxy_sim(params, model, stimuli):
         # update model behavior with current t and current stimulus_idx 
         model.current_t = t 
         model.current_stimulus_idx = stimulus_idx
-       
-       #t = 0
 
         if model.current_t == 0: 
             prior =  params.lp_epsilon.mean(dim = 2) + params.lp_mu_sigma.mean(dim = 2)
@@ -63,12 +62,13 @@ def granch_proxy_sim(params, model, stimuli):
         model.cur_posterior = current_posterior     
 
         # CAN CALCULATE KL HERE
-        if params.linking_hypothesis == "kl": 
+        if params.linking_hypothesis == "KL": 
             kl = compute_prob_tensor.kl_div(model.cur_posterior, prev_observation_posterior, context = "proxy")
             kl_sum  = torch.sum(kl)
             model.update_model_kl(kl_sum.item())
             stimulus_idx, current_stim_t = model.make_decision(params, stimulus_idx, current_stim_t, metric = kl_sum)
     
+        
         if params.linking_hypothesis == "quad_surprisal": 
             continue # need to fill this out
 
@@ -79,8 +79,10 @@ def granch_proxy_sim(params, model, stimuli):
         # end of while loop
     output  = model.behavior.groupby("stimulus_id").size()
     output_df = output.reset_index(name='sample_n')
-    # only saving the last because we are in the forced exposure paradigm
-    output_df = output_df.tail(1)
+
+    if np.isnan(params.forced_exposure_max) == False:
+        # only saving the last because we are in the forced exposure paradigm
+        output_df = output_df.tail(1)
     
     model.output = output_df[["sample_n"]]
     return (model)
