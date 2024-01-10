@@ -3,7 +3,7 @@
 import torch
 from . import compute_prob_tensor
 import numpy as np
-#import ipdb
+import ipdb
 
 # main simulation function
 def granch_main_simulation(params, model, stimuli):
@@ -45,14 +45,10 @@ def granch_main_simulation(params, model, stimuli):
         model.ps_kl = compute_prob_tensor.kl_div(model.ps_posteriror, model.cur_posterior)
         model.ps_pp = compute_prob_tensor.score_post_pred(model, params)
        
-    
 
         # compute EIG
        
         eig = torch.sum(model.ps_kl * model.ps_pp)
-
-       
-        
         
         # threshold at 0 for now to deal with negative EIG's
         #eig = torch.clamp(eig, min=0)
@@ -60,14 +56,13 @@ def granch_main_simulation(params, model, stimuli):
         model.update_model_eig(eig.item())
         stimulus_idx, current_stim_t = model.make_decision(params, stimulus_idx, current_stim_t, eig)
 
-    
         t += 1  
         current_stim_t += 1 
     
     # end of while loop
     output  = model.behavior.groupby("stimulus_id").size()
     output_df = output.reset_index(name='sample_n')
-    
+
     if np.isnan(params.forced_exposure_max) == False:
         # only saving the last because we are in the forced exposure paradigm
         output_df = output_df.tail(1)

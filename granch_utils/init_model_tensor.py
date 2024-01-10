@@ -106,7 +106,7 @@ class granch_model:
         return (self.current_stimulus_idx == last_t_stimulus)
     
     def make_decision(self, params, stimulus_idx, current_stim_t, metric):
-        
+                
         if ~np.isnan(params.forced_exposure_max): 
             # if it's not the last trial, you still have to look
             if (stimulus_idx < (self.stimuli.n_trial - 1)) & (current_stim_t < params.forced_exposure_max - 1):
@@ -132,6 +132,7 @@ class granch_model:
 
         # if it's a self-paced paradigm
         else:
+                        
             # luce's choice rule 
             p_look_away = max(min(params.world_EIGs / (metric.item() + params.world_EIGs), 1), 0)
             #p_look_away = params.world_EIGs / (eig.item() + params.world_EIGs)

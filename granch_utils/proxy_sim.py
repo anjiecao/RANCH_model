@@ -62,7 +62,7 @@ def granch_proxy_sim(params, model, stimuli):
         model.cur_posterior = current_posterior     
 
         # CAN CALCULATE KL HERE
-        if params.linking_hypothesis == "KL": 
+        if params.linking_hypothesis == "KL" or params.linking_hypothesis == "kl": 
             kl = compute_prob_tensor.kl_div(model.cur_posterior, prev_observation_posterior, context = "proxy")
             kl_sum  = torch.sum(kl)
             model.update_model_kl(kl_sum.item())
