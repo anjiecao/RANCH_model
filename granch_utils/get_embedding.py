@@ -14,7 +14,8 @@ def string_to_embedding(trial_info):
 
    # loading the corresponding embedding file
    if embedding_type == "resnet_pa": 
-      embeddings = pd.read_csv("/om2/scratch/tmp/galraz/RANCH/RANCH_cluster/sim_info/embeddings/resnet_pa.csv")
+      #embeddings = pd.read_csv("/om2/scratch/tmp/galraz/RANCH/RANCH_cluster/sim_info/embeddings/resnet_pa.csv")
+      embeddings = pd.read_csv("/Users/caoanjie/Desktop/projects/RANCH/RANCH_cluster/sim_info/embeddings/resnet_pa.csv")
    elif embedding_type == "resnet_saycam":
       embeddings = pd.read_csv("../sim_info/embeddings/resnet_pa.csv")
 

@@ -1,10 +1,10 @@
 
 def param_to_scheme(trial_info):
     fam_duration = trial_info["fam_duration"]
-    test_type = trial_info["test_type"]
+    violation_type = trial_info["violation_type"]
     scheme = "B" * (fam_duration + 1)
 
-    if test_type == "novel": 
+    if violation_type != "background": 
        scheme = scheme[:-1] + "D"
     return scheme
     
