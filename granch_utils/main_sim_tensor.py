@@ -69,7 +69,6 @@ def granch_main_simulation(params, model, stimuli):
     
     model.output = output_df[["sample_n"]]
 
-    print("end one run of main sim")
     return(model)
 
 

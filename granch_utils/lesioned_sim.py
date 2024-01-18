@@ -34,7 +34,6 @@ def granch_no_learning_simulation(params, model, stimuli):
 
             else:
                 p_look_away = np.random.uniform(0, 1)
-                #p_look_away = params.world_EIGs / (eig.item() + params.world_EIGs)
 
                 if (np.random.binomial(1, p_look_away) == 1): 
             # if the model is looking away, increment stimulus
@@ -44,21 +43,11 @@ def granch_no_learning_simulation(params, model, stimuli):
                 else: 
                 # otherwise keep looking at this one
                     model.update_model_decision(False)
-                
-                # if (eig < params.world_EIGs): 
-                # # if EIG below threshold, increment stimulus
-                #     stimulus_idx += 1
-                #     current_stim_t = -1 # -1 so it starts with 0 when incremented 
-                #     model.update_model_decision(True)
-                # else: 
-                # # otherwise keep looking at this one
-                #     model.update_model_decision(False)
 
         # if it's a self-paced paradigm
         else:
             # luce's choice rule 
             p_look_away = np.random.uniform(0, 1)
-            print (p_look_away)
     
             if (np.random.binomial(1, p_look_away) == 1): 
             # if the model is looking away, increment stimulus
@@ -71,6 +60,16 @@ def granch_no_learning_simulation(params, model, stimuli):
 
         t += 1  
         current_stim_t += 1 
+
+    # end of while loop
+    output  = model.behavior.groupby("stimulus_id").size()
+    output_df = output.reset_index(name='sample_n')
+
+    if np.isnan(params.forced_exposure_max) == False:
+        # only saving the last because we are in the forced exposure paradigm
+        output_df = output_df.tail(1)
+    
+    model.output = output_df[["sample_n"]]
 
     return(model)
 
@@ -192,6 +191,16 @@ def granch_no_noise_simulation(params, model, stimuli):
 
         t += 1  
         current_stim_t += 1 
+
+        # end of while loop
+    output  = model.behavior.groupby("stimulus_id").size()
+    output_df = output.reset_index(name='sample_n')
+
+    if np.isnan(params.forced_exposure_max) == False:
+        # only saving the last because we are in the forced exposure paradigm
+        output_df = output_df.tail(1)
+    
+    model.output = output_df[["sample_n"]]
 
     return(model)
 
