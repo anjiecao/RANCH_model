@@ -1,0 +1,128 @@
+
+```{r}
+library(tidyverse)
+library(here)
+```
+
+# Simulation specs
+
+This is a simulation to compare the scaled vs unscaled embeddings. The simulation shares all the same parameters except for the values of the embeddings. The parameters are as following: 
+
+```
+BATCH_INFO = {
+    "jitter_n": 1, 
+    "total_batch_n": 1, 
+    "jitter_mode": "sampling"
+}
+
+GRID_INFO = {
+    "grid_mu_start": -4, "grid_mu_end": 4, "grid_mu_step": 5, 
+    "grid_sigma_start": 0.001, "grid_sigma_end": 1.8, "grid_sigma_step": 5, 
+    "grid_y_start": -4, "grid_y_end": 4, "grid_y_step": 5, 
+    "grid_epsilon_start": 0.00000000001, "grid_epsilon_end": 1, "grid_epsilon_step": 5, 
+    "hypothetical_obs_grid_n": 10
+}
+
+
+BATCH_GRID_INFO = num_stab_help.get_batch_grid(BATCH_INFO, GRID_INFO)
+
+PRIOR_INFO = {
+    "mu_prior": 1,  
+    "V_prior": 1, 
+    "alpha_prior": 3, 
+    "beta_prior": 1, 
+    "epsilon": 0.0001, "mu_epsilon":0.0001, "sd_epsilon": 0.0001, 
+    "hypothetical_obs_grid_n": 5, 
+    "world_EIGs": 0.00001, "max_observation": 500
+}
+```
+
+And for the stimuli, the scaled stimuli are: 
+```
+fam: tensor([-0.2870,  0.2874,  0.3432], dtype=torch.float64) test: tensor([-0.4805, -0.9730, -0.2181], dtype=torch.float64)
+```
+and the unscaled are 10x of the original 
+```
+fam: tensor([-2.870,  2.874,  3.432], dtype=torch.float64) test: tensor([-4.805, -9.730, -2.181], dtype=torch.float64)
+```
+
+Each consisted of 50 run of the same simulation, The stimuli squence are BBBBD
+
+Below are the comparisons
+
+```{r}
+library(tidyverse)
+library(here)
+
+eig_df <- read_csv(here("scaled_vs_unscaled/eig_df.csv"))
+sim_df <- read_csv(here("scaled_vs_unscaled/sim_df.csv"))
+x10_eig_df <- read_csv(here("scaled_vs_unscaled/x10_eig_df.csv"))
+x10_sim_df <- read_csv(here("scaled_vs_unscaled/x10_sim_df.csv"))
+
+```
+
+First let's compare the missing values of eig. From the values we can't see any clear dishabitaution in the x10 case 
+
+```{r}
+eig_df %>% 
+  mutate("type" = "org") %>% 
+  filter(!is.na(stimulus_id)) %>% 
+  bind_rows(
+    x10_eig_df %>% 
+      mutate("type" = "x10") %>% 
+      filter(!is.na(stimulus_id))
+  ) %>% 
+  group_by(type, run_id) %>% 
+  mutate(t = row_number()) %>% 
+  ggplot(aes(x = stimulus_id, y = EIG)) + 
+  geom_point(position = position_jitter(width=.1))+ 
+  facet_wrap(~type)
+  
+
+
+```
+
+we can also check on invalid values (i.e. the number of rows with EIG < 0). 
+
+
+
+```{r}
+eig_df %>% 
+  filter(EIG < 0) %>% 
+  count()
+
+x10_eig_df %>% 
+  filter(EIG < 0) %>% 
+  group_by(stimulus_id) %>% 
+  count()
+  
+```
+
+
+Then we can look at the trajectories. The originals doesn't look quite right, maybe due to the prior? no clear habituation but very clear dishabituation
+
+```{r}
+sim_df %>% 
+  rename(stimulus_id = `...1`) %>% 
+  ggplot(aes(x = stimulus_id, y = sample_n)) + 
+  geom_point(alpha = .3) + 
+  stat_summary(fun.data = "mean_cl_boot", color = "red") + 
+  stat_summary(fun.data = "mean_cl_boot", geom = "line", color = "red") + 
+  labs(title = "scaled")
+
+x10_sim_df %>% 
+  rename(stimulus_id = `...1`) %>% 
+  ggplot(aes(x = stimulus_id, y = sample_n)) + 
+  geom_point(alpha = .3) + 
+  stat_summary(fun.data = "mean_cl_boot", color = "red") + 
+  stat_summary(fun.data = "mean_cl_boot", geom = "line", color = "red") + 
+  labs(title = "x10 scaled (unscaled proxy)")
+
+```
+it turns out there was no variation for the unscaled version at all. all backgrounds have 1 sample, and deviant has 2 samples. persumably due to the last trial always having negative number. 
+
+
+```{r}
+x10_sim_df 
+```
+
