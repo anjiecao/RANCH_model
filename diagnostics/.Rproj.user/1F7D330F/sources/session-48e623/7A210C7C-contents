@@ -1,0 +1,105 @@
+```{r}
+library(tidyverse)
+library(here)
+```
+
+
+
+This is a simulation to compare the scaled vs unscaled embeddings. The simulation shares all the same parameters except for the values of the embeddings. The parameters are as following: 
+
+```
+BATCH_INFO = {
+    "jitter_n": 1, 
+    "total_batch_n": 1, 
+    "jitter_mode": "sampling"
+}
+
+GRID_INFO = {
+    "grid_mu_start": -4, "grid_mu_end": 4, "grid_mu_step": 5, 
+    "grid_sigma_start": 0.001, "grid_sigma_end": 1.8, "grid_sigma_step": 5, 
+    "grid_y_start": -4, "grid_y_end": 4, "grid_y_step": 5, 
+    "grid_epsilon_start": 0.00000000001, "grid_epsilon_end": 1, "grid_epsilon_step": 5, 
+    "hypothetical_obs_grid_n": 10
+}
+
+
+BATCH_GRID_INFO = num_stab_help.get_batch_grid(BATCH_INFO, GRID_INFO)
+```
+Stimuli we use are: 
+
+```
+fam: tensor([-0.2870,  0.2874,  0.3432], dtype=torch.float64) test: tensor([-0.4805, -0.9730, -0.2181], dtype=torch.float64)
+```
+
+
+The parameters we manipulated were: 
+
+OG: 
+```
+PRIOR_INFO = {
+    "mu_prior": 0,  
+    "V_prior": 1, 
+    "alpha_prior": 3, 
+    "beta_prior": 1, 
+    "epsilon": 0.0001, "mu_epsilon":0.0001, "sd_epsilon": 0.0001, 
+    "hypothetical_obs_grid_n": 5, 
+    "world_EIGs": 0.00001, "max_observation": 500
+}
+```
+
+x1000: 
+```
+PRIOR_INFO = {
+    "mu_prior": 1000,  
+    "V_prior": 1000, 
+    "alpha_prior": 3000, 
+    "beta_prior": 1000, 
+    "epsilon": 0.0001, "mu_epsilon":0.0001, "sd_epsilon": 0.0001, 
+    "hypothetical_obs_grid_n": 5, 
+    "world_EIGs": 0.00001, "max_observation": 500
+}
+```
+x0.001
+```
+PRIOR_INFO = {
+    "mu_prior": 0.001,  
+    "V_prior": 0.001, 
+    "alpha_prior": 0.003, 
+    "beta_prior": 0.001, 
+    "epsilon": 0.0001, "mu_epsilon":0.0001, "sd_epsilon": 0.0001, 
+    "hypothetical_obs_grid_n": 5, 
+    "world_EIGs": 0.00001, "max_observation": 500
+}
+```
+
+
+Below are the comparisons
+
+```{r}
+mu_1_v_1_a_3_b_1 <- read_csv(here("parameters_change/og_parameters.csv"))
+mu_1000_v_1000_a_3000_b_1000 <- read_csv(here("parameters_change/x1000_parameters.csv"))
+mu_.01_v_.01_a_.03_b_.01 <- read_csv(here("parameters_change/x0.01_parameters.csv"))
+mu_.001_v_.001_a_.003_b_.001 <- read_csv(here("parameters_change/x0.001_parameters.csv"))
+
+mu_0_v_1_a_3_b_1 <- read_csv(here("parameters_change/mu0_og_parameters.csv"))
+mu_0_v_0.01_a_0.03_b_0.01 <- read_csv(here("parameters_change/mu0_x0.01_parameters.csv"))
+
+```
+
+
+```{r}
+bind_rows(
+  mu_0_v_1_a_3_b_1 %>% mutate(type = "mu_0_v_1_a_3_b_1"),
+  mu_0_v_0.01_a_0.03_b_0.01 %>% mutate(type = "mu_0_v_0.01_a_0.03_b_0.01"),
+  mu_1_v_1_a_3_b_1 %>% mutate(type = "mu_1_v_1_a_3_b_1"), 
+  mu_1000_v_1000_a_3000_b_1000 %>% mutate(type = "mu_1000_v_1000_a_3000_b_1000"), 
+  mu_.001_v_.001_a_.003_b_.001 %>% mutate(type = "mu_.001_v_.001_a_.003_b_.001"), 
+  mu_.01_v_.01_a_.03_b_.01 %>% mutate(type = "mu_.01_v_.01_a_.03_b_.01")) %>% 
+  rename(stimulus_id = `...1`) %>% 
+  ggplot(aes(x = stimulus_id, y = sample_n)) + 
+  geom_point(alpha = .3) + 
+  stat_summary(fun.data = "mean_cl_boot", color = "red") + 
+  stat_summary(fun.data = "mean_cl_boot", geom = "line", color = "red") + 
+  facet_wrap(~type, scales = "free")
+```
+

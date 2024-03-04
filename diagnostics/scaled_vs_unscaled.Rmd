@@ -46,8 +46,16 @@ and the unscaled are 10x of the original
 fam: tensor([-2.870,  2.874,  3.432], dtype=torch.float64) test: tensor([-4.805, -9.730, -2.181], dtype=torch.float64)
 ```
 
-Each consisted of 50 run of the same simulation, The stimuli squence are BBBBD
+and for a milder version 4x of the orignal: 
 
+```
+fam: tensor([-1.1478,  1.1498,  1.3730], dtype=torch.float64) test: tensor([-1.9222, -3.8920, -0.8725], dtype=torch.float64)
+```
+
+
+
+
+Each consisted of 50 run of the same simulation, The stimuli squence are BBBBD
 Below are the comparisons
 
 ```{r}
@@ -58,6 +66,8 @@ eig_df <- read_csv(here("scaled_vs_unscaled/eig_df.csv"))
 sim_df <- read_csv(here("scaled_vs_unscaled/sim_df.csv"))
 x10_eig_df <- read_csv(here("scaled_vs_unscaled/x10_eig_df.csv"))
 x10_sim_df <- read_csv(here("scaled_vs_unscaled/x10_sim_df.csv"))
+x4_eig_df <- read_csv(here("scaled_vs_unscaled/x4_eig_df.csv"))
+x4_sim_df <- read_csv(here("scaled_vs_unscaled/x4_sim_df.csv"))
 
 ```
 
@@ -70,6 +80,9 @@ eig_df %>%
   bind_rows(
     x10_eig_df %>% 
       mutate("type" = "x10") %>% 
+      filter(!is.na(stimulus_id)), 
+    x4_eig_df %>% 
+      mutate("type" = "x4") %>% 
       filter(!is.na(stimulus_id))
   ) %>% 
   group_by(type, run_id) %>% 
@@ -91,11 +104,17 @@ eig_df %>%
   filter(EIG < 0) %>% 
   count()
 
+x4_eig_df %>% 
+  filter(EIG < 0) %>% 
+  group_by(stimulus_id) %>% 
+  count()
+
 x10_eig_df %>% 
   filter(EIG < 0) %>% 
   group_by(stimulus_id) %>% 
   count()
   
+
 ```
 
 
@@ -110,6 +129,14 @@ sim_df %>%
   stat_summary(fun.data = "mean_cl_boot", geom = "line", color = "red") + 
   labs(title = "scaled")
 
+x4_sim_df %>% 
+  rename(stimulus_id = `...1`) %>% 
+  ggplot(aes(x = stimulus_id, y = sample_n)) + 
+  geom_point(alpha = .3) + 
+  stat_summary(fun.data = "mean_cl_boot", color = "red") + 
+  stat_summary(fun.data = "mean_cl_boot", geom = "line", color = "red") + 
+  labs(title = "x4 scaled (unscaled proxy)")
+
 x10_sim_df %>% 
   rename(stimulus_id = `...1`) %>% 
   ggplot(aes(x = stimulus_id, y = sample_n)) + 
@@ -117,6 +144,8 @@ x10_sim_df %>%
   stat_summary(fun.data = "mean_cl_boot", color = "red") + 
   stat_summary(fun.data = "mean_cl_boot", geom = "line", color = "red") + 
   labs(title = "x10 scaled (unscaled proxy)")
+
+
 
 ```
 it turns out there was no variation for the unscaled version at all. all backgrounds have 1 sample, and deviant has 2 samples. persumably due to the last trial always having negative number. 

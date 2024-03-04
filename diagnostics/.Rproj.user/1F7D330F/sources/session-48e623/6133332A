@@ -1,27 +1,27 @@
 {
-    "id": "09DBDD88",
-    "path": "~/Desktop/projects/RANCH/RANCH_model/diagnostics/viz_tool.Rmd",
-    "project_path": "viz_tool.Rmd",
+    "id": "6133332A",
+    "path": "~/Desktop/projects/RANCH/RANCH_model/diagnostics/scaled_vs_unscaled.Rmd",
+    "project_path": "scaled_vs_unscaled.Rmd",
     "type": "r_markdown",
     "hash": "0",
     "contents": "",
     "dirty": false,
-    "created": 1697774364933.0,
+    "created": 1708968366366.0,
     "source_on_save": false,
-    "relative_order": 1,
+    "relative_order": 2,
     "properties": {
         "tempName": "Untitled1",
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "12,6",
-        "scrollLine": "11"
+        "cursorPosition": "129,24",
+        "scrollLine": "121"
     },
     "folds": "",
-    "lastKnownWriteTime": 1698247781,
+    "lastKnownWriteTime": 1709004707,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1698247781253,
+    "last_content_update": 1709004707958,
     "read_only": false,
     "read_only_alternatives": []
 }
