@@ -5,7 +5,7 @@ import numpy as np
 import torch 
 import re 
 from torch.distributions import Normal  
-#import ipdb
+import ipdb
 
 
 
@@ -120,7 +120,7 @@ class granch_model:
 
             else:
                 p_look_away = max(min(params.world_EIGs / (metric.item() + params.world_EIGs), 1), 0)
-                    
+                
                 if (np.random.binomial(1, p_look_away) == 1): 
             # if the model is looking away, increment stimulus
                     stimulus_idx = stimulus_idx + 1

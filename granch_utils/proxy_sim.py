@@ -44,7 +44,7 @@ def granch_proxy_sim(params, model, stimuli):
 
         #  calculate surprisal here 
         if params.linking_hypothesis == "surprisal": 
-            print("run surprisal")
+
             surprisal = compute_prob_tensor.score_surprisal(model, params, prev_observation_posterior)
             model.update_model_surprisal(surprisal.item())
             stimulus_idx, current_stim_t = model.make_decision(params, stimulus_idx, current_stim_t, metric = surprisal)

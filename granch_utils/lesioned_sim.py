@@ -4,7 +4,7 @@
 import torch
 from . import compute_prob_tensor
 import numpy as np
-#import ipdb
+import ipdb
 
 def granch_no_learning_simulation(params, model, stimuli): 
     stimulus_idx = 0
@@ -140,13 +140,17 @@ def granch_no_noise_simulation(params, model, stimuli):
                 p_look_away = max(min(params.world_EIGs / (eig.item() + params.world_EIGs), 1), 0)
                 #p_look_away = params.world_EIGs / (eig.item() + params.world_EIGs)
 
-                if not ((p_look_away >= 0) & (p_look_away <= 1)):
+                if np.isnan(p_look_away):
                     print("p_look_away")
                     print(p_look_away)
-                    print("params.world_EIGs")
-                    print(params.world_EIGs)
+                    print("model.ps_kl")
+                    print(model.ps_kl)
+                    print("model.ps_pp")
+                    print(model.ps_pp)
                     print("eig.item()")
                     print(eig.item())
+                    model.update_model_eig(999)
+                    p_look_away = 1
                     
                 if (np.random.binomial(1, p_look_away) == 1): 
             # if the model is looking away, increment stimulus
@@ -170,16 +174,19 @@ def granch_no_noise_simulation(params, model, stimuli):
         else:
             # luce's choice rule 
             p_look_away = max(min(params.world_EIGs / (eig.item() + params.world_EIGs), 1), 0)
-            #p_look_away = params.world_EIGs / (eig.item() + params.world_EIGs)
             
-            if not ((p_look_away >= 0) & (p_look_away <= 1)):
+            if np.isnan(p_look_away):
                 print("p_look_away")
                 print(p_look_away)
-                print("params.world_EIGs")
-                print(params.world_EIGs)
+                print("model.ps_kl")
+                print(model.ps_kl)
+                print("model.ps_pp")
+                print(model.ps_pp)
                 print("eig.item()")
                 print(eig.item())
-
+                model.update_model_eig(999)
+                p_look_away = 1
+                    
             if (np.random.binomial(1, p_look_away) == 1): 
             # if the model is looking away, increment stimulus
                 stimulus_idx = stimulus_idx + 1

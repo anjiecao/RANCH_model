@@ -42,10 +42,11 @@ def score_surprisal(model, params, prev_observation_posterior):
     padded_log_posterior = torch.log(prev_observation_posterior.expand(likelihood.size())).to(model.device)
     
     prior_pred = torch.exp(torch.logsumexp(torch.add(likelihood, padded_log_posterior), dim = (1, 2,3))).to(model.device)
-    mask = prior_pred < 1e-8
-    prior_pred[mask] = 1e-8
+    #mask = prior_pred < 1e-8
+    #prior_pred[mask] = 1e-8
 
-    surprisal = torch.sum(-torch.log(torch.exp(prior_pred))).to(model.device)
+    surprisal = torch.sum(-torch.log(prior_pred)).to(model.device)
+    print(surprisal)
 
     return (surprisal)
     #return (loss)
