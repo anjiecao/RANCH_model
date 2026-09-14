@@ -222,6 +222,18 @@ the previous submission.
 
 ## 4. Sequence
 
+*Status 2026-09-14.* **Phase A done** (`granch_fast/tests`, 60 tests; found and fixed the eq-15
+slip, §5.6). **Phase B started**: the `ranch` package exists (`RANCH_model/ranch/`: `Prior`,
+`LearnerNoise`, `Quadrature`, `Model` + `FastConfig` shim; `World`; `Learner`; the decision-variable
+registry with `RealizedGain(window=...)`; `forced_exposure_then_test`, `self_paced`, `LucePolicy`,
+`Result`; `linking`) and `tests/test_api_identity.py` proves every runner identical to the engine.
+Remaining in Phase B: (i) regenerate every true-EIG-dependent table with the fixed formula
+(`sherlock/regen_pipeline.sbatch`, running) and review the golden diff; (ii) move the CV protocol
+(`reproduce_cv`) and validated data loaders into the package; (iii) `Selection` with mandatory
+re-evaluation; (iv) rewrite the Phase-1/2 drivers as thin scripts over the API, byte-identical
+against the regenerated goldens; (v) team decisions on names, canonical configurations, and
+whether `oracle` windowing survives beyond reproduction; (vi) retire `FastConfig`.
+
 **Phase A — harden what exists (1–2 days).** `pytest` layout; convert the 13 audit scripts into
 assertion tests with the tolerances above; write the ten regression tests in §0 (they are the
 cheapest, highest-value items); data manifest + loader snapshot tests; golden-table YAML from the
