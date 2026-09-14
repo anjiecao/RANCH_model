@@ -244,9 +244,10 @@ def infant_trajectories(cfg, grid, fam_vec, test_vec, fam_dur, T_max=60, rng=Non
 # --------------------------------------------------------------------------- #
 #  Adult (self-paced) runner: one decision variable drives the mean-field propagation
 # --------------------------------------------------------------------------- #
-def _trial_expected(st, k, zvec, metric, w, T_max, max_obs):
+def _trial_expected(st, k, zvec, metric, w, T_max, max_obs, offset=0.0):
     """Run one trial of stimulus k (fresh slot) under decision variable `metric`,
-    return E[samples]; leaves the slot reset (caller commits)."""
+    return E[samples]; leaves the slot reset (caller commits). `offset` is added to the
+    trajectory before the survival product (the shifted-surprisal variant)."""
     tr = np.empty(T_max)
     trajs = {metric: tr}
     for t in range(T_max):
@@ -255,12 +256,12 @@ def _trial_expected(st, k, zvec, metric, w, T_max, max_obs):
         if _plateaued(trajs, t):
             tr[t + 1:] = tr[t]
             break
-    E = expected_samples(tr, w, max_obs)
+    E = expected_samples(tr + offset, w, max_obs)
     st.reset_stim(k)
     return E
 
 
-def adult_curves(cfg, grid, fam_vec, dev_vec, metric, w, max_D=10, T_max=60, sigma_true=0.0):
+def adult_curves(cfg, grid, fam_vec, dev_vec, metric, w, max_D=10, T_max=60, sigma_true=0.0, offset=0.0):
     """Self-paced: bg[k] = E[samples] on the (k+1)-th familiar trial; dev_test[D] =
     E[samples] on a deviant test after D familiar trials. Mean-field propagation
     (validated vs MC rollouts, audit 2026-08-19). Valid only for a noiseless world:
@@ -274,9 +275,9 @@ def adult_curves(cfg, grid, fam_vec, dev_vec, metric, w, max_D=10, T_max=60, sig
     fam_vec = np.asarray(fam_vec, float); dev_vec = np.asarray(dev_vec, float)
     bg, dev_test = [], {}
     for k in range(max_D + 1):
-        E = _trial_expected(st, k, fam_vec, metric, w, T_max, cfg.max_observation)
+        E = _trial_expected(st, k, fam_vec, metric, w, T_max, cfg.max_observation, offset)
         st.commit_count(k, E, fam_vec)
         bg.append(E)
         if k + 1 <= max_D:
-            dev_test[k + 1] = _trial_expected(st, scratch, dev_vec, metric, w, T_max, cfg.max_observation)
+            dev_test[k + 1] = _trial_expected(st, scratch, dev_vec, metric, w, T_max, cfg.max_observation, offset)
     return np.array(bg), dev_test

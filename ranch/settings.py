@@ -1,0 +1,94 @@
+"""Parameter grids and the mapping from a grid row to a Model + world + decision variables,
+reproducing the conventions of the legacy drivers exactly (so the new pipeline is
+byte-identical against them):
+  main          -- paper prior grid, eps FIXED (the corrected published implementation)
+  infeps        -- paper prior grid, eps INFERRED with a noiseless world (the published spec)
+  selfcons_*    -- noisy world, eps inferred (the canonical family), base pilot / promotion ext
+  adult_*       -- the noisy-adult sweeps (settings only; the paradigm differs)
+"""
+import itertools
+from dataclasses import dataclass
+
+import numpy as np
+import pandas as pd
+
+from .config import Prior, LearnerNoise, Quadrature, Model
+from .decision import EIG, EIGWithin, KL, Surprisal, RealizedGain
+
+KINDS = ("main", "infeps", "selfcons_base", "selfcons_ext", "adult_base", "adult_ext")
+SIGMA_BOX = (0.001, 1.5)
+
+
+def settings_table(kind):
+    rows = []
+    if kind == "main":
+        for V, a, b, e in itertools.product([1.0, 2.0, 3.0], [0.1, 1.0, 10.0], [0.1, 1.0, 10.0], [0.1, 0.2, 0.3, 0.5, 1.0]):
+            rows.append(dict(V_prior=V, alpha_prior=a, beta_prior=b, eps_fixed=e, sd_epsilon=np.nan, infer_eps=False, sigma_true=0.0))
+    elif kind == "infeps":
+        for V, a, b, s in itertools.product([1.0, 2.0, 3.0], [0.1, 1.0, 10.0], [0.1, 1.0, 10.0], [0.1, 0.5, 1.0]):
+            rows.append(dict(V_prior=V, alpha_prior=a, beta_prior=b, eps_fixed=np.nan, sd_epsilon=s, infer_eps=True, sigma_true=0.0))
+    elif kind in ("selfcons_base", "selfcons_ext"):
+        def tab(Vs, sds):
+            return [dict(V_prior=V, alpha_prior=a, beta_prior=b, sigma_true=st, sd_epsilon=sd, infer_eps=True, eps_fixed=np.nan)
+                    for V, a, b, sd, st in itertools.product(Vs, [1.0, 10.0], [0.1, 1.0], sds, [0.1, 0.2, 0.3, 0.5])]
+        base = pd.DataFrame(tab([1.0], [0.5]))
+        if kind == "selfcons_base":
+            return base
+        key = ["V_prior", "alpha_prior", "beta_prior", "sd_epsilon", "sigma_true"]
+        full = pd.DataFrame(tab([1.0, 3.0], [0.1, 0.5, 1.0]))
+        ext = full.merge(base[key].assign(_b=1), on=key, how="left")
+        return ext[ext._b.isna()].drop(columns="_b").reset_index(drop=True)
+    elif kind == "adult_base":
+        for a, b, st in itertools.product([1.0, 10.0], [0.1, 1.0], [0.1, 0.2]):
+            rows.append(dict(V_prior=1.0, alpha_prior=a, beta_prior=b, sigma_true=st, sd_epsilon=0.5, infer_eps=True, eps_fixed=np.nan))
+    elif kind == "adult_ext":
+        for V, a, b, sd, st in itertools.product([1.0, 3.0], [1.0, 10.0], [0.1, 1.0], [0.5, 1.0], [0.1, 0.2]):
+            rows.append(dict(V_prior=V, alpha_prior=a, beta_prior=b, sigma_true=st, sd_epsilon=sd, infer_eps=True, eps_fixed=np.nan))
+    else:
+        raise ValueError(kind)
+    return pd.DataFrame(rows)
+
+
+@dataclass(frozen=True)
+class Spec:
+    """Everything a runner needs for one grid row."""
+    model: Model
+    sigma_true: float
+    realized_gain: RealizedGain
+    surprisal_offset: float            # the eps-resolution shift for the surprisal_b variant
+    variables: tuple                   # in the legacy metric order for this kind
+
+    @property
+    def keys(self):
+        return tuple(v.key for v in self.variables)
+
+
+def spec(s, kind, window="exemplar_mean"):
+    """Grid row -> Spec, matching the legacy make_cfg conventions per kind."""
+    prior = Prior(0.0, float(s["V_prior"]), float(s["alpha_prior"]), float(s["beta_prior"]), SIGMA_BOX)
+    if kind == "main" or (kind.startswith("adult") and not bool(s["infer_eps"])):
+        e = float(s["eps_fixed"])
+        model = Model(prior, LearnerNoise.fixed(e), quadrature=Quadrature(160, 1))
+        rg = RealizedGain(window, 1e-4, 1)
+        return Spec(model, 0.0, rg, 3.0 * (-np.log(e)), (rg, EIGWithin, EIG, KL, Surprisal))
+    if kind == "infeps":
+        model = Model(prior, LearnerNoise.inferred(1e-3, float(s["sd_epsilon"]), (1e-6, 1.0)), quadrature=Quadrature(120, 30))
+        rg = RealizedGain(window, 1e-4, 1)
+        return Spec(model, 0.0, rg, 3.0 * (-np.log(0.3)), (rg, EIGWithin, EIG, KL, Surprisal))
+    if kind in ("selfcons_base", "selfcons_ext", "adult_base", "adult_ext"):
+        st = float(s["sigma_true"])
+        model = Model(prior, LearnerNoise.inferred(1e-3, float(s["sd_epsilon"]), (1e-3, 1.2)), quadrature=Quadrature(80, 30))
+        rg = RealizedGain(window, st, 5)
+        return Spec(model, st, rg, 3.0 * (-np.log(st)), (rg, EIG, KL, Surprisal))
+    raise ValueError(kind)
+
+
+def variable_for(name, sp):
+    """Score-table metric name -> (decision variable, offset): 'surprisal_b' is Surprisal
+    with the eps-resolution shift; everything else is a registry key."""
+    if name == "surprisal_b":
+        return Surprisal, sp.surprisal_offset
+    for v in sp.variables:
+        if v.key == name:
+            return v, 0.0
+    raise KeyError(name)

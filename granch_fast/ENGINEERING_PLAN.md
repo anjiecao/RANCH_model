@@ -227,12 +227,20 @@ slip, §5.6). **Phase B started**: the `ranch` package exists (`RANCH_model/ranc
 `LearnerNoise`, `Quadrature`, `Model` + `FastConfig` shim; `World`; `Learner`; the decision-variable
 registry with `RealizedGain(window=...)`; `forced_exposure_then_test`, `self_paced`, `LucePolicy`,
 `Result`; `linking`) and `tests/test_api_identity.py` proves every runner identical to the engine.
-Remaining in Phase B: (i) regenerate every true-EIG-dependent table with the fixed formula
-(`sherlock/regen_pipeline.sbatch`, running) and review the golden diff; (ii) move the CV protocol
-(`reproduce_cv`) and validated data loaders into the package; (iii) `Selection` with mandatory
-re-evaluation; (iv) rewrite the Phase-1/2 drivers as thin scripts over the API, byte-identical
-against the regenerated goldens; (v) team decisions on names, canonical configurations, and
-whether `oracle` windowing survives beyond reproduction; (vi) retire `FastConfig`.
+Progress (2026-09-14, later): (ii) done — `ranch.data` (validated loaders, manifest, Exp-1 pairs,
+Exp-2 sets and human means) and a native `linking.split_half_cv`; (iii) done — `ranch.selection`
+(`select_infant`/`select_adult` with the sign/saturation filters, `Selection.quote()` refuses
+Monte-Carlo-selected numbers until `reevaluate_infant`/`reevaluate_adult` has run on fresh
+explicit seeds); (iv) done as `ranch.settings` (grids + row→Model/world/variables mapping) and
+`ranch.pipeline` (`infant_grid`, `score_infant`, `adult_grid` mean-field/stochastic, `score_adult`
+75- and 21-cell, `exp2_infants`, `exp2_adults`) with a CLI (`python -m ranch <stage>`) writing the
+legacy file names; `tests/test_api_pipeline.py` proves every stage bit-identical to the legacy
+drivers on subsets (same seeds); (v) decided — names as in the report, canonical = model B,
+`exemplar_mean` window. Remaining: (a) the regeneration + window-pass review on the cluster
+(golden diff); (b) the Phase-B gate — run the full grids through `python -m ranch` on the cluster
+and diff against the legacy outputs, then retire the legacy drivers and `FastConfig`; (c) fold the
+Phase-2 selection rules (paper / within / joint) and the lesion + channel figures into the
+pipeline; (d) figures regenerated from `Result` objects.
 
 **Phase A — harden what exists (1–2 days).** `pytest` layout; convert the 13 audit scripts into
 assertion tests with the tolerances above; write the ten regression tests in §0 (they are the

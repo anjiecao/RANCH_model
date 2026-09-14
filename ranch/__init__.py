@@ -10,9 +10,11 @@ from .world import World
 from .learner import Learner
 from .paradigms import forced_exposure_then_test, self_paced, LucePolicy, Result
 from .canonical import CANONICAL, PUBLISHED_CORRECTED, PUBLISHED_SPEC, CONFIGURATIONS, NamedConfiguration
-from . import linking, data
+from .selection import Selection, UnquotableSelection, select_infant, select_adult, reevaluate_infant, reevaluate_adult
+from . import linking, data, settings, pipeline, selection
 
 __all__ = ["Prior", "LearnerNoise", "Quadrature", "Model", "EIG", "EIGWithin", "KL", "Surprisal",
            "RealizedGain", "ALL_VARIABLES", "DecisionVariable", "World", "Learner",
-           "forced_exposure_then_test", "self_paced", "LucePolicy", "Result", "linking", "data",
-           "CANONICAL", "PUBLISHED_CORRECTED", "PUBLISHED_SPEC", "CONFIGURATIONS", "NamedConfiguration"]
+           "forced_exposure_then_test", "self_paced", "LucePolicy", "Result", "linking", "data", "settings", "pipeline",
+           "selection", "Selection", "UnquotableSelection", "select_infant", "select_adult", "reevaluate_infant",
+           "reevaluate_adult", "CANONICAL", "PUBLISHED_CORRECTED", "PUBLISHED_SPEC", "CONFIGURATIONS", "NamedConfiguration"]

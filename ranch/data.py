@@ -81,6 +81,50 @@ def load_adult_exp1():
     return a
 
 
+CL = f"{RANCH}/RANCH_cluster/sim_info"
+VIOLATION_TYPES = ["background", "pose", "number", "identity", "animacy"]
+
+
+def load_adult_exp1_pairs(n_pairs=6, seed=0):
+    """(familiar, deviant) stimulus-name pairs used in the adult Exp-1 runs, sampled as in
+    granch_fast.phase1_adults.adult_pairs (same seed -> same pairs)."""
+    import re
+    a = pd.read_csv(f"{PAPER}/data/adults/adult_exposure_duration.csv", low_memory=False)
+    clean = lambda s: re.sub(r".*/", "", s) if isinstance(s, str) else s
+    pairs = (a.dropna(subset=["deviant_stimulus"])
+             .assign(f=lambda d: d.background_stimulus.map(clean), v=lambda d: d.deviant_stimulus.map(clean))
+             [["f", "v"]].drop_duplicates())
+    return pairs.sample(min(n_pairs, len(pairs)), random_state=seed).values.tolist()
+
+
+def load_exp2_infant_pairs():
+    """Exp-2 infant stimulus pairs: 6 per violation type (fam, test, violation_type)."""
+    sp = pd.read_csv(f"{CL}/trial_info/stimulus_type/infants/stimuli_pair_info.csv")
+    _check(all((sp.violation_type == vt).sum() == 6 for vt in VIOLATION_TYPES), "Exp-2 infant pairs: expected 6 per type")
+    return sp
+
+
+def load_exp2_adult_pairs(n_per_type=6, seed=0):
+    sp = pd.read_csv(f"{CL}/trial_info/stimulus_type/adults/stimuli_pair_info.csv")
+    return {vt: sp[sp.violation_type == vt].sample(min(n_per_type, (sp.violation_type == vt).sum()), random_state=seed)
+            [["fam", "test"]].values.tolist() for vt in VIOLATION_TYPES}
+
+
+def load_exp2_human_infants():
+    """Combined zoom + lookit Exp-2 infant condition means by test type (as in 05_experiment2.Rmd)."""
+    z = pd.read_csv(f"{PAPER}/data/infants/exp2_zoom.csv", low_memory=False)
+    l = pd.read_csv(f"{PAPER}/data/infants/exp2_lookit.csv", low_memory=False)
+    zd = z[(~z.exclude) & z.LT.notna()][["subject_num", "LT", "test_type"]]
+    ld = l[(~l.exclude) & l.LT.notna()][["subject_num", "LT", "violation_type"]].rename(columns={"violation_type": "test_type"})
+    return pd.concat([zd, ld]).groupby("test_type").LT.mean().to_dict()
+
+
+def load_exp2_human_adults():
+    b = pd.read_csv(f"{PAPER}/data/results_plots/exp2_adult_plot.csv")
+    b = b[b.value_type == "Adult Behavior"]
+    return {(r.trial_type, int(r.trial_number)): float(r.LT) for r in b.itertuples(index=False)}
+
+
 def sha256(path):
     h = hashlib.sha256()
     with open(path, "rb") as f:
