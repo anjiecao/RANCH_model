@@ -128,13 +128,17 @@ def feature_eig_channels(fp, n_star, zbar_star):
     # term about mu given sigma^2 (eq 12), expectation over posterior
     I_mu = 0.5 * np.log1p(alpha ** 2 * fp.v_mu / (vy + g.eps2))
     I_mu_bar = np.sum(fp.post * I_mu)
-    # term about sigma^2 (eq 15), Gaussian-mixture approx of predictive
+    # term about (sigma^2, eps) (eq 15): H(z | data) with the mixture entropy replaced by
+    # its moment-matched Gaussian (an upper bound), minus the EXACT conditional entropies
+    # E_post[0.5 log vz]. (Until 2026-09-14 the second term was 0.5 log E_post[vz], which
+    # drops the scale-mixture information by Jensen's gap: 3-6 % of the total at first
+    # samples, verified against numerical MI in tests/test_decision_variables.py.)
     mean_g = alpha * fp.m_mu + (1.0 - alpha) * zbar_star
     vz = alpha ** 2 * fp.v_mu + vy + g.eps2
     Emean = np.sum(fp.post * mean_g)
     Evar = np.sum(fp.post * vz)
     Varmean = np.sum(fp.post * (mean_g - Emean) ** 2)
-    I_sigma = 0.5 * np.log((Evar + Varmean) / Evar)
+    I_sigma = 0.5 * (np.log(Evar + Varmean) - np.sum(fp.post * np.log(vz)))
     return I_mu_bar, I_sigma
 
 

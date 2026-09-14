@@ -1,0 +1,16 @@
+{
+ "RANCH_model/resnet50_downscaled.csv": "02a3808385911a3714749ad4a20cf3ae21f0e06a2291ddde40b68c0034f0a41a",
+ "pkbb_paper_writing/data/infants/exp1.csv": "1e9ae1391a5e238f387c0888ce496244cebc832b0dc9738135a69876c6367e3a",
+ "pkbb_paper_writing/data/infants/unscaled_model_data/trial_info.csv": "e91321ec0014cee252e27785a08a53beb827e012c06bc9e1ee69ca30021950e5",
+ "pkbb_paper_writing/data/infants/unscaled_model_data/linked_aligned_eig_unscaled_onlyanimals.csv": "6b6d79940cd9a3d78948e7b0563110498c3b3e59aaedc178b6a1f4b6ccaf62b8",
+ "pkbb_paper_writing/data/infants/crossvalidation/resnet50_EIG_CV.csv": "158914365096067fb9e967f2491f8d99ddd369132b24d1cb9ebf18051df5b8bf",
+ "pkbb_paper_writing/data/infants/exp2_zoom.csv": "2318c89c08e4e0fd9d483ceb44f49e8f8debe87a1763b058bf1522d0ca5599d5",
+ "pkbb_paper_writing/data/infants/exp2_lookit.csv": "88e084e8be06422b64cc70d1bfa8f472590876a1d25151ad94674076b76d62ad",
+ "pkbb_paper_writing/data/adults/adult_exposure_duration.csv": "b8270ac0d47f0149e6f5f214b5fb3a9c2d06390bf8e1e6f7cb664fe5a6683501",
+ "pkbb_paper_writing/data/results_plots/exp1_data_plot.csv": "18d73710b82f726c56eb192387462aabc91b46dc261937b8f740f9ad3ad9dfc5",
+ "pkbb_paper_writing/data/results_plots/exp2_infant_plot.csv": "9468fc43726601df5cb8c6dd1570625a3f167806f9bc8cbb4011a8c16cc0a84c",
+ "pkbb_paper_writing/data/results_plots/exp2_adult_plot.csv": "8a3d652d7e705c2c23166c705f60704588189f58d70a2b937d1ed3d8cedf0c80",
+ "pkbb_paper_writing/data/results_plots/exp1_adult_sim_plot.csv": "e4d752eb5885f4c228c153846ae10e585ef03935a35dbee57afd3529fee2a21b",
+ "RANCH_cluster/sim_info/trial_info/stimulus_type/infants/stimuli_pair_info.csv": "60d5e58d17eb81ea37ac9a05938ba69920873bc8812390c817533f034c80763e",
+ "RANCH_cluster/sim_info/trial_info/stimulus_type/adults/stimuli_pair_info.csv": "cbfc708d930671b88cf89bdd8cbcc753f18fec888fa839e3ed0dcb59a1ca0e33"
+}

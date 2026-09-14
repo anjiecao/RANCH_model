@@ -251,3 +251,16 @@ reproduction commands for every figure/table in the revision.
    on the paradigm, not the model.
 5. **Quadrature boxes** (`sigma_box`, `eps_box`) act as priors; they belong in `Prior`/`LearnerNoise`
    with the convergence test guarding them.
+6. **A formula slip in the closed-form true EIG, found and fixed by Phase A.** The (σ², ε)-channel
+   (note eq. 15) subtracted ½·log E[vz] where the exact conditional entropy is E[½·log vz]; the
+   difference is Jensen's gap = the information carried by *variance* heterogeneity across
+   (σ², ε) nodes, i.e. exactly the scale-mixture term. Effect: the true EIG was underestimated
+   by 3–6 % at first samples (largest at distance 0, where it was the whole σ²-channel), shrinking
+   as the posterior concentrates. Adding the gap back reproduces exact numerical MI to < 0.5 %
+   everywhere (the residual is the moment-matching bound). Fixed in `eig.feature_eig_channels`
+   (2026-09-14); `test_decision_variables.py` now pins 1 %. **Pending (Phase B):** every
+   true-EIG-dependent table and figure (infant/adult Phase-1 `mi` rows, the selfcons winners,
+   Exp-2 carry, config map, channel decomposition) was produced with the old formula and must be
+   regenerated with a reviewed golden-table diff; expected shifts are a few percent in the
+   variable itself and smaller in the fitted R² (the gap is nearly stimulus-independent at a
+   given sample count, so it slightly *compresses* novel/familiar contrast).

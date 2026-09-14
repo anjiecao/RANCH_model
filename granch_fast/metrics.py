@@ -11,7 +11,8 @@ deciding whether to take sample t+1 -- we compute, summed over the 3 features:
                original code (window half-width = TRUE sampling noise).
   eig_within : same with the within-stimulus predictive (the prior session's eig.py variant)
   mi         : proper expected information gain I(z_{t+1}; theta | data), closed form
-               (inference note eqs 10-15; brute-force checked to ~3%)
+               (inference note eqs 10-15; < 0.5% vs brute-force MI after the eq-15
+               Jensen-gap fix of 2026-09-14 -- see eig.feature_eig_channels)
   kl         : realized KL(post_t || post_{t-1}) of the sample just observed  (proxy_sim "KL")
   surprisal  : -log p_concept(z_t) under the PRE-sample posterior           (proxy_sim "surprisal")
                variant (b) = surprisal + n_feature * (-log eps_fixed)  [eps-resolution observation]
@@ -236,10 +237,15 @@ def _trial_expected(st, k, zvec, metric, w, T_max, max_obs):
     return E
 
 
-def adult_curves(cfg, grid, fam_vec, dev_vec, metric, w, max_D=10, T_max=60):
+def adult_curves(cfg, grid, fam_vec, dev_vec, metric, w, max_D=10, T_max=60, sigma_true=0.0):
     """Self-paced: bg[k] = E[samples] on the (k+1)-th familiar trial; dev_test[D] =
     E[samples] on a deviant test after D familiar trials. Mean-field propagation
-    (validated vs MC rollouts, audit 2026-08-19)."""
+    (validated vs MC rollouts, audit 2026-08-19). Valid only for a noiseless world:
+    E[samples] is nonlinear in a stochastic trajectory and the committed exposure
+    would itself be noisy -- use stochastic rollouts (phase1b_adults_selfcons) instead."""
+    if sigma_true > 0.0:
+        raise ValueError("adult_curves is a mean-field (noiseless-world) runner; "
+                         "sigma_true > 0 requires stochastic rollouts")
     scratch = max_D + 1
     st = State(cfg, grid, max_D + 2)
     fam_vec = np.asarray(fam_vec, float); dev_vec = np.asarray(dev_vec, float)
