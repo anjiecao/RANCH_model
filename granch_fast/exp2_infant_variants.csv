@@ -1,0 +1,21 @@
+metric,trial_type,mean_sample
+implemented EIG,familiar,15.645887422313868
+implemented EIG,pose,15.666605834911271
+implemented EIG,number,16.763271536499108
+implemented EIG,identity,17.46659148721987
+implemented EIG,animacy,22.013207702108065
+KL,familiar,2.005231531194146
+KL,pose,2.0069679271870884
+KL,number,2.069118996494623
+KL,identity,2.195724175558596
+KL,animacy,2.7501556148231217
+true EIG,familiar,41.97967606035501
+true EIG,pose,41.99515102972503
+true EIG,number,43.78643774155328
+true EIG,identity,46.02253071863989
+true EIG,animacy,52.27131843363142
+surprisal,familiar,387.7694271004707
+surprisal,pose,387.78437026848337
+surprisal,number,389.262035767632
+surprisal,identity,391.2244701414477
+surprisal,animacy,399.1145350696074

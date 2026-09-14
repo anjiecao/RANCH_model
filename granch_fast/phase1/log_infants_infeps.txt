@@ -1,0 +1,11 @@
+infeps: 81 settings x 480 trial rows x 5 metrics x T=60
+  10/81 settings done  (145s)
+  20/81 settings done  (258s)
+  30/81 settings done  (359s)
+  40/81 settings done  (455s)
+  50/81 settings done  (556s)
+  60/81 settings done  (656s)
+  70/81 settings done  (748s)
+  80/81 settings done  (846s)
+  81/81 settings done  (851s)
+saved /Users/mcfrank/Projects/ranch/RANCH_model/granch_fast/phase1/infant_traj_infeps.npz  (852s)

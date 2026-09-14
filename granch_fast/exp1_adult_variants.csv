@@ -1,0 +1,85 @@
+metric,trial_type,trial_number,mean_sample
+implemented EIG,familiar,1,15.703811153618773
+implemented EIG,familiar,2,13.12037927556861
+implemented EIG,familiar,3,11.75779554988698
+implemented EIG,familiar,4,10.96294875837026
+implemented EIG,familiar,5,10.471705763306671
+implemented EIG,familiar,6,10.156098509907409
+implemented EIG,familiar,7,9.94748544432468
+implemented EIG,familiar,8,9.806674466962756
+implemented EIG,familiar,9,9.7102323645837
+implemented EIG,familiar,10,9.64356031852948
+implemented EIG,familiar,11,9.59726820359019
+implemented EIG,novel,2,14.039844840431249
+implemented EIG,novel,3,13.769833384008612
+implemented EIG,novel,4,13.68738873752284
+implemented EIG,novel,5,13.67418159891126
+implemented EIG,novel,6,13.698104581470128
+implemented EIG,novel,7,13.745892086663114
+implemented EIG,novel,8,13.810382928791762
+implemented EIG,novel,9,13.887071466579323
+implemented EIG,novel,10,13.972832150631644
+implemented EIG,novel,11,14.065409815609524
+KL,familiar,1,14.153232296521027
+KL,familiar,2,11.72302844669406
+KL,familiar,3,10.479550333581354
+KL,familiar,4,9.755956515180769
+KL,familiar,5,9.3030129135231
+KL,familiar,6,9.004635298607331
+KL,familiar,7,8.799945648629642
+KL,familiar,8,8.654638956671075
+KL,familiar,9,8.548327627461827
+KL,familiar,10,8.468382424151622
+KL,familiar,11,8.406701196330896
+KL,novel,2,12.632201118049034
+KL,novel,3,12.444515320598471
+KL,novel,4,12.417767756889024
+KL,novel,5,12.444995238957748
+KL,novel,6,12.497961794182448
+KL,novel,7,12.566072455320016
+KL,novel,8,12.644181045321076
+KL,novel,9,12.729283638459163
+KL,novel,10,12.819399934500812
+KL,novel,11,12.913133437588872
+true EIG,familiar,1,8.012233408561624
+true EIG,familiar,2,7.882811338898966
+true EIG,familiar,3,7.822380748804744
+true EIG,familiar,4,7.792000291611072
+true EIG,familiar,5,7.774347157006285
+true EIG,familiar,6,7.762091765728057
+true EIG,familiar,7,7.752269502602592
+true EIG,familiar,8,7.743695460849501
+true EIG,familiar,9,7.735873633388943
+true EIG,familiar,10,7.72857061417236
+true EIG,familiar,11,7.721657418634176
+true EIG,novel,2,7.882713041136569
+true EIG,novel,3,7.843525236313295
+true EIG,novel,4,7.836516000772574
+true EIG,novel,5,7.84314900722657
+true EIG,novel,6,7.855520956425218
+true EIG,novel,7,7.870406728143019
+true EIG,novel,8,7.886492988337912
+true EIG,novel,9,7.9032091224184144
+true EIG,novel,10,7.920272412928663
+true EIG,novel,11,7.9375197180428545
+surprisal,familiar,1,2.1200067615101803
+surprisal,familiar,2,2.024929150438545
+surprisal,familiar,3,1.981905728160125
+surprisal,familiar,4,1.9564091301207165
+surprisal,familiar,5,1.938914948183008
+surprisal,familiar,6,1.9257753764191456
+surprisal,familiar,7,1.9152969133526736
+surprisal,familiar,8,1.906585208862299
+surprisal,familiar,9,1.8991217436094687
+surprisal,familiar,10,1.8925837146340472
+surprisal,familiar,11,1.886758522256315
+surprisal,novel,2,2.0497725526295363
+surprisal,novel,3,2.042933577765838
+surprisal,novel,4,2.042468144577991
+surprisal,novel,5,2.0435794601073836
+surprisal,novel,6,2.044999067157744
+surprisal,novel,7,2.046353703707662
+surprisal,novel,8,2.047541123998998
+surprisal,novel,9,2.0485479261576143
+surprisal,novel,10,2.0493894080915163
+surprisal,novel,11,2.050088366167651

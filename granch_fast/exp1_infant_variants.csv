@@ -1,0 +1,161 @@
+metric,sel,test_type,fam_duration,mean_sample
+implemented EIG,best CV fit,Familiar,0,17.124596931271956
+implemented EIG,best CV fit,Familiar,1,17.006987921504088
+implemented EIG,best CV fit,Familiar,2,16.838509587145303
+implemented EIG,best CV fit,Familiar,3,16.64911189350777
+implemented EIG,best CV fit,Familiar,4,16.45287818752446
+implemented EIG,best CV fit,Familiar,5,16.25648509631311
+implemented EIG,best CV fit,Familiar,6,16.06360401005178
+implemented EIG,best CV fit,Familiar,7,15.874724260863834
+implemented EIG,best CV fit,Familiar,8,15.690789349267021
+implemented EIG,best CV fit,Familiar,9,15.512058975618965
+implemented EIG,best CV fit,Novel,0,17.062866333470165
+implemented EIG,best CV fit,Novel,1,17.127300851255814
+implemented EIG,best CV fit,Novel,2,17.147658670366322
+implemented EIG,best CV fit,Novel,3,17.14694253722937
+implemented EIG,best CV fit,Novel,4,17.135739851934314
+implemented EIG,best CV fit,Novel,5,17.119051425168472
+implemented EIG,best CV fit,Novel,6,17.099749566274596
+implemented EIG,best CV fit,Novel,7,17.07831536902621
+implemented EIG,best CV fit,Novel,8,17.0556983446869
+implemented EIG,best CV fit,Novel,9,17.03235296089728
+implemented EIG,closest to human amplitude,Familiar,0,20.8417456393769
+implemented EIG,closest to human amplitude,Familiar,1,18.188937804152093
+implemented EIG,closest to human amplitude,Familiar,2,16.344364262036798
+implemented EIG,closest to human amplitude,Familiar,3,15.006764359217385
+implemented EIG,closest to human amplitude,Familiar,4,14.0055918170009
+implemented EIG,closest to human amplitude,Familiar,5,13.236841645258954
+implemented EIG,closest to human amplitude,Familiar,6,12.633540220856473
+implemented EIG,closest to human amplitude,Familiar,7,12.150805720149288
+implemented EIG,closest to human amplitude,Familiar,8,11.757638173205004
+implemented EIG,closest to human amplitude,Familiar,9,11.432157522773098
+implemented EIG,closest to human amplitude,Novel,0,20.65285301209836
+implemented EIG,closest to human amplitude,Novel,1,19.412269197383342
+implemented EIG,closest to human amplitude,Novel,2,18.88716993654049
+implemented EIG,closest to human amplitude,Novel,3,18.598651257121738
+implemented EIG,closest to human amplitude,Novel,4,18.41570698627509
+implemented EIG,closest to human amplitude,Novel,5,18.291120831734997
+implemented EIG,closest to human amplitude,Novel,6,18.203278877811943
+implemented EIG,closest to human amplitude,Novel,7,18.140594058864796
+implemented EIG,closest to human amplitude,Novel,8,18.09611505065754
+implemented EIG,closest to human amplitude,Novel,9,18.06532756130865
+KL,best CV fit,Familiar,0,2.1452735461499666
+KL,best CV fit,Familiar,1,2.121831849034423
+KL,best CV fit,Familiar,2,2.1075602569337337
+KL,best CV fit,Familiar,3,2.095010848102898
+KL,best CV fit,Familiar,4,2.0819459465716337
+KL,best CV fit,Familiar,5,2.067663680461086
+KL,best CV fit,Familiar,6,2.051994681791676
+KL,best CV fit,Familiar,7,2.034988503591967
+KL,best CV fit,Familiar,8,2.016776766792601
+KL,best CV fit,Familiar,9,1.997520424253527
+KL,best CV fit,Novel,0,2.1422600101586786
+KL,best CV fit,Novel,1,2.135809336387272
+KL,best CV fit,Novel,2,2.134974633311069
+KL,best CV fit,Novel,3,2.135971329711627
+KL,best CV fit,Novel,4,2.1378426086308058
+KL,best CV fit,Novel,5,2.140215840662742
+KL,best CV fit,Novel,6,2.1428678449819087
+KL,best CV fit,Novel,7,2.145638335024533
+KL,best CV fit,Novel,8,2.1483984452737883
+KL,best CV fit,Novel,9,2.15104418089738
+KL,closest to human amplitude,Familiar,0,7.991731665652047
+KL,closest to human amplitude,Familiar,1,6.6996382832016685
+KL,closest to human amplitude,Familiar,2,5.974431014149432
+KL,closest to human amplitude,Familiar,3,5.524574176797796
+KL,closest to human amplitude,Familiar,4,5.227059544803877
+KL,closest to human amplitude,Familiar,5,5.020443439323518
+KL,closest to human amplitude,Familiar,6,4.870878761669729
+KL,closest to human amplitude,Familiar,7,4.758527036465005
+KL,closest to human amplitude,Familiar,8,4.6712328537308885
+KL,closest to human amplitude,Familiar,9,4.601280838513465
+KL,closest to human amplitude,Novel,0,7.924376951779299
+KL,closest to human amplitude,Novel,1,7.419844328040874
+KL,closest to human amplitude,Novel,2,7.30906800275354
+KL,closest to human amplitude,Novel,3,7.282144923547567
+KL,closest to human amplitude,Novel,4,7.285629997584407
+KL,closest to human amplitude,Novel,5,7.303953610889707
+KL,closest to human amplitude,Novel,6,7.330832046806627
+KL,closest to human amplitude,Novel,7,7.363111893527003
+KL,closest to human amplitude,Novel,8,7.398961194052236
+KL,closest to human amplitude,Novel,9,7.437210194443807
+true EIG,best CV fit,Familiar,0,45.46813095276162
+true EIG,best CV fit,Familiar,1,44.86599646112938
+true EIG,best CV fit,Familiar,2,44.33462197467092
+true EIG,best CV fit,Familiar,3,43.85733336638341
+true EIG,best CV fit,Familiar,4,43.42390295070851
+true EIG,best CV fit,Familiar,5,43.02672254724464
+true EIG,best CV fit,Familiar,6,42.659893164872294
+true EIG,best CV fit,Familiar,7,42.31878033189752
+true EIG,best CV fit,Familiar,8,41.999702481007546
+true EIG,best CV fit,Familiar,9,41.69970038735255
+true EIG,best CV fit,Novel,0,45.29147716054819
+true EIG,best CV fit,Novel,1,45.195803099616164
+true EIG,best CV fit,Novel,2,45.15204594493911
+true EIG,best CV fit,Novel,3,45.12918126425893
+true EIG,best CV fit,Novel,4,45.114674838146435
+true EIG,best CV fit,Novel,5,45.10265987695291
+true EIG,best CV fit,Novel,6,45.09023084301771
+true EIG,best CV fit,Novel,7,45.075952951363384
+true EIG,best CV fit,Novel,8,45.05915984224952
+true EIG,best CV fit,Novel,9,45.039596167163616
+true EIG,closest to human amplitude,Familiar,0,58.48612238143276
+true EIG,closest to human amplitude,Familiar,1,50.912232047305594
+true EIG,closest to human amplitude,Familiar,2,46.48868326581703
+true EIG,closest to human amplitude,Familiar,3,43.505616590653894
+true EIG,closest to human amplitude,Familiar,4,41.31715019525401
+true EIG,closest to human amplitude,Familiar,5,39.62150226757428
+true EIG,closest to human amplitude,Familiar,6,38.25672762173112
+true EIG,closest to human amplitude,Familiar,7,37.127074671886064
+true EIG,closest to human amplitude,Familiar,8,36.171745193789
+true EIG,closest to human amplitude,Familiar,9,35.34997607998521
+true EIG,closest to human amplitude,Novel,0,58.442171025236156
+true EIG,closest to human amplitude,Novel,1,51.56576616912094
+true EIG,closest to human amplitude,Novel,2,47.95129266327972
+true EIG,closest to human amplitude,Novel,3,45.72462030970437
+true EIG,closest to human amplitude,Novel,4,44.22175676851639
+true EIG,closest to human amplitude,Novel,5,43.146935737539394
+true EIG,closest to human amplitude,Novel,6,42.34740764426014
+true EIG,closest to human amplitude,Novel,7,41.735802858485805
+true EIG,closest to human amplitude,Novel,8,41.258291236488105
+true EIG,closest to human amplitude,Novel,9,40.87978290592293
+surprisal,best CV fit,Familiar,0,391.02891902926314
+surprisal,best CV fit,Familiar,1,390.1521545834859
+surprisal,best CV fit,Familiar,2,389.4927694045639
+surprisal,best CV fit,Familiar,3,388.9773573192961
+surprisal,best CV fit,Familiar,4,388.5620086672506
+surprisal,best CV fit,Familiar,5,388.21888809774106
+surprisal,best CV fit,Familiar,6,387.9295443389858
+surprisal,best CV fit,Familiar,7,387.68129821484035
+surprisal,best CV fit,Familiar,8,387.46516885060987
+surprisal,best CV fit,Familiar,9,387.2746293789011
+surprisal,best CV fit,Novel,0,390.81791023168824
+surprisal,best CV fit,Novel,1,390.46852671712924
+surprisal,best CV fit,Novel,2,390.27290462755633
+surprisal,best CV fit,Novel,3,390.164243109521
+surprisal,best CV fit,Novel,4,390.10634728357064
+surprisal,best CV fit,Novel,5,390.0786049554385
+surprisal,best CV fit,Novel,6,390.06886687480545
+surprisal,best CV fit,Novel,7,390.0697904860918
+surprisal,best CV fit,Novel,8,390.07686023862357
+surprisal,best CV fit,Novel,9,390.08726750614454
+surprisal,closest to human amplitude,Familiar,0,72.71219825262052
+surprisal,closest to human amplitude,Familiar,1,65.71613437129587
+surprisal,closest to human amplitude,Familiar,2,60.91940546066126
+surprisal,closest to human amplitude,Familiar,3,57.431783854290956
+surprisal,closest to human amplitude,Familiar,4,54.76534980809422
+surprisal,closest to human amplitude,Familiar,5,52.6443505946418
+surprisal,closest to human amplitude,Familiar,6,50.90595442184366
+surprisal,closest to human amplitude,Familiar,7,49.44828244595439
+surprisal,closest to human amplitude,Familiar,8,48.204009198963114
+surprisal,closest to human amplitude,Familiar,9,47.126566118923826
+surprisal,closest to human amplitude,Novel,0,72.6568433012789
+surprisal,closest to human amplitude,Novel,1,66.4502072291148
+surprisal,closest to human amplitude,Novel,2,62.340996763911356
+surprisal,closest to human amplitude,Novel,3,59.467631585765396
+surprisal,closest to human amplitude,Novel,4,57.36177709771957
+surprisal,closest to human amplitude,Novel,5,55.75875536054159
+surprisal,closest to human amplitude,Novel,6,54.50261940137395
+surprisal,closest to human amplitude,Novel,7,53.49626321341001
+surprisal,closest to human amplitude,Novel,8,52.675942799616166
+surprisal,closest to human amplitude,Novel,9,51.99792539587971

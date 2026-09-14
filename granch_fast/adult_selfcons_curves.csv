@@ -1,0 +1,106 @@
+panel,trial_type,trial_number,y,lo,hi
+adult behaviour (s),familiar,1,3.173741275743707,3.1153582917478118,3.232124259739603
+adult behaviour (s),familiar,2,2.189406364749082,2.1429645037704033,2.235848225727761
+adult behaviour (s),familiar,3,2.085444482640083,2.039843939116552,2.1310450261636134
+adult behaviour (s),familiar,4,2.0727512650836903,2.0217716096137286,2.1237309205536516
+adult behaviour (s),familiar,5,2.010005885015844,1.957743023019817,2.062268747011872
+adult behaviour (s),familiar,6,2.0095085621092688,1.950851145243616,2.0681659789749216
+adult behaviour (s),familiar,7,1.9564290945406126,1.8977475650389763,2.015110624042249
+adult behaviour (s),familiar,8,1.947493741907639,1.880719001526993,2.0142684822882853
+adult behaviour (s),familiar,9,1.9437540473225403,1.8582866830177074,2.0292214116273732
+adult behaviour (s),familiar,10,2.0083656542056074,1.8880030651140274,2.1287282432971875
+adult behaviour (s),familiar,11,2.023081967213115,1.7864210293657992,2.2597429050604303
+adult behaviour (s),novel,2,2.7001493506493506,2.4895463058897453,2.9107523954089563
+adult behaviour (s),novel,3,2.742453781512605,2.54569921267329,2.93920835035192
+adult behaviour (s),novel,4,2.541703125,2.353372848775105,2.730033401224895
+adult behaviour (s),novel,5,2.5441591836734694,2.3741678150566936,2.7141505522902447
+adult behaviour (s),novel,6,2.4807381889763778,2.3235398285940025,2.637936549358753
+adult behaviour (s),novel,7,2.6773046511627907,2.4812119940232065,2.8733973083023754
+adult behaviour (s),novel,8,2.625249452954048,2.430783213630705,2.819715692277391
+adult behaviour (s),novel,9,2.768987525987526,2.560875685943819,2.9770993660312333
+adult behaviour (s),novel,10,2.7394003944773178,2.546599455425882,2.9322013335287536
+adult behaviour (s),novel,11,2.7173333333333334,2.513480608720764,2.9211860579459032
+implemented EIG  (R2 = 0.26),familiar,1,47.208333333333336,,
+implemented EIG  (R2 = 0.26),familiar,2,33.15625,,
+implemented EIG  (R2 = 0.26),familiar,3,27.885416666666668,,
+implemented EIG  (R2 = 0.26),familiar,4,23.8125,,
+implemented EIG  (R2 = 0.26),familiar,5,19.260416666666668,,
+implemented EIG  (R2 = 0.26),familiar,6,19.520833333333332,,
+implemented EIG  (R2 = 0.26),familiar,7,16.385416666666668,,
+implemented EIG  (R2 = 0.26),familiar,8,13.020833333333334,,
+implemented EIG  (R2 = 0.26),familiar,9,15.947916666666666,,
+implemented EIG  (R2 = 0.26),familiar,10,19.645833333333332,,
+implemented EIG  (R2 = 0.26),familiar,11,18.6875,,
+implemented EIG  (R2 = 0.26),novel,2,37.166666666666664,,
+implemented EIG  (R2 = 0.26),novel,3,32.645833333333336,,
+implemented EIG  (R2 = 0.26),novel,4,27.291666666666668,,
+implemented EIG  (R2 = 0.26),novel,5,21.46875,,
+implemented EIG  (R2 = 0.26),novel,6,20.697916666666668,,
+implemented EIG  (R2 = 0.26),novel,7,18.635416666666668,,
+implemented EIG  (R2 = 0.26),novel,8,19.427083333333332,,
+implemented EIG  (R2 = 0.26),novel,9,18.760416666666668,,
+implemented EIG  (R2 = 0.26),novel,10,17.0625,,
+implemented EIG  (R2 = 0.26),novel,11,17.322916666666668,,
+KL  (R2 = 0.31),familiar,1,20.885416666666668,,
+KL  (R2 = 0.31),familiar,2,10.84375,,
+KL  (R2 = 0.31),familiar,3,8.166666666666666,,
+KL  (R2 = 0.31),familiar,4,8.364583333333334,,
+KL  (R2 = 0.31),familiar,5,7.395833333333333,,
+KL  (R2 = 0.31),familiar,6,7.927083333333333,,
+KL  (R2 = 0.31),familiar,7,6.927083333333333,,
+KL  (R2 = 0.31),familiar,8,6.541666666666667,,
+KL  (R2 = 0.31),familiar,9,6.510416666666667,,
+KL  (R2 = 0.31),familiar,10,7.114583333333333,,
+KL  (R2 = 0.31),familiar,11,5.864583333333333,,
+KL  (R2 = 0.31),novel,2,11.427083333333334,,
+KL  (R2 = 0.31),novel,3,10.114583333333334,,
+KL  (R2 = 0.31),novel,4,10.104166666666666,,
+KL  (R2 = 0.31),novel,5,8.65625,,
+KL  (R2 = 0.31),novel,6,7.354166666666667,,
+KL  (R2 = 0.31),novel,7,7.5,,
+KL  (R2 = 0.31),novel,8,7.572916666666667,,
+KL  (R2 = 0.31),novel,9,7.1875,,
+KL  (R2 = 0.31),novel,10,6.614583333333333,,
+KL  (R2 = 0.31),novel,11,6.802083333333333,,
+true EIG  (R2 = 0.68),familiar,1,22.447916666666668,,
+true EIG  (R2 = 0.68),familiar,2,19.291666666666668,,
+true EIG  (R2 = 0.68),familiar,3,22.0625,,
+true EIG  (R2 = 0.68),familiar,4,18.177083333333332,,
+true EIG  (R2 = 0.68),familiar,5,18.479166666666668,,
+true EIG  (R2 = 0.68),familiar,6,17.177083333333332,,
+true EIG  (R2 = 0.68),familiar,7,17.489583333333332,,
+true EIG  (R2 = 0.68),familiar,8,16.760416666666668,,
+true EIG  (R2 = 0.68),familiar,9,17.0,,
+true EIG  (R2 = 0.68),familiar,10,18.3125,,
+true EIG  (R2 = 0.68),familiar,11,17.052083333333332,,
+true EIG  (R2 = 0.68),novel,2,19.916666666666668,,
+true EIG  (R2 = 0.68),novel,3,20.260416666666668,,
+true EIG  (R2 = 0.68),novel,4,20.875,,
+true EIG  (R2 = 0.68),novel,5,20.65625,,
+true EIG  (R2 = 0.68),novel,6,19.864583333333332,,
+true EIG  (R2 = 0.68),novel,7,21.395833333333332,,
+true EIG  (R2 = 0.68),novel,8,19.739583333333332,,
+true EIG  (R2 = 0.68),novel,9,22.208333333333332,,
+true EIG  (R2 = 0.68),novel,10,21.822916666666668,,
+true EIG  (R2 = 0.68),novel,11,20.802083333333332,,
+surprisal  (R2 = 0.50),familiar,1,49.3125,,
+surprisal  (R2 = 0.50),familiar,2,47.666666666666664,,
+surprisal  (R2 = 0.50),familiar,3,43.385416666666664,,
+surprisal  (R2 = 0.50),familiar,4,43.802083333333336,,
+surprisal  (R2 = 0.50),familiar,5,45.239583333333336,,
+surprisal  (R2 = 0.50),familiar,6,46.072916666666664,,
+surprisal  (R2 = 0.50),familiar,7,41.864583333333336,,
+surprisal  (R2 = 0.50),familiar,8,42.65625,,
+surprisal  (R2 = 0.50),familiar,9,45.40625,,
+surprisal  (R2 = 0.50),familiar,10,45.354166666666664,,
+surprisal  (R2 = 0.50),familiar,11,42.447916666666664,,
+surprisal  (R2 = 0.50),novel,2,47.541666666666664,,
+surprisal  (R2 = 0.50),novel,3,48.395833333333336,,
+surprisal  (R2 = 0.50),novel,4,47.302083333333336,,
+surprisal  (R2 = 0.50),novel,5,47.677083333333336,,
+surprisal  (R2 = 0.50),novel,6,49.697916666666664,,
+surprisal  (R2 = 0.50),novel,7,43.885416666666664,,
+surprisal  (R2 = 0.50),novel,8,48.1875,,
+surprisal  (R2 = 0.50),novel,9,52.625,,
+surprisal  (R2 = 0.50),novel,10,51.020833333333336,,
+surprisal  (R2 = 0.50),novel,11,45.635416666666664,,

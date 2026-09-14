@@ -1,0 +1,137 @@
+"""Expected Information Gain for analytic granch, faithful to the grid code.
+
+The grid model computes, per step,
+    EIG = sum_over_possible_next_obs  ppred(z) * KL(post(.|data,z) || post(.|data))
+where the possible next observations span a tiny window (stimulus +/- epsilon,
+with epsilon the near-zero true sampling noise) and ppred is the posterior
+predictive *density* (an unnormalised weight, no dz factor -- matching
+main_sim_tensor.py).
+
+Because the 3 features are independent, the joint sum factorizes:
+    EIG = sum_d  E_d * prod_{d'!=d} P_d'
+with per-feature   P_d = sum_z ppred_d(z),   E_d = sum_z ppred_d(z) KL_d(z).
+
+This module also provides the inference-note closed-form EIG (`eig_closed_form`)
+for comparison.
+"""
+
+import numpy as np
+from .analytic_core import FeaturePosterior, LOG2PI
+
+
+def _kl_gauss(m_new, v_new, m_cur, v_cur):
+    return 0.5 * (np.log(v_cur / v_new) + (v_new + (m_new - m_cur) ** 2) / v_cur - 1.0)
+
+
+def _joint_kl(post_new, m_new, v_new, post_cur, m_cur, v_cur, floor=1e-8):
+    """KL( new || cur ) of the joint (mu, sigma^2, eps) posterior, mu analytic.
+
+    Mirrors compute_prob_tensor.kl_div: sum_g new*log(new/cur) over the discrete
+    (sigma^2,eps) grid, plus the Gaussian-in-mu term weighted by new."""
+    pn = np.clip(post_new, floor, None)
+    pc = np.clip(post_cur, floor, None)
+    disc = np.sum(post_new * (np.log(pn) - np.log(pc)))
+    gauss = np.sum(post_new * _kl_gauss(m_new, v_new, m_cur, v_cur))
+    return disc + gauss
+
+
+def _predictive(fp, n_star, zbar_star):
+    """Per-(grid node) mean/var of the next within-stimulus sample, given the
+    current posterior. n_star, zbar_star: current stimulus stats (scalars)."""
+    g = fp.grid
+    alpha = g.eps2 / (g.eps2 + n_star * g.sigma2)          # (G,)
+    vy = g.sigma2 * g.eps2 / (g.eps2 + n_star * g.sigma2)
+    mean = alpha * fp.m_mu + (1.0 - alpha) * zbar_star
+    var = alpha ** 2 * fp.v_mu + vy + g.eps2
+    return mean, var
+
+
+def feature_eig_terms(fp, stats, cur_idx, stim_val, eps_window, n_z):
+    """Return (P_d, E_d) for one feature.
+
+    fp        : FeaturePosterior already ``update``-d on current data
+    stats     : list of [n_k, zbar_k, S_k] for stimuli seen so far
+    cur_idx   : index of the current stimulus in ``stats``
+    stim_val  : true embedding value of the current stimulus (this feature)
+    eps_window: half-width of the next-observation window (== true sampling noise)
+    """
+    n_star, zbar_star, S_star = stats[cur_idx]
+
+    # current joint posterior (frozen reference for the KL)
+    post_cur = fp.post.copy()
+    m_cur, v_cur = fp.m_mu.copy(), fp.v_mu.copy()
+
+    # posterior predictive density over the narrow z window
+    pmean, pvar = _predictive(fp, n_star, zbar_star)
+    if n_z == 1:
+        z_nodes = np.array([stim_val])
+    else:
+        z_nodes = np.linspace(stim_val - eps_window, stim_val + eps_window, n_z)
+
+    P = 0.0
+    E = 0.0
+    # only stimuli observed so far enter inference (n_k>0); remap cur_idx into
+    # this filtered list (the current stimulus always has n_star>=1).
+    seen_idx = [i for i in range(len(stats)) if stats[i][0] > 0]
+    cur = seen_idx.index(cur_idx)
+    n = np.array([stats[i][0] for i in seen_idx], dtype=float)
+    zbar = np.array([stats[i][1] for i in seen_idx], dtype=float)
+    S = np.array([stats[i][2] for i in seen_idx], dtype=float)
+    for z in z_nodes:
+        # posterior predictive density p(z | data) = mixture over grid nodes
+        pp = np.sum(fp.post * np.exp(-0.5 * LOG2PI - 0.5 * np.log(pvar)
+                                     - 0.5 * (z - pmean) ** 2 / pvar))
+        # teacher-force z as one more sample of the current stimulus
+        n_new = n_star + 1.0
+        zbar_new = (n_star * zbar_star + z) / n_new
+        S_new = S_star + (z - zbar_star) * (z - zbar_new)
+        n[cur], zbar[cur], S[cur] = n_new, zbar_new, S_new
+        fp.update(n, zbar, S)
+        kl = _joint_kl(fp.post, fp.m_mu, fp.v_mu, post_cur, m_cur, v_cur)
+        P += pp
+        E += pp * kl
+    # restore current-stimulus stats and posterior
+    n[cur], zbar[cur], S[cur] = n_star, zbar_star, S_star
+    fp.update(n, zbar, S)
+    return P, E
+
+
+def total_eig(fps, stats, cur_idx, stim_vals, eps_window, n_z):
+    """Full EIG summed across features (factorized joint expectation)."""
+    Ps, Es = [], []
+    for d, fp in enumerate(fps):
+        P, E = feature_eig_terms(fp, stats[d], cur_idx, stim_vals[d], eps_window, n_z)
+        Ps.append(P)
+        Es.append(E)
+    Ps = np.array(Ps)
+    Es = np.array(Es)
+    prodP = np.prod(Ps)
+    # sum_d E_d * prod_{d'!=d} P_d'
+    eig = 0.0
+    for d in range(len(fps)):
+        others = prodP / Ps[d] if Ps[d] != 0 else np.prod([Ps[j] for j in range(len(fps)) if j != d])
+        eig += Es[d] * others
+    return eig
+
+
+# --------------------------------------------------------------------------- #
+#  Inference-note closed form (chain-rule mutual information), per feature
+# --------------------------------------------------------------------------- #
+def feature_eig_closed_form(fp, n_star, zbar_star):
+    """I(z; mu | sigma^2) integrated over the posterior + I(z; sigma^2).
+    Note eqs (10)-(15). Returns a scalar per feature."""
+    g = fp.grid
+    t = n_star
+    alpha = g.eps2 / (g.eps2 + t * g.sigma2)
+    vy = g.sigma2 * g.eps2 / (g.eps2 + t * g.sigma2)
+    # term about mu given sigma^2 (eq 12), expectation over posterior
+    I_mu = 0.5 * np.log1p(alpha ** 2 * fp.v_mu / (vy + g.eps2))
+    I_mu_bar = np.sum(fp.post * I_mu)
+    # term about sigma^2 (eq 15), Gaussian-mixture approx of predictive
+    mean_g = alpha * fp.m_mu + (1.0 - alpha) * zbar_star
+    vz = alpha ** 2 * fp.v_mu + vy + g.eps2
+    Emean = np.sum(fp.post * mean_g)
+    Evar = np.sum(fp.post * vz)
+    Varmean = np.sum(fp.post * (mean_g - Emean) ** 2)
+    I_sigma = 0.5 * np.log((Evar + Varmean) / Evar)
+    return I_mu_bar + I_sigma
