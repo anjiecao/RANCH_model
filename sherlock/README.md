@@ -37,6 +37,13 @@ sbatch --dependency=afterok:$jid adults_winners.sbatch   # R=64 winner re-evalua
 sbatch lesions.sbatch                           # no-noise lesion of model B, minutes
 ```
 
+Parallel scheme (2026-09-14): `regen_pipeline.sbatch` runs on the owner node from `~/ranch`;
+`window_part1.sbatch` runs concurrently on `-p owners --requeue` from a SEPARATE clone
+(`~/ranch_window`, same bundle + copied data) so the two never touch the same files; then
+`window_part2.sbatch` (`--dependency=afterok:<regen>:<part1>`) imports part 1's outputs, merges
+the exemplar-mean implemented-EIG rows into the regenerated adult sweeps, and runs the stages
+that need both. `window_pass.sbatch` is the serial alternative. Sherlock's git has no `-C`.
+
 Sizing note (2026-09-14): the first ext design (72 settings, 10 pairs, 24 rollouts) measured
 ~25 h on the node — realized looks under noise are long (~40 samples/trial) — and was cut to
 32 settings x 6 pairs x 16 rollouts. Sync code with a git bundle (no GitHub write access):
