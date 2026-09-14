@@ -22,14 +22,22 @@ class Affine:
         return a + b * np.asarray(x, float)
 
 
-def split_half_cv(model_cond, human_cm):
-    """Infant protocol: fit the affine linking on the odd-block condition means, evaluate on
-    the even ones and vice versa (RMSE); R^2 = squared correlation on the pooled means; r signed."""
-    from reproduce_cv import cv_rmse_r2          # lives in pkbb_paper_writing until Phase B moves it here
-    rmse, r2 = cv_rmse_r2(model_cond, human_cm)
-    j = human_cm.merge(model_cond, on=["trial_type", "trial_number"])
-    r = float(np.corrcoef(j.mean_sample, 0.5 * (j.LT_odd + j.LT_even))[0, 1]) if j.mean_sample.std() > 0 else np.nan
-    return dict(rmse=rmse, r2=r2, r=r, n_cond=len(j))
+def split_half_cv(model_cond, human_cm, link=Affine()):
+    """Infant protocol (the paper's, as reconstructed): fit the linking on the odd-block
+    condition means, evaluate RMSE on the even ones and vice versa; R^2 = squared
+    correlation between model and pooled means; r = its signed root.
+    model_cond: [trial_type, trial_number, mean_sample]; human_cm: [.., LT_odd, LT_even]."""
+    j = human_cm.merge(model_cond, on=["trial_type", "trial_number"], how="inner")
+    if len(j) < 4 or j["mean_sample"].std() == 0:
+        return dict(rmse=np.nan, r2=np.nan, r=np.nan, n_cond=len(j))
+    x = j["mean_sample"].values
+    rmses = []
+    for train, test in (("LT_odd", "LT_even"), ("LT_even", "LT_odd")):
+        pred = link.predict(link.fit(x, j[train].values), x)
+        rmses.append(np.sqrt(np.mean((j[test].values - pred) ** 2)))
+    y = 0.5 * (j["LT_odd"].values + j["LT_even"].values)
+    r = float(np.corrcoef(x, y)[0, 1])
+    return dict(rmse=float(np.mean(rmses)), r2=r * r, r=r, n_cond=len(j))
 
 
 def condition_mean_cv(human_long, model_pred, cond_cols, lt_col="LT", n_folds=10):

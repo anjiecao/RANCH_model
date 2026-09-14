@@ -9,8 +9,10 @@ from .decision import EIG, EIGWithin, KL, Surprisal, RealizedGain, ALL_VARIABLES
 from .world import World
 from .learner import Learner
 from .paradigms import forced_exposure_then_test, self_paced, LucePolicy, Result
-from . import linking
+from .canonical import CANONICAL, PUBLISHED_CORRECTED, PUBLISHED_SPEC, CONFIGURATIONS, NamedConfiguration
+from . import linking, data
 
 __all__ = ["Prior", "LearnerNoise", "Quadrature", "Model", "EIG", "EIGWithin", "KL", "Surprisal",
            "RealizedGain", "ALL_VARIABLES", "DecisionVariable", "World", "Learner",
-           "forced_exposure_then_test", "self_paced", "LucePolicy", "Result", "linking"]
+           "forced_exposure_then_test", "self_paced", "LucePolicy", "Result", "linking", "data",
+           "CANONICAL", "PUBLISHED_CORRECTED", "PUBLISHED_SPEC", "CONFIGURATIONS", "NamedConfiguration"]
