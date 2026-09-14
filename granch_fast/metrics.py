@@ -184,14 +184,37 @@ def _plateaued(trajs, t, tol=1e-4):
     return True
 
 
+WINDOWS = ("oracle", "observed", "exemplar_mean")
+
+
+def window_center(st, k, z, z_true, window):
+    """Center of the implemented functional's hypothetical-sample window (eig_code):
+      'oracle'        -- the TRUE stimulus vector, as in the published code. Identical to the
+                         others in a noiseless world; an information leak under noise.
+      'observed'      -- the glimpse just seen.
+      'exemplar_mean' -- the running mean of this exemplar's glimpses including z: the
+                         learner's current estimate of the stimulus (team decision 2026-09-14).
+    Prospective (mi) and retrospective (kl, surprisal) variables never use it."""
+    if window == "oracle":
+        return np.asarray(z_true, dtype=float)
+    if window == "observed":
+        return np.asarray(z, dtype=float)
+    if window == "exemplar_mean":
+        return np.array([(st.stats[d][k][0] * st.stats[d][k][1] + z[d]) / (st.stats[d][k][0] + 1.0)
+                         for d in range(st.nf)])
+    raise ValueError(f"unknown window centering {window!r}; choose from {WINDOWS}")
+
+
 # --------------------------------------------------------------------------- #
 #  Infant (forced-exposure) runner: all metrics along the test trial
 # --------------------------------------------------------------------------- #
 def infant_trajectories(cfg, grid, fam_vec, test_vec, fam_dur, T_max=60, rng=None,
-                        sigma_true=0.0, want=METRICS):
+                        sigma_true=0.0, want=METRICS, window="oracle"):
     """Returns dict metric -> array (T_max,) of the decision variable after test
     sample t=1..T_max (plateau-filled after early stop).  If sigma_true>0 the
-    samples are noisy (self-consistent variant); otherwise deterministic."""
+    samples are noisy (self-consistent variant); otherwise deterministic.
+    `window` = centering of eig_code's hypothetical-sample window (see window_center);
+    the default reproduces the published code and is only meaningful when sigma_true=0."""
     n_stim = fam_dur + 1
     st = State(cfg, grid, n_stim)
     noise = (lambda v: v + rng.normal(0.0, sigma_true, size=len(v))) if sigma_true > 0 else (lambda v: v)
@@ -208,7 +231,7 @@ def infant_trajectories(cfg, grid, fam_vec, test_vec, fam_dur, T_max=60, rng=Non
     trajs = {m: np.empty(T_max) for m in want}
     for t in range(T_max):
         z = noise(np.asarray(test_vec, float))
-        out = st.step(ktest, z, np.asarray(test_vec, float), want)
+        out = st.step(ktest, z, window_center(st, ktest, z, test_vec, window), want)
         for m in want:
             trajs[m][t] = out[m]
         if sigma_true == 0.0 and _plateaued(trajs, t):

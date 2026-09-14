@@ -36,16 +36,17 @@ class RealizedGain(DecisionVariable):
     post), i.e. typicality-weighted REALIZED information gain (report Eq. 5; identical to
     exp(-surprisal) * KL_{t+1}). z* ranges over an n_z-point window of half-width
     `half_width` centered on:
+      'exemplar_mean' -- the running mean of the current exemplar's glimpses, i.e. the
+                         learner's estimate of the stimulus (DEFAULT; team decision 2026-09-14),
       'observed'      -- the glimpse just seen (learner-computable),
-      'exemplar_mean' -- the running mean of the current exemplar's glimpses (learner-computable),
       'oracle'        -- the TRUE stimulus vector, as in the published code. Harmless in a
-                         noiseless world (observed == true); an information leak under noise,
+                         noiseless world (all three coincide); an information leak under noise,
                          so the paradigm runners refuse it there unless allow_oracle=True."""
-    window: str = "observed"
+    window: str = "exemplar_mean"
     half_width: float = 1e-4
     n_z: int = 1
 
-    def __init__(self, window="observed", half_width=1e-4, n_z=1):
+    def __init__(self, window="exemplar_mean", half_width=1e-4, n_z=1):
         if window not in ("observed", "exemplar_mean", "oracle"):
             raise ValueError(f"unknown window centering {window!r}")
         object.__setattr__(self, "key", "eig_code")

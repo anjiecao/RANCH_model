@@ -48,6 +48,20 @@ def test_forced_exposure_matches_engine_noisy_with_shared_seed(stim_pair):
         assert np.array_equal(res.trajectories[k][0], ref[k]), k
 
 
+def test_exemplar_mean_engine_matches_api_under_noise(stim_pair):
+    """The engine's window option and the API's RealizedGain(window='exemplar_mean') are
+    the same computation (one helper, metrics.window_center)."""
+    fam, dev = stim_pair
+    cfg = cfg_inferred()
+    ref = M.infant_trajectories(cfg, make_grid(cfg), fam, dev, 3, T_max=6, rng=np.random.default_rng(11),
+                                sigma_true=0.1, want=("mi", "eig_code"), window="exemplar_mean")
+    res = forced_exposure_then_test(INFERRED, World(0.1, seed=11), fam, dev, exposures=3, T_max=6,
+                                    variables=(EIG, RealizedGain(window="exemplar_mean", half_width=0.1, n_z=5)))
+    for k in ("mi", "eig_code"):
+        assert np.array_equal(res.trajectories[k][0], ref[k]), k
+    assert RealizedGain().window == "exemplar_mean"
+
+
 def test_oracle_window_is_refused_under_noise(stim_pair):
     fam, dev = stim_pair
     with pytest.raises(ValueError):

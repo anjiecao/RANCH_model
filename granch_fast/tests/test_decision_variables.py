@@ -203,12 +203,33 @@ def test_prospective_and_retrospective_variables_read_only_observed_glimpses(ora
             assert oa[m] == ob[m], m
 
 
-@pytest.mark.xfail(strict=True, reason="implemented EIG centers its window on the TRUE stimulus (plan §0 #10); "
-                                        "this test must pass once the window is centered on observed glimpses")
-def test_implemented_eig_reads_only_observed_glimpses(oracle_runs):
+@pytest.mark.xfail(strict=True, reason="the published 'oracle' centering reads the TRUE stimulus (plan §0 #10); "
+                                        "kept as a reproduction mode only -- see the exemplar_mean test below")
+def test_oracle_centered_implemented_eig_reads_the_truth(oracle_runs):
     a, b = oracle_runs
     for oa, ob in zip(a, b):
         assert oa["eig_code"] == ob["eig_code"]
+
+
+def test_exemplar_mean_centered_implemented_eig_reads_only_observed_glimpses(ref_inferred, stim_pair):
+    """Team decision 2026-09-14: the hypothetical window is centered on the exemplar mean.
+    Same glimpses, perturbed truth -> identical implemented EIG."""
+    cfg, grid = ref_inferred
+    fam, dev = stim_pair
+    rng = np.random.default_rng(5)
+    glimpses = [dev + rng.normal(0, 0.1, 3) for _ in range(4)]
+
+    def run(truth):
+        st = _exposed_state(cfg, grid, fam, 1, 2)
+        return [st.step(1, z, M.window_center(st, 1, z, truth, "exemplar_mean"), want=("eig_code",))["eig_code"]
+                for z in glimpses]
+
+    assert run(dev) == run(dev + 0.3)
+    st = _exposed_state(cfg, grid, fam, 1, 2)
+    z = glimpses[0]
+    assert np.allclose(M.window_center(st, 1, z, dev, "exemplar_mean"), z)      # first glimpse of a fresh exemplar
+    assert np.array_equal(M.window_center(st, 1, z, dev, "observed"), z)
+    assert np.array_equal(M.window_center(st, 1, z, dev, "oracle"), dev)
 
 
 # ---------------------------------------------------------------- symmetries

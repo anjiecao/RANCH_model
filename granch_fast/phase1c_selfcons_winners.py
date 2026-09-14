@@ -34,7 +34,7 @@ def _init(rows):
 
 
 def _chunk(args):
-    ci, s, lo, hi, seed0 = args
+    ci, s, lo, hi, seed0, window = args
     cfg = make_cfg(s); grid = make_grid(cfg)
     out = np.empty((hi - lo, R32, len(WANT), T_MAX), dtype=np.float32)
     for ri in range(lo, hi):
@@ -42,7 +42,7 @@ def _chunk(args):
         for rr in range(R32):
             rng = np.random.default_rng([seed0, ri, rr])
             tr = M.infant_trajectories(cfg, grid, _EMB[r["fam"]], _EMB[r["test"]], int(r["fam_duration"]), T_MAX,
-                                       rng=rng, sigma_true=s["sigma_true"], want=WANT)
+                                       rng=rng, sigma_true=s["sigma_true"], want=WANT, window=window)
             for mi, m in enumerate(WANT):
                 out[ri - lo, rr, mi] = tr[m]
     return ci, lo, hi, out
@@ -62,6 +62,7 @@ def r2_at_w(tr, w, meta, human_cm):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--procs", type=int, default=8)
+    ap.add_argument("--window", default="exemplar_mean", choices=M.WINDOWS)
     args = ap.parse_args()
     sc = pd.read_csv(f"{OUT}/infant_scores_selfcons.csv")
     winners = {}
@@ -81,7 +82,7 @@ def main():
     human_cm = human_condition_means()
     n_chunks = 16
     bounds = np.linspace(0, len(rows), n_chunks + 1).astype(int)
-    jobs = [(ci, uset[k], int(bounds[j]), int(bounds[j + 1]), 777 + ci)
+    jobs = [(ci, uset[k], int(bounds[j]), int(bounds[j + 1]), 777 + ci, args.window)
             for ci, k in enumerate(keys) for j in range(n_chunks)]
     traj = {ci: np.empty((len(rows), R32, len(WANT), T_MAX), dtype=np.float32) for ci in range(len(keys))}
     t0 = time.time()

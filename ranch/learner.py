@@ -40,15 +40,10 @@ class Learner:
         RealizedGain(window='oracle')."""
         z = np.asarray(z, dtype=float)
         rg = self.realized_gain
-        if rg is None or rg.window == "observed":
-            center = z
-        elif rg.window == "exemplar_mean":
-            center = np.array([(n0 * zb0 + z[d]) / (n0 + 1.0) for d, (n0, zb0, _) in
-                               ((d, self.state.stats[d][slot]) for d in range(self.cfg.n_feature))])
-        else:
-            if truth is None:
-                raise ValueError("RealizedGain(window='oracle') needs the true stimulus")
-            center = np.asarray(truth, dtype=float)
+        window = rg.window if rg is not None else "observed"
+        if window == "oracle" and truth is None:
+            raise ValueError("RealizedGain(window='oracle') needs the true stimulus")
+        center = M.window_center(self.state, slot, z, truth, window)
         self.last = self.state.step(slot, z, center, want=self.want)
         return self.last
 

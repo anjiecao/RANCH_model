@@ -56,7 +56,8 @@ def channel_trajectory(cfg, grid, fam_vec, test_vec, rng, sigma_true):
         st._refresh(d)
     out = np.empty((T_SHOW, len(COLS)))
     for t in range(T_SHOW):
-        o = st.step(FAM_DUR, noise(test_vec), test_vec, want=("mi", "kl", "eig_code"))
+        z = noise(test_vec)
+        o = st.step(FAM_DUR, z, M.window_center(st, FAM_DUR, z, test_vec, "exemplar_mean"), want=("mi", "kl", "eig_code"))
         ch = np.zeros(2)
         for d in range(cfg.n_feature):
             n_star, zbar_star, _ = st.stats[d][FAM_DUR]

@@ -37,16 +37,16 @@ CANONICAL = NamedConfiguration(
 PUBLISHED_CORRECTED = NamedConfiguration(
     name="published implementation, corrected: noiseless world + fixed eps + realized gain",
     model=Model(Prior(0.0, 1.0, 10.0, 0.1, (0.001, 1.5)), LearnerNoise.fixed(0.2), quadrature=Quadrature(160, 1)),
-    sigma_true=0.0, variable=RealizedGain(window="observed", half_width=1e-4, n_z=1),
+    sigma_true=0.0, variable=RealizedGain(window="exemplar_mean", half_width=1e-4, n_z=1),
     w_infants=5.6e-6, w_adults=3.2e-6, adult_prior=Prior(0.0, 1.0, 10.0, 0.1, (0.001, 1.5)),
     note="amplitude showcase (infants hab .55 / dis 1.58); the best-CV infant setting is V3 a1 b0.1 eps .5; "
-         "in a noiseless world 'observed' == the published oracle centering")
+         "in a noiseless world every centering equals the published oracle one")
 
 PUBLISHED_SPEC = NamedConfiguration(
     name="published specification under exact inference: noiseless world + inferred eps (degenerate)",
     model=Model(Prior(0.0, 1.0, 10.0, 0.1, (0.001, 1.5)), LearnerNoise.inferred(1e-3, 0.5, (1e-6, 1.0)),
                 quadrature=Quadrature(120, 30)),
-    sigma_true=0.0, variable=RealizedGain(window="observed", half_width=1e-4, n_z=1),
+    sigma_true=0.0, variable=RealizedGain(window="exemplar_mean", half_width=1e-4, n_z=1),
     w_infants=1e-4, w_adults=1e-4, adult_prior=Prior(0.0, 1.0, 10.0, 0.1, (0.001, 1.5)),
     note="eps posterior collapses on identical glimpses; ~1 sample at any w (the grid approximation was load-bearing)")
 

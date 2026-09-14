@@ -63,14 +63,14 @@ def _init(rows):
 
 
 def _one(args):
-    si, s, R, seed0 = args
+    si, s, R, seed0, window = args
     cfg = make_cfg(s); grid = make_grid(cfg)
     rng = np.random.default_rng(seed0 + si)
     out = np.empty((len(_ROWS), R, len(WANT), T_MAX), dtype=np.float32)
     for ri, r in enumerate(_ROWS):
         for rr in range(R):
             tr = M.infant_trajectories(cfg, grid, _EMB[r["fam"]], _EMB[r["test"]], int(r["fam_duration"]), T_MAX,
-                                       rng=rng, sigma_true=s["sigma_true"], want=WANT)
+                                       rng=rng, sigma_true=s["sigma_true"], want=WANT, window=window)
             for mi, m in enumerate(WANT):
                 out[ri, rr, mi] = tr[m]
     return si, out
@@ -82,6 +82,8 @@ def main():
     ap.add_argument("--procs", type=int, default=10)
     ap.add_argument("--rollouts", type=int, default=R)
     ap.add_argument("--limit-rows", type=int, default=None)
+    ap.add_argument("--window", default="exemplar_mean", choices=M.WINDOWS,
+                    help="eig_code hypothetical-window centering (oracle = published code)")
     args = ap.parse_args()
     S = settings_table(args.which)
     suf = "selfcons" if args.which == "base" else "selfcons_ext"
@@ -90,17 +92,18 @@ def main():
     rows = trials.to_dict("records")
     if args.limit_rows:
         rows = rows[: args.limit_rows]
-    print(f"{suf}: {len(S)} settings x {len(rows)} rows x {args.rollouts} rollouts x {len(WANT)} metrics x T={T_MAX}")
+    print(f"{suf}: {len(S)} settings x {len(rows)} rows x {args.rollouts} rollouts x {len(WANT)} metrics x T={T_MAX}, window={args.window}")
     t0 = time.time()
     traj = np.empty((len(S), len(rows), args.rollouts, len(WANT), T_MAX), dtype=np.float32)
-    jobs = [(si, s, args.rollouts, seed0) for si, s in S.iterrows()]
+    jobs = [(si, s, args.rollouts, seed0, args.window) for si, s in S.iterrows()]
     with Pool(args.procs, initializer=_init, initargs=(rows,)) as pool:
         for k, (si, out) in enumerate(pool.imap_unordered(_one, jobs)):
             traj[si] = out
             print(f"  {k+1}/{len(S)} settings done ({time.time()-t0:.0f}s)", flush=True)
     tr = trials.iloc[: len(rows)]
     np.savez_compressed(f"{OUT}/infant_traj_{suf}.npz", traj=traj, metrics=np.array(WANT),
-                        trial_type=tr.trial_type.values, trial_number=tr.trial_number.values)
+                        trial_type=tr.trial_type.values, trial_number=tr.trial_number.values,
+                        window=np.array(args.window))
     S.to_csv(f"{OUT}/infant_settings_{suf}.csv", index=False)
     print(f"saved ({time.time()-t0:.0f}s)")
 

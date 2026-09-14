@@ -254,8 +254,13 @@ reproduction commands for every figure/table in the revision.
 
 ## 5. Open modeling-fidelity items the API review surfaced
 
-1. **Oracle window** (§0 #10): decide `observed`-glimpse vs `exemplar-mean` centering for the
-   implemented functional under noise, and re-run the noisy-world implemented-EIG row with it.
+1. **Oracle window** (§0 #10) — *decided 2026-09-14 (MCF): `exemplar_mean`.* One helper,
+   `metrics.window_center`, serves the engine, the drivers and the API; `RealizedGain` defaults to
+   `exemplar_mean`; the noisy-world drivers (`phase1_selfconsistent`, `phase1b`, `phase1c`,
+   `phase1e`, `run_phase2_selfcons`, `gen_figs_channels`) take `--window` with that default;
+   `oracle` remains a reproduction mode (refused by the API under noise unless
+   `allow_oracle=True`). The noisy implemented-EIG rows are recomputed in
+   `sherlock/window_pass.sbatch`, chained after the regeneration.
 2. **`epsilon` overloading**: retire the name; window half-width becomes a `RealizedGain` argument.
 3. **μ0 = 0 fixed**: the model is not translation-invariant in embedding space; embeddings are
    downscaled/centered upstream — make that an explicit preprocessing step with a test.

@@ -57,14 +57,16 @@ def settings_table(which="base"):
     return pd.DataFrame(rows)
 
 
-def run_trial(st, k, stim, base, off, w, rng, sigma, commit):
+def run_trial(st, k, stim, base, off, w, rng, sigma, commit, window="oracle"):
     """One self-paced trial of stimulus k: noisy samples until the Luce coin stops.
-    Returns the realized sample count; resets the slot unless commit."""
+    Returns the realized sample count; resets the slot unless commit. `window` = centering
+    of eig_code's hypothetical window (metrics.window_center); 'oracle' reproduces the
+    published code and is only appropriate when sigma == 0."""
     t = 0
     while True:
         t += 1
         z = stim + rng.normal(0.0, sigma, st.nf)
-        val = st.step(k, z, stim, want=(base,))[base] + off
+        val = st.step(k, z, M.window_center(st, k, z, stim, window), want=(base,))[base] + off
         p = min(max(w / (val + w), 0.0), 1.0)
         if rng.random() < p or t >= T_CAP:
             break
@@ -73,14 +75,14 @@ def run_trial(st, k, stim, base, off, w, rng, sigma, commit):
     return t
 
 
-def rollout(cfg, grid, fam, dev, base, off, w, rng, sigma):
+def rollout(cfg, grid, fam, dev, base, off, w, rng, sigma, window="oracle"):
     st = M.State(cfg, grid, MAX_D + 2)
     scratch = MAX_D + 1
     bg, dv = [], {}
     for k in range(MAX_D + 1):
-        bg.append(run_trial(st, k, fam, base, off, w, rng, sigma, commit=True))
+        bg.append(run_trial(st, k, fam, base, off, w, rng, sigma, commit=True, window=window))
         if k + 1 <= MAX_D:
-            dv[k + 1] = run_trial(st, scratch, dev, base, off, w, rng, sigma, commit=False)
+            dv[k + 1] = run_trial(st, scratch, dev, base, off, w, rng, sigma, commit=False, window=window)
     return bg, dv
 
 
@@ -95,7 +97,7 @@ def _init(pairs):
 
 
 def _one(args):
-    si, s, metric, wi, w, rollouts = args
+    si, s, metric, wi, w, rollouts, window = args
     cfg = make_cfg(s)
     cfg.max_observation = T_CAP
     grid = make_grid(cfg)
@@ -107,7 +109,7 @@ def _one(args):
         fam = np.asarray(_EMB[f], float); dev = np.asarray(_EMB[v], float)
         for rr in range(rollouts):
             rng = np.random.default_rng([si, mseed, wi, pi, rr])
-            bg, dv = rollout(cfg, grid, fam, dev, base, off, w, rng, s["sigma_true"])
+            bg, dv = rollout(cfg, grid, fam, dev, base, off, w, rng, s["sigma_true"], window=window)
             n_capped += sum(x >= T_CAP for x in bg) + sum(x >= T_CAP for x in dv.values())
             bgs.append(bg); dvs.append([dv[D] for D in range(1, MAX_D + 1)])
             if pi == 0 and rr == 0 and np.mean(bg + list(dv.values())) >= 0.97 * T_CAP:
@@ -120,7 +122,7 @@ def _one(args):
     bg = np.mean(bgs, axis=0); dv = np.mean(dvs, axis=0)
     row = dict(setting=si, metric=metric, world_EIGs=w,
                **{k: s[k] for k in ("V_prior", "alpha_prior", "beta_prior", "eps_fixed", "sd_epsilon", "infer_eps", "sigma_true")},
-               n_capped=n_capped)
+               n_capped=n_capped, window=window)
     row.update({f"bg_{i+1}": bg[i] for i in range(MAX_D + 1)})
     row.update({f"dev_{D}": dv[D - 1] for D in range(1, MAX_D + 1)})
     return row
@@ -133,27 +135,37 @@ def main():
     ap.add_argument("--pairs", type=int, default=None)
     ap.add_argument("--rollouts", type=int, default=None)
     ap.add_argument("--limit", type=int, default=None, help="limit #jobs (smoke test)")
+    ap.add_argument("--window", default="exemplar_mean", choices=M.WINDOWS,
+                    help="eig_code hypothetical-window centering (oracle = published code, noiseless worlds only)")
+    ap.add_argument("--metrics", default=",".join(W_GRID), help="comma list; e.g. eig_code to recompute one metric")
+    ap.add_argument("--merge", action="store_true", help="replace only the recomputed metrics' rows in an existing output")
     args = ap.parse_args()
     S = settings_table(args.which)
     wgrid = W_GRID if args.which == "base" else W_GRID_EXT
+    mets = [m for m in wgrid if m in args.metrics.split(",")]
     n_pairs = args.pairs or 6
     rollouts = args.rollouts or R
     suf = "selfcons" if args.which == "base" else "selfcons_ext"
     pairs = adult_pairs(n_pairs)
-    jobs = [(si, s, m, wi, w, rollouts)
-            for si, s in S.iterrows() for m in wgrid for wi, w in enumerate(wgrid[m])]
+    jobs = [(si, s, m, wi, w, rollouts, args.window)
+            for si, s in S.iterrows() for m in mets for wi, w in enumerate(wgrid[m])]
     if args.limit:
         jobs = jobs[: args.limit]
-    print(f"adults {suf}: {len(S)} settings x {len(wgrid)} metrics x {len(wgrid['eig_code'])} w "
-          f"x {len(pairs)} pairs x {rollouts} rollouts -> {len(jobs)} jobs")
+    print(f"adults {suf}: {len(S)} settings x {len(mets)} metrics x {len(wgrid['eig_code'])} w "
+          f"x {len(pairs)} pairs x {rollouts} rollouts, window={args.window} -> {len(jobs)} jobs")
     t0 = time.time(); out = []
     with Pool(args.procs, initializer=_init, initargs=(pairs,)) as pool:
         for k, row in enumerate(pool.imap_unordered(_one, jobs)):
             out.append(row)
             if (k + 1) % 20 == 0 or k == len(jobs) - 1:
                 print(f"  {k+1}/{len(jobs)} jobs done ({time.time()-t0:.0f}s)", flush=True)
-    df = pd.DataFrame(out).sort_values(["setting", "metric", "world_EIGs"])
+    df = pd.DataFrame(out)
     fn = f"{OUT}/adult_preds_{suf}.csv"
+    if args.merge and os.path.exists(fn):
+        old = pd.read_csv(fn)
+        df = pd.concat([old[~old.metric.isin(mets)], df], ignore_index=True)
+        print(f"merged: replaced {mets} rows in {fn}")
+    df = df.sort_values(["setting", "metric", "world_EIGs"])
     df.to_csv(fn, index=False)
     print(f"saved {fn}: {len(df)} rows ({time.time()-t0:.0f}s)")
 

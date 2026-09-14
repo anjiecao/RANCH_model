@@ -51,7 +51,7 @@ def sel_adu(a21, dm, rule):
     return g.sort_values("rmse21_cv").iloc[0] if rule == "paper" else g.sort_values("r2_21", ascending=False).iloc[0]
 
 
-def infant_exp2_mc(cfg, grid, emb, base, off, w, sigma, seed, T_max=60, durations=(8, 9)):
+def infant_exp2_mc(cfg, grid, emb, base, off, w, sigma, seed, T_max=60, durations=(8, 9), window="exemplar_mean"):
     sp = infant_pairs()
     out = {}
     for vi, vt in enumerate(VT):
@@ -61,13 +61,13 @@ def infant_exp2_mc(cfg, grid, emb, base, off, w, sigma, seed, T_max=60, duration
                 for rr in range(R_INF):
                     rng = np.random.default_rng([seed, vi, pi, D, rr])
                     tr = M.infant_trajectories(cfg, grid, emb[r.fam], emb[r.test], D, T_max,
-                                               rng=rng, sigma_true=sigma, want=(base,))[base]
+                                               rng=rng, sigma_true=sigma, want=(base,), window=window)[base]
                     vals.append(M.expected_samples(tr + off, w))
         out[vt] = float(np.mean(vals))
     return out
 
 
-def adult_exp2_mc(cfg, grid, emb, base, off, w, sigma, seed, n_per_type=6):
+def adult_exp2_mc(cfg, grid, emb, base, off, w, sigma, seed, n_per_type=6, window="exemplar_mean"):
     """Blocks of length 6 with deviant probes after D=1,3,5 familiar trials
     (positions 2/4/6, violation on the last trial), stochastic rollouts."""
     pairs = adult_pairs(n_per_type)
@@ -82,9 +82,9 @@ def adult_exp2_mc(cfg, grid, emb, base, off, w, sigma, seed, n_per_type=6):
                 st = M.State(cfg, grid, 7)
                 bg, dd = [], {}
                 for k in range(6):
-                    bg.append(run_trial(st, k, fam, base, off, w, rng, sigma, commit=True))
+                    bg.append(run_trial(st, k, fam, base, off, w, rng, sigma, commit=True, window=window))
                     if k + 1 in (1, 3, 5):
-                        dd[k + 1] = run_trial(st, scratch, dv, base, off, w, rng, sigma, commit=False)
+                        dd[k + 1] = run_trial(st, scratch, dv, base, off, w, rng, sigma, commit=False, window=window)
                 bgs.append(bg); devs.append(dd)
         fams.append(np.mean(bgs, axis=0))
         if vt != "background":
@@ -103,15 +103,15 @@ def _init():
 
 
 def _one(args):
-    dm, rule, bi, ba = args
+    dm, rule, bi, ba, window = args
     base = "surprisal" if dm == "surprisal_b" else dm
-    out = dict(metric=dm, rule=rule)
+    out = dict(metric=dm, rule=rule, window=window)
     if bi is not None:
         s = dict(V_prior=bi.V_prior, alpha_prior=bi.alpha_prior, beta_prior=bi.beta_prior,
                  sigma_true=bi.sigma_true, sd_epsilon=bi.sd_epsilon)
         cfg = make_cfg(s); grid = make_grid(cfg)
         off = 3.0 * (-np.log(bi.sigma_true)) if dm == "surprisal_b" else 0.0
-        pred = infant_exp2_mc(cfg, grid, _EMB, base, off, bi.world_EIGs, bi.sigma_true, seed=11)
+        pred = infant_exp2_mc(cfg, grid, _EMB, base, off, bi.world_EIGs, bi.sigma_true, seed=11, window=window)
         out["inf_setting"] = f"V{s['V_prior']:g} a{s['alpha_prior']:g} b{s['beta_prior']:g} sd{s['sd_epsilon']:g} st{s['sigma_true']:g} w{bi.world_EIGs:.1e}"
         out["inf_exp1_rmse"], out["inf_exp1_r2"], out["inf_exp1_r"] = bi.pooled_rmse, bi.pooled_r2, bi.pooled_r
         out.update({f"inf_{k}": pred[k] for k in INF_KEYS})
@@ -120,7 +120,7 @@ def _one(args):
                   sigma_true=ba.sigma_true, sd_epsilon=ba.sd_epsilon)
         cfga = make_cfg(sa); cfga.max_observation = T_CAP; grida = make_grid(cfga)
         offa = 3.0 * (-np.log(ba.sigma_true)) if dm == "surprisal_b" else 0.0
-        fam_pred, dev_pred = adult_exp2_mc(cfga, grida, _EMB, base, offa, ba.world_EIGs, ba.sigma_true, seed=13)
+        fam_pred, dev_pred = adult_exp2_mc(cfga, grida, _EMB, base, offa, ba.world_EIGs, ba.sigma_true, seed=13, window=window)
         out["adu_setting"] = f"V{sa['V_prior']:g} a{sa['alpha_prior']:g} b{sa['beta_prior']:g} sd{sa['sd_epsilon']:g} st{sa['sigma_true']:g} w{ba.world_EIGs:.1e}"
         out["adu_exp1_r2"], out["adu_exp1_rmse"] = ba.r2_21, ba.rmse21_cv
         out["adu_pred"] = {**fam_pred, **dev_pred}
@@ -133,6 +133,7 @@ def main():
     ap.add_argument("--procs", type=int, default=8)
     ap.add_argument("--adults", default="base", choices=["base", "ext"],
                     help="which noisy-adult sweep to select from (base pilot or the Sherlock ext grid)")
+    ap.add_argument("--window", default="exemplar_mean", choices=M.WINDOWS)
     args = ap.parse_args()
     sc = pd.read_csv(f"{OUT}/infant_scores_selfcons.csv")
     suf = "" if args.adults == "base" else "_ext"
@@ -146,7 +147,7 @@ def main():
     jobs = []
     for dm in METRICS:
         for rule in args.rules.split(","):
-            jobs.append((dm, rule, sel_row(sc, dm, rule), sel_adu(a21, dm, rule)))
+            jobs.append((dm, rule, sel_row(sc, dm, rule), sel_adu(a21, dm, rule), args.window))
     t0 = time.time()
     with Pool(args.procs, initializer=_init) as pool:
         results = list(pool.imap(_one, jobs))

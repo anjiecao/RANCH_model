@@ -59,7 +59,7 @@ def _init(pairs):
 
 def _one_pair(args):
     """All R64 rollouts of one (winner, pair): returns per-rollout bg/dev arrays."""
-    (wid, s, metric, w, pi) = args
+    (wid, s, metric, w, pi, window) = args
     cfg = make_cfg(s); cfg.max_observation = T_CAP
     grid = make_grid(cfg)
     base = "surprisal" if metric == "surprisal_b" else metric
@@ -69,7 +69,7 @@ def _one_pair(args):
     bgs, dvs = [], []
     for rr in range(R64):
         rng = np.random.default_rng([5_000_000 + wid, pi, rr])
-        bg, dv = rollout(cfg, grid, fam, dev, base, off, w, rng, s["sigma_true"])
+        bg, dv = rollout(cfg, grid, fam, dev, base, off, w, rng, s["sigma_true"], window=window)
         bgs.append(bg); dvs.append([dv[D] for D in range(1, MAX_D + 1)])
     return wid, pi, np.array(bgs), np.array(dvs)
 
@@ -77,7 +77,8 @@ def _one_pair(args):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--procs", type=int, default=24)
-    ap.add_argument("--pairs", type=int, default=10)
+    ap.add_argument("--pairs", type=int, default=6)
+    ap.add_argument("--window", default="exemplar_mean", choices=M.WINDOWS)
     args = ap.parse_args()
     from granch_fast.phase1_adults import adult_pairs
     preds = pd.read_csv(f"{OUT}/adult_preds_selfcons_ext.csv")
@@ -108,7 +109,7 @@ def main():
                  sigma_true=b.sigma_true, sd_epsilon=b.sd_epsilon)
         wn["s"] = s
         for pi in range(len(pairs)):
-            jobs.append((wid, s, wn["metric"], b.world_EIGs, pi))
+            jobs.append((wid, s, wn["metric"], b.world_EIGs, pi, args.window))
     print(f"\nre-evaluating {len(winners)} winners x {len(pairs)} pairs x {R64} rollouts ...")
     t0 = time.time()
     acc = {wid: ([], []) for wid in range(len(winners))}
