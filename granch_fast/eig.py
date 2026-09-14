@@ -117,9 +117,10 @@ def total_eig(fps, stats, cur_idx, stim_vals, eps_window, n_z):
 # --------------------------------------------------------------------------- #
 #  Inference-note closed form (chain-rule mutual information), per feature
 # --------------------------------------------------------------------------- #
-def feature_eig_closed_form(fp, n_star, zbar_star):
-    """I(z; mu | sigma^2) integrated over the posterior + I(z; sigma^2).
-    Note eqs (10)-(15). Returns a scalar per feature."""
+def feature_eig_channels(fp, n_star, zbar_star):
+    """The two channels of the closed-form EIG, per feature:
+    (I_mu: about mu given (sigma^2, eps), averaged over the posterior -- eq 12;
+     I_sigma: about the (sigma^2, eps) node, Gaussian-mixture approx -- eq 15)."""
     g = fp.grid
     t = n_star
     alpha = g.eps2 / (g.eps2 + t * g.sigma2)
@@ -134,4 +135,11 @@ def feature_eig_closed_form(fp, n_star, zbar_star):
     Evar = np.sum(fp.post * vz)
     Varmean = np.sum(fp.post * (mean_g - Emean) ** 2)
     I_sigma = 0.5 * np.log((Evar + Varmean) / Evar)
+    return I_mu_bar, I_sigma
+
+
+def feature_eig_closed_form(fp, n_star, zbar_star):
+    """I(z; mu | sigma^2) integrated over the posterior + I(z; sigma^2).
+    Note eqs (10)-(15). Returns a scalar per feature."""
+    I_mu_bar, I_sigma = feature_eig_channels(fp, n_star, zbar_star)
     return I_mu_bar + I_sigma

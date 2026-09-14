@@ -98,3 +98,28 @@ pB4 <- ggplot(ac, aes(trial_number, y, color=trial_type)) +
     subtitle="Best sign-consistent non-saturated setting per decision variable (21-condition linking). Implemented EIG's novel curve falls BELOW familiar (dis 0.93); true EIG keeps novel elevated (dis 1.22).")
 ggsave(file.path(FIGS,"figB4_selfcons_adults.png"), pB4, width=14.5, height=4.4, dpi=150, bg="white")
 cat("wrote figB1..figB4\n")
+
+## ---------- figB5: channel decomposition of the forward-looking EIG ----------
+# rows = quantities (I_mu, I_sigma, their sum = true EIG, realized KL, implemented EIG);
+# columns = configurations isolating world noise and eps inference; same prior throughout.
+# facet_grid free_y: each ROW shares a y-axis across the three worlds, so absolute
+# magnitudes are comparable across columns.
+ch <- read_csv(file.path(GF,"channels_decomp.csv"), show_col_types=FALSE) %>%
+  mutate(channel=factor(channel, levels=c("I_mu (concept mean)","I_sigma (spread & noise)","total (true EIG)",
+                                           "KL (realized)","implemented EIG")),
+         tt=ifelse(test_type=="background","familiar","novel"))
+pB5 <- ggplot(ch %>% mutate(lo=pmax(lo, y/3)), aes(t, y, color=tt, fill=tt)) +
+  geom_ribbon(aes(ymin=lo, ymax=hi), alpha=.25, color=NA) +
+  geom_line(linewidth=.9) + geom_point(size=1.2) +
+  facet_grid(channel ~ world, scales="free_y", switch="y") +
+  scale_y_log10() +
+  scale_color_manual(values=COL_TT, name="Test stimulus") +
+  scale_fill_manual(values=COL_TT, guide="none") +
+  theme_p(12) + theme(strip.placement="outside", strip.text.y.left=element_text(angle=90)) +
+  labs(x="Test-trial sample number (after 8 exposures)", y="log scale; each row shares its axis across the three worlds",
+       title="Where the forward-looking EIG's novelty preference comes from, and why realized gain loses it under noise",
+       subtitle=paste0("Same prior (V3 a1 b0.1) throughout. Rows 1-3: the mu-channel is stimulus-blind in every world; the (sigma^2, eps) channel carries all of the novel > familiar contrast\n",
+                       "and grows under noise, but the total's contrast is similar across worlds. Rows 4-5: realized KL and the implemented functional separate novel from familiar\n",
+                       "only in the noiseless world; under noise the familiar acquires a noise floor and the novel's update is partly absorbed as noise."))
+ggsave(file.path(FIGS,"figB5_channels.png"), pB5, width=12.5, height=10.5, dpi=150, bg="white")
+cat("wrote figB5\n")
