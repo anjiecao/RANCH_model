@@ -131,10 +131,13 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--rules", default="paper,r2")
     ap.add_argument("--procs", type=int, default=8)
+    ap.add_argument("--adults", default="base", choices=["base", "ext"],
+                    help="which noisy-adult sweep to select from (base pilot or the Sherlock ext grid)")
     args = ap.parse_args()
     sc = pd.read_csv(f"{OUT}/infant_scores_selfcons.csv")
-    a21 = pd.read_csv(f"{OUT}/adult_scores21_selfcons.csv")
-    preds = pd.read_csv(f"{OUT}/adult_preds_selfcons.csv")
+    suf = "" if args.adults == "base" else "_ext"
+    a21 = pd.read_csv(f"{OUT}/adult_scores21_selfcons{suf}.csv")
+    preds = pd.read_csv(f"{OUT}/adult_preds_selfcons{suf}.csv")
     a21 = a21.merge(preds[["setting", "metric", "world_EIGs", "sigma_true", "sd_epsilon"]].drop_duplicates(),
                     on=["setting", "metric", "world_EIGs"], how="left")
     h_inf2 = human_infant_exp2(); h_adu2 = human_adult_exp2()

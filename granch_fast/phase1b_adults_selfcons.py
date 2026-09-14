@@ -41,16 +41,17 @@ W_GRID_EXT = {"eig_code": list(np.logspace(-5.5, -0.5, 11)), "kl": list(np.logsp
 
 def settings_table(which="base"):
     """base: the 8-setting laptop pilot (V1, sd_eps .5, sigma_true {.1,.2}).
-    ext: the Sherlock promotion grid, V{1,3} x alpha{1,10} x beta{.1,1} x
-    sd_eps{.1,.5,1} x sigma_true{.1,.2,.3} = 72 settings (matches the infant
-    promotion grid minus sigma_true=.5, which saturated everywhere for infants)."""
+    ext: the Sherlock promotion grid, V{1,3} x alpha{1,10} x beta{.1,1} x sd_eps{.5,1}
+    x sigma_true{.1,.2} = 32 settings. (A 72-setting version with sd_eps .1 and
+    sigma_true .3, 10 pairs x 24 rollouts, measured ~25 h on the 24-core node --
+    realized looks under noise are long -- and was cut down on 2026-09-14.)"""
     rows = []
     if which == "base":
         for a, b, st in itertools.product([1.0, 10.0], [0.1, 1.0], [0.1, 0.2]):
             rows.append(dict(V_prior=1.0, alpha_prior=a, beta_prior=b, sigma_true=st, sd_epsilon=0.5,
                              infer_eps=True, eps_fixed=np.nan))
     else:
-        for V, a, b, sd, st in itertools.product([1.0, 3.0], [1.0, 10.0], [0.1, 1.0], [0.1, 0.5, 1.0], [0.1, 0.2, 0.3]):
+        for V, a, b, sd, st in itertools.product([1.0, 3.0], [1.0, 10.0], [0.1, 1.0], [0.5, 1.0], [0.1, 0.2]):
             rows.append(dict(V_prior=V, alpha_prior=a, beta_prior=b, sigma_true=st, sd_epsilon=sd,
                              infer_eps=True, eps_fixed=np.nan))
     return pd.DataFrame(rows)
@@ -135,8 +136,8 @@ def main():
     args = ap.parse_args()
     S = settings_table(args.which)
     wgrid = W_GRID if args.which == "base" else W_GRID_EXT
-    n_pairs = args.pairs or (6 if args.which == "base" else 10)
-    rollouts = args.rollouts or (R if args.which == "base" else 24)
+    n_pairs = args.pairs or 6
+    rollouts = args.rollouts or R
     suf = "selfcons" if args.which == "base" else "selfcons_ext"
     pairs = adult_pairs(n_pairs)
     jobs = [(si, s, m, wi, w, rollouts)

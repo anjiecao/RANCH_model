@@ -11,18 +11,19 @@ Human Exp-2 data: combined zoom+lookit infant condition means (as in the paper's
   05_experiment2.Rmd: exclude==False & LT not NA, no LT>2 filter); adult condition
   means from results_plots/exp2_adult_plot.csv ('Adult Behavior').
 """
-import sys, re
+import os, sys, re
 import numpy as np
 import pandas as pd
 
-ROOT = "/Users/mcfrank/Projects/ranch/RANCH_model"
+RANCH = os.environ.get("RANCH_ROOT", "/Users/mcfrank/Projects/ranch")
+ROOT = f"{RANCH}/RANCH_model"
 sys.path.insert(0, ROOT)
 from granch_fast.run_fast import FastConfig, make_grid
 from granch_fast import metrics as M
 from granch_fast import fit_infants as F
 
-CL = "/Users/mcfrank/Projects/ranch/RANCH_cluster/sim_info"
-PAPER = "/Users/mcfrank/Projects/ranch/pkbb_paper_writing"
+CL = f"{RANCH}/RANCH_cluster/sim_info"
+PAPER = f"{RANCH}/pkbb_paper_writing"
 VT = ["background", "pose", "number", "identity", "animacy"]
 _EMB = F.load_embeddings()
 

@@ -12,13 +12,14 @@ Exp-2 condition means -> R^2, RMSE) plus a zero-free-parameter RMSE for infants 
 Exp-1 pooled scaling. The paper's own grid predictions (results_plots/*, 'RANCH') are
 rescored under the same statistic for comparability.
 """
-import sys, argparse, itertools
+import os, sys, argparse, itertools
 import numpy as np
 import pandas as pd
 
-ROOT = "/Users/mcfrank/Projects/ranch/RANCH_model"
+RANCH = os.environ.get("RANCH_ROOT", "/Users/mcfrank/Projects/ranch")
+ROOT = f"{RANCH}/RANCH_model"
 sys.path.insert(0, ROOT)
-sys.path.insert(0, "/Users/mcfrank/Projects/ranch/pkbb_paper_writing")
+sys.path.insert(0, f"{RANCH}/pkbb_paper_writing")
 from granch_fast.run_fast import make_grid
 from granch_fast import metrics as M
 from granch_fast.phase1_infants import OUT, make_cfg
@@ -28,7 +29,7 @@ from granch_fast.score_phase1_adults import pred_table
 from granch_fast.linking_mixed import adult_long
 from reproduce_cv import human_condition_means
 
-PAPER = "/Users/mcfrank/Projects/ranch/pkbb_paper_writing"
+PAPER = f"{RANCH}/pkbb_paper_writing"
 METRICS = ["eig_code", "eig_within", "kl", "mi", "surprisal_b"]
 INF_KEYS = ["background", "pose", "number", "identity", "animacy"]
 
