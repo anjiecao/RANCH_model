@@ -147,3 +147,51 @@ def feature_eig_closed_form(fp, n_star, zbar_star):
     Note eqs (10)-(15). Returns a scalar per feature."""
     I_mu_bar, I_sigma = feature_eig_channels(fp, n_star, zbar_star)
     return I_mu_bar + I_sigma
+
+
+_GH = {}
+
+
+def _hermegauss(n):
+    if n not in _GH:
+        x, w = np.polynomial.hermite_e.hermegauss(n)
+        _GH[n] = (x, w / w.sum())
+    return _GH[n]
+
+
+def feature_eig_concept(fp, n_star, zbar_star, gh_n=7):
+    """Expected information about the CONCEPT only, I(z_{t+1}; mu, sigma^2 | data), with the
+    learner's own glimpse noise eps treated as a nuisance parameter:
+        H(z | data) - E_{sigma^2, mu | data}[ H(z | mu, sigma^2, data) ],
+    where z | mu, sigma^2 is a mixture over the eps nodes. Both entropies use the
+    moment-matched Gaussian (as eq. 15); the average over mu | sigma^2 uses Gauss-Hermite
+    on the moment-matched mu posterior of the sigma^2 column. With a single eps node this
+    equals feature_eig_closed_form exactly (no nuisance left). Reference implementation by
+    exact quadrature: tests/test_decision_variables.py."""
+    g = fp.grid
+    t = n_star
+    alpha = g.eps2 / (g.eps2 + t * g.sigma2)
+    vy = g.sigma2 * g.eps2 / (g.eps2 + t * g.sigma2)
+    mean_g = alpha * fp.m_mu + (1.0 - alpha) * zbar_star
+    vz = alpha ** 2 * fp.v_mu + vy + g.eps2
+    Emean = np.sum(fp.post * mean_g)
+    Hz = 0.5 * np.log(np.sum(fp.post * vz) + np.sum(fp.post * (mean_g - Emean) ** 2))
+    ns, ne = g.n_sigma, g.n_eps
+    P = fp.post.reshape(ns, ne)
+    col = P.sum(1)
+    keep = col > 1e-14
+    W = P[keep] / col[keep, None]                                   # p(eps | sigma^2, data)
+    A = alpha.reshape(ns, ne)[keep]
+    C = (vy + g.eps2).reshape(ns, ne)[keep]                         # Var(z | mu, sigma^2, eps)
+    Mg = fp.m_mu.reshape(ns, ne)[keep]
+    Vg = fp.v_mu.reshape(ns, ne)[keep]
+    Abar = (W * A).sum(1)
+    VarA = (W * (A - Abar[:, None]) ** 2).sum(1)
+    base = (W * C).sum(1)
+    Mmu = (W * Mg).sum(1)
+    Vmu = (W * (Vg + (Mg - Mmu[:, None]) ** 2)).sum(1)             # mu | sigma^2, moment-matched
+    x, w = _hermegauss(gh_n)
+    mu = Mmu[:, None] + np.sqrt(Vmu)[:, None] * x[None, :]
+    var_cond = base[:, None] + VarA[:, None] * (mu - zbar_star) ** 2   # Var(z | mu, sigma^2): eps-mixture
+    Hcond = (w[None, :] * 0.5 * np.log(var_cond)).sum(1)
+    return float(Hz - np.sum(col[keep] * Hcond))

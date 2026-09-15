@@ -38,7 +38,9 @@ def main(argv=None):
     ap.add_argument("--metrics", default=None)
     ap.add_argument("--window", default="exemplar_mean")
     ap.add_argument("--procs", type=int, default=8)
+    ap.add_argument("--out", default=None, help="output directory (default: the legacy granch_fast/phase1)")
     a = ap.parse_args(argv)
+    OUT = a.out or globals()["OUT"]
     os.makedirs(OUT, exist_ok=True)
     if a.stage == "grid":
         g = pipeline.infant_grid(a.kind, rollouts=a.rollouts, window=a.window, procs=a.procs)

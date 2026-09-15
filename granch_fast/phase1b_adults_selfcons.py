@@ -34,9 +34,11 @@ MAX_D = 10
 T_CAP = 80          # = cfg.max_observation in the deterministic adult runs
 R = 16
 W_GRID = {m: W_GRID_DET[m] for m in ("eig_code", "mi", "kl", "surprisal_b")}
+W_GRID["mi_concept"] = W_GRID_DET["mi"]                     # concept-only EIG, added 2026-09-15 (appended: seeds keep their indices)
 # ext: one decade wider at the top (higher noise floors need larger w), 11 points
 W_GRID_EXT = {"eig_code": list(np.logspace(-5.5, -0.5, 11)), "kl": list(np.logspace(-5.5, -0.5, 11)),
-              "mi": list(np.logspace(-4.5, 0.5, 11)), "surprisal_b": list(np.logspace(-2, 2, 11))}
+              "mi": list(np.logspace(-4.5, 0.5, 11)), "surprisal_b": list(np.logspace(-2, 2, 11)),
+              "mi_concept": list(np.logspace(-4.5, 0.5, 11))}
 
 
 def settings_table(which="base"):

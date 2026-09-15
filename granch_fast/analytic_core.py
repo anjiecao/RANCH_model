@@ -56,6 +56,7 @@ class SigmaEpsGrid:
         self.sigma2 = self.sigma ** 2
         self.eps2 = self.eps ** 2
         self.G = self.sigma.size
+        self.n_sigma, self.n_eps = sigma.size, eps.size   # node g = i_sigma * n_eps + i_eps
 
         # trapezoid cell widths -> log measure weight per node
         w_sigma = _cell_width(sigma)

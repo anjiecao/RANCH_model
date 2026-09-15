@@ -27,7 +27,7 @@ from granch_fast.phase1_infants import OUT
 
 T_MAX = 40
 R = 8
-WANT = ("eig_code", "mi", "kl", "surprisal")
+WANT = ("eig_code", "mi", "kl", "surprisal", "mi_concept")   # mi_concept added 2026-09-15 (concept-only EIG)
 
 
 def settings_table(which="base"):

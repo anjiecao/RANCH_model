@@ -25,7 +25,8 @@ W_INFANT = {
     "main": {"eig_code": np.logspace(-7, -1, 25), "eig_within": np.logspace(-7, -1, 25), "kl": np.logspace(-7, -1, 25),
              "mi": np.logspace(-5, 0, 25), "surprisal": np.logspace(-2.5, 2, 25), "surprisal_b": np.logspace(-2.5, 2, 25)},
     "selfcons": {"eig_code": np.logspace(-7, -1, 19), "kl": np.logspace(-7, -1, 19), "mi": np.logspace(-5, 0, 19),
-                 "surprisal": np.logspace(-2.5, 2, 19), "surprisal_b": np.logspace(-2.5, 2, 19)},
+                 "surprisal": np.logspace(-2.5, 2, 19), "surprisal_b": np.logspace(-2.5, 2, 19),
+                 "mi_concept": np.logspace(-5, 0, 19)},
 }
 W_INFANT["infeps"] = W_INFANT["main"]
 W_ADULT = {
@@ -33,9 +34,11 @@ W_ADULT = {
                    "kl": list(np.logspace(-5.5, -1.5, 9)), "mi": list(np.logspace(-4.5, -0.5, 9)),
                    "surprisal": list(np.logspace(-2, 1.5, 9)), "surprisal_b": list(np.logspace(-2, 1.5, 9))},
     "adult_base": {"eig_code": list(np.logspace(-5.5, -1.5, 9)), "mi": list(np.logspace(-4.5, -0.5, 9)),
-                   "kl": list(np.logspace(-5.5, -1.5, 9)), "surprisal_b": list(np.logspace(-2, 1.5, 9))},
+                   "kl": list(np.logspace(-5.5, -1.5, 9)), "surprisal_b": list(np.logspace(-2, 1.5, 9)),
+                   "mi_concept": list(np.logspace(-4.5, -0.5, 9))},
     "adult_ext": {"eig_code": list(np.logspace(-5.5, -0.5, 11)), "kl": list(np.logspace(-5.5, -0.5, 11)),
-                  "mi": list(np.logspace(-4.5, 0.5, 11)), "surprisal_b": list(np.logspace(-2, 2, 11))},
+                  "mi": list(np.logspace(-4.5, 0.5, 11)), "surprisal_b": list(np.logspace(-2, 2, 11)),
+                  "mi_concept": list(np.logspace(-4.5, 0.5, 11))},
 }
 T_CAP = 80
 MAX_D = 10

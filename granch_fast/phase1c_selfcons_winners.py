@@ -67,8 +67,10 @@ def main():
     args = ap.parse_args()
     sc = pd.read_csv(f"{OUT}/infant_scores_selfcons.csv")
     winners = {}
-    for dm in ["eig_code", "kl", "mi", "surprisal_b"]:
+    for dm in ["eig_code", "kl", "mi", "surprisal_b", "mi_concept"]:
         g = sc[(sc.metric == dm) & (sc.pooled_r > 0) & (sc.pred_bg1 < 450) & (sc.pred_bg10 > 1.02)].dropna(subset=["pooled_r2"])
+        if g.empty:
+            print(f"{dm}: no sign-consistent non-saturated row"); continue
         winners[dm] = g.sort_values("pooled_r2", ascending=False).iloc[0]
     uset = {}
     for dm, b in winners.items():

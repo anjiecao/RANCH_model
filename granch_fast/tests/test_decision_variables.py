@@ -232,6 +232,97 @@ def test_exemplar_mean_centered_implemented_eig_reads_only_observed_glimpses(ref
     assert np.array_equal(M.window_center(st, 1, z, dev, "oracle"), dev)
 
 
+# ---------------------------------------------------------------- concept-only EIG (eps a nuisance)
+from granch_fast.eig import feature_eig_concept
+
+
+def _mix_entropy(w, means, vars_, npts):
+    sd = np.sqrt(vars_); lo, hi = (means - 8 * sd).min(), (means + 8 * sd).max()
+    z = np.linspace(lo, hi, npts); dz = z[1] - z[0]
+    keep = w > 1e-13
+    dens = (w[keep, None] * np.exp(-0.5 * LOG2PI - 0.5 * np.log(vars_[keep, None])
+                                   - 0.5 * (z[None, :] - means[keep, None]) ** 2 / vars_[keep, None])).sum(0)
+    return -np.sum(dens * np.log(np.maximum(dens, 1e-300))) * dz
+
+
+def _exact_concept_mi(fp, n_star, zbar_star, gh=5, npts=501):
+    """I(z; mu, sigma^2 | data) by exact quadrature: H(z|data) minus E_{sigma^2, mu}[H(z | mu, sigma^2)],
+    where mu | sigma^2 is the eps-mixture of the nodes' N(m_mu, v_mu) (Gauss-Hermite per component) and
+    z | mu, sigma^2 is the eps-mixture of N(alpha mu + (1-alpha) zbar, vy + eps^2)."""
+    g = fp.grid
+    x, w = np.polynomial.hermite_e.hermegauss(gh); w = w / w.sum()
+    alpha = g.eps2 / (g.eps2 + n_star * g.sigma2); vy = g.sigma2 * g.eps2 / (g.eps2 + n_star * g.sigma2)
+    mean = alpha * fp.m_mu + (1 - alpha) * zbar_star; vz = alpha ** 2 * fp.v_mu + vy + g.eps2
+    Hz = _mix_entropy(fp.post, mean, vz, 3001)
+    ns, ne = g.n_sigma, g.n_eps
+    P = fp.post.reshape(ns, ne); col = P.sum(1)
+    A = alpha.reshape(ns, ne); C = (vy + g.eps2).reshape(ns, ne); Mg = fp.m_mu.reshape(ns, ne); Vg = fp.v_mu.reshape(ns, ne)
+    Hc = 0.0
+    for i in np.where(col > 1e-6)[0]:
+        W = P[i] / col[i]
+        mus = (Mg[i][:, None] + np.sqrt(Vg[i])[:, None] * x[None, :]).ravel()
+        wts = (W[:, None] * w[None, :]).ravel()
+        Hmix = [_mix_entropy(W, A[i] * mu + (1 - A[i]) * zbar_star, C[i], npts) for mu in mus]
+        Hc += col[i] * float(np.dot(wts, Hmix))
+    return Hz - Hc
+
+
+def test_concept_eig_equals_true_eig_when_eps_is_fixed(ref_fixed, stim_pair):
+    cfg, grid = ref_fixed
+    fam, dev = stim_pair
+    st = _exposed_state(cfg, grid, fam, 5, 6)
+    for _ in range(3):
+        o = st.step(5, dev, dev, want=("mi", "mi_concept"))
+        assert o["mi_concept"] == pytest.approx(o["mi"], rel=1e-12)
+
+
+@pytest.fixture(scope="module")
+def concept_runs(ref_inferred, stim_pair):
+    """Canonical regime (eps inferred, sigma_true .1), dur-8 test: per-sample total EIG,
+    concept EIG (engine) and concept EIG (exact quadrature) for familiar and novel."""
+    cfg, grid = ref_inferred
+    fam, dev = stim_pair
+    out = {}
+    for name, test in (("familiar", fam), ("novel", dev)):
+        rng = np.random.default_rng(3)
+        st = M.State(cfg, grid, 9)
+        for k in range(8):
+            for _ in range(5):
+                z = fam + rng.normal(0, 0.1, 3)
+                for d in range(3):
+                    st.add_sample(d, k, z[d])
+        st.ensure_init()
+        for d in range(3):
+            st._refresh(d)
+        rows = []
+        for t in range(6):
+            z = test + rng.normal(0, 0.1, 3)
+            o = st.step(8, z, z, want=("mi", "mi_concept"))
+            exact = sum(_exact_concept_mi(st.fps[d], *st.stats[d][8][:2]) for d in range(3)) if t < 3 else np.nan
+            rows.append((o["mi"], o["mi_concept"], exact))
+        out[name] = np.array(rows)
+    return out
+
+
+def test_concept_eig_matches_exact_quadrature_under_noise(concept_runs):
+    for name in ("familiar", "novel"):
+        approx, exact = concept_runs[name][:3, 1], concept_runs[name][:3, 2]
+        assert np.all(np.abs(approx - exact) / exact < 0.25), (name, approx, exact)
+    ra = concept_runs["novel"][:3, 1] / concept_runs["familiar"][:3, 1]
+    re = concept_runs["novel"][:3, 2] / concept_runs["familiar"][:3, 2]
+    assert np.all(np.abs(ra - re) / re < 0.15), (ra, re)
+
+
+def test_concept_eig_discriminates_where_the_total_does_not(concept_runs):
+    """The finding of 2026-09-15: under noise with eps inferred, the total EIG is mostly about
+    eps (novel/familiar ~1) while the concept-only EIG habituates and dishabituates."""
+    fam, nov = concept_runs["familiar"], concept_runs["novel"]
+    assert nov[2, 0] / fam[2, 0] < 1.3                      # total, sample 3
+    assert nov[2, 1] / fam[2, 1] > 1.5                      # concept, sample 3
+    assert fam[5, 1] / fam[0, 1] < 0.2                      # concept habituates within the trial
+    assert fam[5, 0] / fam[0, 0] > 0.5                      # total barely does
+
+
 # ---------------------------------------------------------------- symmetries
 def test_feature_permutation_invariance(ref_fixed, stim_pair):
     cfg, grid = ref_fixed

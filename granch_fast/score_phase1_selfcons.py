@@ -21,7 +21,8 @@ from reproduce_cv import human_condition_means, cv_rmse_r2
 from granch_fast.phase1_infants import OUT
 
 W_GRID = {"eig_code": np.logspace(-7, -1, 19), "kl": np.logspace(-7, -1, 19), "mi": np.logspace(-5, 0, 19),
-          "surprisal": np.logspace(-2.5, 2, 19), "surprisal_b": np.logspace(-2.5, 2, 19)}
+          "surprisal": np.logspace(-2.5, 2, 19), "surprisal_b": np.logspace(-2.5, 2, 19),
+          "mi_concept": np.logspace(-5, 0, 19)}
 
 _CTX = None
 
@@ -37,6 +38,8 @@ def _score_one(args):
     rows = []
     for dm, wg in W_GRID.items():
         base = "surprisal" if dm == "surprisal_b" else dm
+        if base not in metrics:            # older grids without mi_concept
+            continue
         mi = metrics.index(base)
         off = 3.0 * (-np.log(s.sigma_true)) if dm == "surprisal_b" else 0.0
         tr = tr_all[:, :, mi, :].astype(float) + off          # (rows, R, T)

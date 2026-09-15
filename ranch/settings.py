@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 
 from .config import Prior, LearnerNoise, Quadrature, Model
-from .decision import EIG, EIGWithin, KL, Surprisal, RealizedGain
+from .decision import EIG, EIGWithin, EIGConcept, KL, Surprisal, RealizedGain
 
 KINDS = ("main", "infeps", "selfcons_base", "selfcons_ext", "adult_base", "adult_ext")
 SIGMA_BOX = (0.001, 1.5)
@@ -79,7 +79,7 @@ def spec(s, kind, window="exemplar_mean"):
         st = float(s["sigma_true"])
         model = Model(prior, LearnerNoise.inferred(1e-3, float(s["sd_epsilon"]), (1e-3, 1.2)), quadrature=Quadrature(80, 30))
         rg = RealizedGain(window, st, 5)
-        return Spec(model, st, rg, 3.0 * (-np.log(st)), (rg, EIG, KL, Surprisal))
+        return Spec(model, st, rg, 3.0 * (-np.log(st)), (rg, EIG, KL, Surprisal, EIGConcept))
     raise ValueError(kind)
 
 

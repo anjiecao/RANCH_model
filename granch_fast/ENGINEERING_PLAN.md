@@ -255,6 +255,18 @@ proven byte-identical against the golden tables; drivers rewritten as thin scrip
 table), which configurations are *canonical* (the two coherent RANCHs), and whether `oracle`
 windowing is kept for reproduction only.
 
+*Finishing sequence (agreed 2026-09-15).* Phase B: (1) `EIGConcept` registered (engine
+`feature_eig_concept`, exact-quadrature reference test) and run through the noisy-world study
+(`sherlock/concept_study.sbatch`); (2) the gate (`sherlock/gate.sbatch` + `python -m ranch.gate`):
+every grid and table produced by `python -m ranch` must equal the legacy drivers' outputs; (3)
+on a passing gate, retire the legacy drivers (keep `audit/`), `FastConfig` becomes internal to
+`ranch.config`, and the remaining scripts (Phase-2 selection rules, lesions, figures) are
+re-expressed over `Result`/`Selection` objects; (4) golden tables and figures regenerated from
+the corrected outputs with a reviewed diff. Phase C: `pyproject` + pinned deps; CI running the
+fast suite (needs a decision on how the human data reach CI — the pkbb repo is not ours); a
+model card stating the named configurations and the two retractions; one reproduction command
+per figure/table of the revision.
+
 **Phase C — release readiness (as needed).** `pyproject` packaging with pinned deps; CI (GitHub
 Actions on the fork: fast suite on every push, slow suite nightly); batched runner if interactive
 use is a goal; a model card stating what the model is, its two coherent forms, and what it is not;

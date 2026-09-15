@@ -26,7 +26,7 @@ from granch_fast.phase1b_adults_selfcons import rollout, T_CAP, MAX_D, W_GRID
 from granch_fast.phase1_infants import OUT
 
 R64 = 64
-METRICS = ["eig_code", "mi", "kl", "surprisal_b"]
+METRICS = ["eig_code", "mi", "kl", "surprisal_b", "mi_concept"]
 
 
 def pred21(row):

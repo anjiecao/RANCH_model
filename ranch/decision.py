@@ -28,6 +28,14 @@ Surprisal = DecisionVariable(
 EIGWithin = DecisionVariable(
     "eig_within", "EIG-within (deprecated)", True,
     "The July-2026 variant: window EIG with the within-stimulus predictive as weight.")
+EIGConcept = DecisionVariable(
+    "mi_concept", "concept EIG", True,
+    "I(z_{t+1}; mu, sigma^2 | data) with the learner's own glimpse noise eps treated as a "
+    "nuisance ('learn about the world, not about my own eyes'). Equals the true EIG when eps "
+    "is fixed. Proposed 2026-09-15 after the retraction of the noisy-world true-EIG finding: "
+    "under noise with eps inferred, most of the total EIG is information about eps, which the "
+    "familiar supplies as well as the novel; the concept-only quantity habituates and "
+    "dishabituates (eig.feature_eig_concept; exact-quadrature reference in the tests).")
 
 
 @dataclass(frozen=True)
@@ -58,4 +66,4 @@ class RealizedGain(DecisionVariable):
         object.__setattr__(self, "n_z", int(n_z))
 
 
-ALL_VARIABLES = (EIG, KL, Surprisal, EIGWithin, RealizedGain())
+ALL_VARIABLES = (EIG, KL, Surprisal, EIGWithin, RealizedGain(), EIGConcept)

@@ -23,9 +23,10 @@ The posterior machinery is analytic_core.FeaturePosterior (exact, y and mu integ
 import numpy as np
 from scipy.special import logsumexp
 from .analytic_core import FeaturePosterior, LOG2PI
-from .eig import _kl_gauss, _joint_kl, _predictive, feature_eig_closed_form
+from .eig import _kl_gauss, _joint_kl, _predictive, feature_eig_closed_form, feature_eig_concept
 
 METRICS = ("eig_code", "eig_within", "mi", "kl", "surprisal")
+# opt-in: "mi_concept" = expected information about the concept (mu, sigma^2) only, eps a nuisance
 
 
 def _dens(z, m, v):
@@ -120,6 +121,8 @@ class State:
             n_star, zbar_star, S_star = self.stats[d][k]
             if "mi" in want:
                 out["mi"] += feature_eig_closed_form(fp, n_star, zbar_star)
+            if "mi_concept" in want:
+                out["mi_concept"] += feature_eig_concept(fp, n_star, zbar_star)
             if "eig_code" in want or "eig_within" in want:
                 cur = (fp.post.copy(), fp.log_post.copy(), fp.m_mu.copy(), fp.v_mu.copy())
                 if cfg.n_z == 1:

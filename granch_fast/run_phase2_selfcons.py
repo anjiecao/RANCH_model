@@ -32,7 +32,7 @@ from granch_fast.phase2_exp2 import (infant_pairs, adult_pairs, human_infant_exp
 from granch_fast.phase1b_adults_selfcons import run_trial, T_CAP
 from reproduce_cv import human_condition_means
 
-METRICS = ["eig_code", "mi", "kl", "surprisal_b"]
+METRICS = ["eig_code", "mi", "kl", "surprisal_b", "mi_concept"]
 INF_KEYS = ["background", "pose", "number", "identity", "animacy"]
 R_INF = 8
 R_ADU = 12
