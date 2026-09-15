@@ -42,6 +42,26 @@ def test_sbatch_scripts_parse():
         assert "-p mcfrank" in open(f).read() or "-p owners" in open(f).read()
 
 
+def test_cluster_invoked_scripts_start_up():
+    """Every script a sbatch file runs must import and build its argument parser
+    (`--help`) in a clean process: py_compile does not catch NameErrors at argparse
+    construction (the 2026-09-15 resume died that way at its last-but-three step)."""
+    import re
+    scripts = set()
+    for sb in glob.glob(f"{ROOT}/sherlock/*.sbatch"):
+        scripts |= set(re.findall(r"granch_fast/[a-z0-9_]+\.py", open(sb).read()))
+    env = dict(os.environ, RANCH_ROOT=os.environ.get("RANCH_ROOT", "/Users/mcfrank/Projects/ranch"))
+    failures = []
+    for s in sorted(scripts):
+        src = open(f"{ROOT}/{s}").read()
+        if "argparse" not in src:
+            continue                                   # positional-arg scripts are exercised elsewhere
+        r = subprocess.run([sys.executable, f"{ROOT}/{s}", "--help"], capture_output=True, text=True, env=env, timeout=300)
+        if r.returncode != 0:
+            failures.append((s, r.stderr.strip().splitlines()[-1] if r.stderr.strip() else "?"))
+    assert not failures, failures
+
+
 def test_cluster_invoked_scripts_have_no_hardcoded_laptop_paths():
     """Every python script a sbatch file runs must resolve its paths through RANCH_ROOT
     (the 2026-09-14 regeneration died at its first scoring step because four scorers

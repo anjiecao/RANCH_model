@@ -19,6 +19,7 @@ ROOT = os.environ.get("RANCH_ROOT", "/Users/mcfrank/Projects/ranch") + "/RANCH_m
 sys.path.insert(0, ROOT)
 from granch_fast.run_fast import make_grid
 from granch_fast import fit_infants as F
+from granch_fast import metrics as M
 from granch_fast.linking_mixed import adult_long, condition_mean_fit
 from granch_fast.phase1_selfconsistent import make_cfg
 from granch_fast.phase1b_adults_selfcons import rollout, T_CAP, MAX_D, W_GRID
