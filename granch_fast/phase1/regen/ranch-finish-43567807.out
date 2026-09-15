@@ -1,0 +1,49 @@
+7fc21b7 phase1e: missing metrics import; test that every cluster script starts up; finish.sbatch
+=== 2026-09-15 09:46:35  adults winners R64
+=== grid winners (sign-consistent b21>0, non-saturated bg1<76) ===
+eig_code     [r2  ] R2 0.297 rmse 337 | V3 a1 b0.1 sd0.5 st0.2 w3.2e-03 (hab 0.29 dis 1.43)
+eig_code     [rmse] R2 0.297 rmse 337 | V3 a1 b0.1 sd0.5 st0.2 w3.2e-03 (hab 0.29 dis 1.43)
+mi           [r2  ] R2 0.319 rmse 310 | V3 a10 b0.1 sd0.5 st0.1 w3.2e-03 (hab 0.25 dis 1.54)
+mi           [rmse] R2 0.319 rmse 310 | V3 a10 b0.1 sd0.5 st0.1 w3.2e-03 (hab 0.25 dis 1.54)
+kl           [r2  ] R2 0.387 rmse 301 | V3 a10 b0.1 sd0.5 st0.1 w3.2e-01 (hab 0.47 dis 1.13)
+kl           [rmse] R2 0.355 rmse 297 | V3 a10 b0.1 sd1 st0.1 w3.2e-02 (hab 0.29 dis 1.44)
+surprisal_b  [r2  ] R2 0.559 rmse 233 | V3 a10 b1 sd1 st0.2 w1.6e+01 (hab 0.87 dis 1.02)
+surprisal_b  [rmse] R2 0.559 rmse 233 | V3 a10 b1 sd1 st0.2 w1.6e+01 (hab 0.87 dis 1.02)
+
+re-evaluating 5 winners x 6 pairs x 64 rollouts ...
+
+=== RE-EVALUATION at R=64 (grid -> fresh; the winner's-curse check) ===
+eig_code     [r2  ] V3 a1 b0.1 sd0.5 st0.2 w3.2e-03 | grid R2 0.297 -> R64 R2 0.222 (b +33; hab 0.27 dis 1.38)
+mi           [r2  ] V3 a10 b0.1 sd0.5 st0.1 w3.2e-03 | grid R2 0.319 -> R64 R2 0.230 (b +35; hab 0.28 dis 1.41)
+kl           [r2  ] V3 a10 b0.1 sd0.5 st0.1 w3.2e-01 | grid R2 0.387 -> R64 R2 0.263 (b +600; hab 0.49 dis 1.18)
+kl           [rmse] V3 a10 b0.1 sd1 st0.1 w3.2e-02 | grid R2 0.355 -> R64 R2 0.265 (b +164; hab 0.30 dis 1.28)
+surprisal_b  [r2  ] V3 a10 b1 sd1 st0.2 w1.6e+01 | grid R2 0.559 -> R64 R2 0.004 (b -662; hab 0.93 dis 1.05)
+
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1/adult_winners_R64.csv (279s)
+=== 2026-09-15 09:51:28  phase2 selfcons
+multiprocessing.pool.RemoteTraceback: 
+"""
+Traceback (most recent call last):
+  File "/share/software/user/open/python/3.12.1/lib/python3.12/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+                    ^^^^^^^^^^^^^^^^^^^
+  File "/home/users/mcfrank/ranch/RANCH_model/granch_fast/run_phase2_selfcons.py", line 121, in _one
+    sigma_true=ba.sigma_true, sd_epsilon=ba.sd_epsilon)
+               ^^^^^^^^^^^^^
+  File "/home/users/mcfrank/ranch/venv/lib/python3.12/site-packages/pandas/core/generic.py", line 6299, in __getattr__
+    return object.__getattribute__(self, name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Series' object has no attribute 'sigma_true'. Did you mean: 'sigma_true_x'?
+"""
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/users/mcfrank/ranch/RANCH_model/granch_fast/run_phase2_selfcons.py", line 191, in <module>
+    main()
+  File "/home/users/mcfrank/ranch/RANCH_model/granch_fast/run_phase2_selfcons.py", line 154, in main
+    results = list(pool.imap(_one, jobs))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/share/software/user/open/python/3.12.1/lib/python3.12/multiprocessing/pool.py", line 873, in next
+    raise value
+AttributeError: 'Series' object has no attribute 'sigma_true'

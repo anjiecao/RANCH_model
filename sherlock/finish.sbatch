@@ -14,7 +14,7 @@ export RANCH_ROOT=$HOME/ranch
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
 source $RANCH_ROOT/venv/bin/activate
 cd $RANCH_ROOT/RANCH_model
-git fetch -q ~/ranch_reboot.bundle exact-inference-reboot && git reset -q --hard FETCH_HEAD && git log --oneline -1
+git fetch -q ~/ranch_reboot.bundle exact-inference-reboot && git ls-tree -r --name-only FETCH_HEAD | grep -v "^granch_fast/phase1/" | xargs git checkout -q FETCH_HEAD -- && git log --oneline -1 FETCH_HEAD   # code-only sync: never touch the output tables
 PY=python
 step() { echo "=== $(date '+%F %T')  $*"; }
 

@@ -87,6 +87,22 @@ def test_adult_grid_stochastic_matches_legacy_driver(emb):
             assert ours[k] == theirs[k], (metric, k, ours[k], theirs[k])
 
 
+def test_legacy_phase2_selfcons_adult_scores_loader(tmp_path):
+    """run_phase2_selfcons must handle both adult score tables: the base one (no world/noise
+    columns; taken from the predictions) and the ext one (already carries them). The finish
+    job of 2026-09-15 died on the second case (suffixed duplicate columns)."""
+    from granch_fast.run_phase2_selfcons import load_adult_scores
+    preds = pd.DataFrame(dict(setting=[0, 0], metric=["mi", "mi"], world_EIGs=[1e-4, 1e-3], sigma_true=[0.1, 0.1], sd_epsilon=[0.5, 0.5]))
+    base = pd.DataFrame(dict(setting=[0, 0], metric=["mi", "mi"], world_EIGs=[1e-4, 1e-3], r2_21=[0.5, 0.4], rmse21_cv=[100.0, 110.0], b21=[10.0, 9.0], bg1=[20.0, 30.0]))
+    ext = base.assign(sigma_true=0.1, sd_epsilon=0.5)
+    for suf, tab in (("", base), ("_ext", ext)):
+        tab.to_csv(tmp_path / f"adult_scores21_selfcons{suf}.csv", index=False)
+        preds.to_csv(tmp_path / f"adult_preds_selfcons{suf}.csv", index=False)
+        out = load_adult_scores(str(tmp_path), suf)
+        assert list(out.columns).count("sigma_true") == 1 and "sigma_true_x" not in out.columns
+        assert out.iloc[0].sigma_true == 0.1 and out.iloc[0].sd_epsilon == 0.5
+
+
 def test_exp2_predictions_match_legacy(emb):
     S = settings_table("selfcons_base")
     s = S.iloc[0]

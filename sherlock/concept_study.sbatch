@@ -16,7 +16,7 @@ export RANCH_ROOT=$HOME/ranch
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
 source $RANCH_ROOT/venv/bin/activate
 cd $RANCH_ROOT/RANCH_model
-git fetch -q ~/ranch_reboot.bundle exact-inference-reboot && git reset -q --hard FETCH_HEAD && git log --oneline -1
+git fetch -q ~/ranch_reboot.bundle exact-inference-reboot && git ls-tree -r --name-only FETCH_HEAD | grep -v "^granch_fast/phase1/" | xargs git checkout -q FETCH_HEAD -- && git log --oneline -1 FETCH_HEAD   # code-only sync: never touch the output tables
 PY=python
 step() { echo "=== $(date '+%F %T')  $*"; }
 
@@ -24,10 +24,12 @@ step selfcons base with mi_concept;   $PY granch_fast/phase1_selfconsistent.py -
 step selfcons ext with mi_concept;    $PY granch_fast/phase1_selfconsistent.py --which ext --procs 24
 step score selfcons;                  $PY granch_fast/score_phase1_selfcons.py --procs 24
 step selfcons winners R32;            $PY granch_fast/phase1c_selfcons_winners.py --procs 24
-step adults base mi_concept merge;    $PY granch_fast/phase1b_adults_selfcons.py --which base --metrics mi_concept --merge --procs 24
+step adults base all variables;       $PY granch_fast/phase1b_adults_selfcons.py --which base --procs 24
 step score adults selfcons base;      $PY granch_fast/score_phase1_adults.py --which selfcons
                                       $PY granch_fast/score_phase1_adults21.py selfcons
 step adults ext mi_concept merge;     $PY granch_fast/phase1b_adults_selfcons.py --which ext --metrics mi_concept --merge --procs 24
 step adults winners R64;              $PY granch_fast/phase1e_adults_winners.py --procs 24
 step phase2 selfcons;                 $PY granch_fast/run_phase2_selfcons.py --procs 24 --adults ext
+step lesions;                         $PY granch_fast/phase1d_lesions_selfcons.py --procs 24
+step channels;                        $PY granch_fast/gen_figs_channels.py
 step done

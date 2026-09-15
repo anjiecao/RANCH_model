@@ -42,6 +42,17 @@ def test_sbatch_scripts_parse():
         assert "-p mcfrank" in open(f).read() or "-p owners" in open(f).read()
 
 
+def test_cluster_jobs_never_reset_the_output_tables():
+    """`git reset --hard` in a job clobbers the tracked score tables in granch_fast/phase1
+    with the committed (stale) versions -- it cost the 2026-09-15 regeneration three tables.
+    Jobs must sync code only."""
+    for f in glob.glob(f"{ROOT}/sherlock/*.sbatch"):
+        src = open(f).read()
+        assert "reset --hard" not in src, f
+        if "git fetch" in src:
+            assert 'grep -v "^granch_fast/phase1/"' in src, f
+
+
 def test_cluster_invoked_scripts_start_up():
     """Every script a sbatch file runs must import and build its argument parser
     (`--help`) in a clean process: py_compile does not catch NameErrors at argparse
