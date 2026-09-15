@@ -289,3 +289,13 @@ reproduction commands for every figure/table in the revision.
    regenerated with a reviewed golden-table diff; expected shifts are a few percent in the
    variable itself and smaller in the fitted R² (the gap is nearly stimulus-independent at a
    given sample count, so it slightly *compresses* novel/familiar contrast).
+   **Outcome (2026-09-15):** the noiseless tables reproduced to the digit; the noisy-world
+   true-EIG results collapsed (infants R² .73 → .23, dis 1.19 → 1.03; adults .68 → .27) — the
+   report's finding 9 is retracted. Exact numerical MI over the full (σ², ε) mixture confirms
+   the fixed closed form (≤4% bound looseness, identical novel/familiar ratios) and shows the
+   old one was 20× too low for the familiar in this regime. With ε inferred, 61–97% of the
+   expected information is about ε itself. A concept-only EIG (ε as nuisance), computed by
+   exact quadrature, habituates 17× and dishabituates ~2×, matching what the slipped formula
+   had produced: proposed as a new registered variable (`EIGConcept`) with a moment-matched
+   closed form validated against the exact quadrature, then a full noisy-world study.
+   The canonical-model decision (§4) is reopened.

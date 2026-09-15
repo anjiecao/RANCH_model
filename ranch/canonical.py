@@ -4,9 +4,12 @@ forward-looking EIG -- not the corrected published implementation. The other two
 as named references: what was published (degenerate under exact inference) and its
 corrected form (realized gain in a clean world).
 
-Parameter values are the best sign-consistent fits found so far (report v2, 2026-09-14,
-Stage B). They were produced BEFORE the eq-15 fix and are refreshed from the regenerated
-tables in Phase B; treat them as the current pins, not as constants of nature.
+REOPENED 2026-09-15: that decision rested on a result produced by the eq-15 slip. With the
+correct mutual information the CANONICAL configuration below does NOT reproduce the phenomena
+(infants R2 .23 on re-evaluation, native dishabituation 1.03; adults .27). Its parameter pins
+are left as the record of the superseded analysis; PUBLISHED_CORRECTED is, on present
+evidence, the only configuration that produces the phenomena natively. A concept-only EIG
+(eps as nuisance) is under study as a possible replacement decision variable.
 """
 from dataclasses import dataclass
 
