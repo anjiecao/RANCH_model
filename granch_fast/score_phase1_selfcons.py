@@ -11,9 +11,10 @@ import numpy as np
 import pandas as pd
 from multiprocessing import Pool
 
-ROOT = "/Users/mcfrank/Projects/ranch/RANCH_model"
+RANCH = os.environ.get("RANCH_ROOT", "/Users/mcfrank/Projects/ranch")
+ROOT = f"{RANCH}/RANCH_model"
 sys.path.insert(0, ROOT)
-sys.path.insert(0, "/Users/mcfrank/Projects/ranch/pkbb_paper_writing")
+sys.path.insert(0, f"{RANCH}/pkbb_paper_writing")
 from granch_fast.metrics import expected_samples
 from granch_fast.linking_mixed import infant_long, deconfounded_fit
 from reproduce_cv import human_condition_means, cv_rmse_r2

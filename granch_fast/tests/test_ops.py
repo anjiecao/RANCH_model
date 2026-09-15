@@ -39,7 +39,25 @@ def test_sbatch_scripts_parse():
     for f in glob.glob(f"{ROOT}/sherlock/*.sbatch"):
         r = subprocess.run(["bash", "-n", f], capture_output=True, text=True)
         assert r.returncode == 0, (f, r.stderr)
-        assert "-p mcfrank" in open(f).read()
+        assert "-p mcfrank" in open(f).read() or "-p owners" in open(f).read()
+
+
+def test_cluster_invoked_scripts_have_no_hardcoded_laptop_paths():
+    """Every python script a sbatch file runs must resolve its paths through RANCH_ROOT
+    (the 2026-09-14 regeneration died at its first scoring step because four scorers
+    still hardcoded the laptop path). A literal '/Users/mcfrank' is allowed only as the
+    RANCH_ROOT default inside an os.environ.get(...) expression."""
+    import re
+    scripts = set()
+    for sb in glob.glob(f"{ROOT}/sherlock/*.sbatch"):
+        scripts |= set(re.findall(r"granch_fast/[a-z0-9_]+\.py", open(sb).read()))
+    assert scripts
+    offenders = []
+    for s in sorted(scripts):
+        for line in open(f"{ROOT}/{s}"):
+            if "/Users/mcfrank" in line and "os.environ.get(" not in line:
+                offenders.append((s, line.strip()))
+    assert not offenders, offenders
 
 
 @pytest.mark.slow

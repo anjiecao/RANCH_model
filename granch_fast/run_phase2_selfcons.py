@@ -18,9 +18,10 @@ import numpy as np
 import pandas as pd
 from multiprocessing import Pool
 
-ROOT = "/Users/mcfrank/Projects/ranch/RANCH_model"
+RANCH = os.environ.get("RANCH_ROOT", "/Users/mcfrank/Projects/ranch")
+ROOT = f"{RANCH}/RANCH_model"
 sys.path.insert(0, ROOT)
-sys.path.insert(0, "/Users/mcfrank/Projects/ranch/pkbb_paper_writing")
+sys.path.insert(0, f"{RANCH}/pkbb_paper_writing")
 from granch_fast.run_fast import make_grid
 from granch_fast import metrics as M
 from granch_fast import fit_infants as F

@@ -4,11 +4,14 @@ linking (adults are within-subject, so pooled condition means are unconfounded):
   r2 = full-fit squared correlation; rmse = 10-fold CV over conditions (ms).
 Also a within-subject (prolific_id-demeaned) r^2 for symmetry with the infant table.
 """
+import os
+for _v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "VECLIB_MAXIMUM_THREADS"):
+    os.environ.setdefault(_v, "1")
 import sys, argparse
 import numpy as np
 import pandas as pd
 
-ROOT = "/Users/mcfrank/Projects/ranch/RANCH_model"
+ROOT = os.environ.get("RANCH_ROOT", "/Users/mcfrank/Projects/ranch") + "/RANCH_model"
 sys.path.insert(0, ROOT)
 from granch_fast.linking_mixed import adult_long, condition_mean_fit, deconfounded_fit
 from granch_fast.phase1_infants import OUT

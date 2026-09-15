@@ -2,8 +2,11 @@
 trial_number, pooled over exposure durations). Full-fit R2 + 7-fold CV RMSE over
 conditions + full-fit RMSE (ms). Also rescoring of the paper's published grid output
 (results_plots/exp1_adult_sim_plot.csv, the per-hypothesis param-averaged curves)."""
-import sys, numpy as np, pandas as pd
-sys.path.insert(0, "/Users/mcfrank/Projects/ranch/RANCH_model")
+import os, sys, numpy as np, pandas as pd
+for _v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "VECLIB_MAXIMUM_THREADS"):
+    os.environ.setdefault(_v, "1")
+RANCH = os.environ.get("RANCH_ROOT", "/Users/mcfrank/Projects/ranch")
+sys.path.insert(0, f"{RANCH}/RANCH_model")
 from granch_fast.linking_mixed import adult_long
 from granch_fast.phase1_infants import OUT
 WHICH = sys.argv[1] if len(sys.argv) > 1 else "main"
@@ -39,7 +42,7 @@ for dm in ["eig_code", "eig_within", "kl", "mi", "surprisal_b", "surprisal"]:
     print(f"{dm:12s} {g.r2_21.mean():7.3f} {g.r2_21.max():7.3f} {g.rmse21_full.min():9.0f} {g.rmse21_cv.min():7.0f} | V{b.V_prior:g} a{b.alpha_prior:g} b{b.beta_prior:g} eps{b.eps_fixed:g} w{b.world_EIGs:.1e} ({b.bg1:.2f} {b.bg2:.2f} {b.bg11:.2f} | {b.dev:.2f})")
 print(f"constant baseline: RMSE {hb.std(ddof=0):.0f} ms")
 print("\nbest R2_21 by eps_fixed:"); print(res.groupby(["metric", "eps_fixed"]).r2_21.max().unstack(1).round(3).to_string())
-sp = pd.read_csv("/Users/mcfrank/Projects/ranch/pkbb_paper_writing/data/results_plots/exp1_adult_sim_plot.csv")
+sp = pd.read_csv(f"{RANCH}/pkbb_paper_writing/data/results_plots/exp1_adult_sim_plot.csv")
 tt = {"Familiar": "background", "Novel": "deviant"}
 print("\npaper's published grid curves (param-averaged figure data), same statistic:")
 for t in sp.type.unique():
