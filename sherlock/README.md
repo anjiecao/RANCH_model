@@ -46,6 +46,8 @@ a clone one commit behind):
 git fetch -q origin exact-inference-reboot
 git reset -q --soft FETCH_HEAD
 git ls-tree -r --name-only HEAD | grep -v "^granch_fast/phase1/" | tr '\n' '\0' | xargs -0 git checkout -q HEAD --
+STALE=$(git diff --cached --name-only --diff-filter=A HEAD | grep -v "^granch_fast/phase1/" || true)   # deleted/moved upstream
+if [ -n "$STALE" ]; then printf '%s\n' "$STALE" | tr '\n' '\0' | xargs -0 git rm -q --cached --; printf '%s\n' "$STALE" | tr '\n' '\0' | xargs -0 rm -f; fi
 if git status --short | grep -v "^?? " | grep -v "granch_fast/phase1/" | grep -q .; then echo "SYNC FAILED"; exit 1; fi
 ```
 

@@ -24,6 +24,8 @@ cd $RANCH_ROOT/RANCH_model
 git fetch -q origin exact-inference-reboot
 git reset -q --soft FETCH_HEAD
 git ls-tree -r --name-only HEAD | grep -v "^granch_fast/phase1/" | tr '\n' '\0' | xargs -0 git checkout -q HEAD --   # NUL-separated: four tracked paths contain spaces
+STALE=$(git diff --cached --name-only --diff-filter=A HEAD | grep -v "^granch_fast/phase1/" || true)                     # tracked before, gone from HEAD: drop them
+if [ -n "$STALE" ]; then printf '%s\n' "$STALE" | tr '\n' '\0' | xargs -0 git rm -q --cached --; printf '%s\n' "$STALE" | tr '\n' '\0' | xargs -0 rm -f; fi
 if git status --short | grep -v "^?? " | grep -v "granch_fast/phase1/" | grep -q .; then echo "SYNC FAILED: tracked code differs from HEAD"; git status --short | grep -v "^?? " | head; exit 1; fi
 git log --oneline -1
 R() { python -m ranch "$@" --procs 24; }
