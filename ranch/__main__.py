@@ -13,7 +13,7 @@ import sys
 import numpy as np
 import pandas as pd
 
-from . import pipeline, selection
+from . import data, pipeline, selection
 from .data import ROOT
 
 OUT = f"{ROOT}/granch_fast/phase1"
@@ -39,11 +39,13 @@ def main(argv=None):
     ap.add_argument("--window", default="exemplar_mean")
     ap.add_argument("--procs", type=int, default=8)
     ap.add_argument("--out", default=None, help="output directory (default: the legacy granch_fast/phase1)")
+    ap.add_argument("--every", type=int, default=1, help="grid: take every k-th trial row (smoke tests: 24 -> one row per condition)")
     a = ap.parse_args(argv)
     OUT = a.out or globals()["OUT"]
     os.makedirs(OUT, exist_ok=True)
     if a.stage == "grid":
-        g = pipeline.infant_grid(a.kind, rollouts=a.rollouts, window=a.window, procs=a.procs)
+        rows = data.load_trials().iloc[:: a.every].to_dict("records") if a.every > 1 else None
+        g = pipeline.infant_grid(a.kind, rollouts=a.rollouts, window=a.window, procs=a.procs, rows=rows)
         pipeline.save_infant_grid(g, f"{OUT}/{NPZ[a.kind]}")
         print(f"saved {OUT}/{NPZ[a.kind]} {g['traj'].shape}")
     elif a.stage == "score":

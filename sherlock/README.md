@@ -46,9 +46,33 @@ that need both. `window_pass.sbatch` is the serial alternative. Sherlock's git h
 
 Sizing note (2026-09-14): the first ext design (72 settings, 10 pairs, 24 rollouts) measured
 ~25 h on the node — realized looks under noise are long (~40 samples/trial) — and was cut to
-32 settings x 6 pairs x 16 rollouts. Sync code with a git bundle (no GitHub write access):
-`git bundle create /tmp/b exact-inference-reboot; scp /tmp/b sherlock:ranch_reboot.bundle;`
-then on Sherlock `git fetch ~/ranch_reboot.bundle exact-inference-reboot && git reset --hard FETCH_HEAD`.
+32 settings x 6 pairs x 16 rollouts.
+
+Code sync (2026-09-15, replaces the git-bundle + scp scheme): push the branch to GitHub
+(`git push origin exact-inference-reboot`; both repos are public and writable); Sherlock's clone
+has `origin` = GitHub. Every sbatch file starts with the same code-only sync block (tested by
+`tests/test_ops.py`, which applies it to a clone one commit behind):
+
+```bash
+git fetch -q origin exact-inference-reboot
+git reset -q --soft FETCH_HEAD
+git ls-tree -r --name-only HEAD | grep -v "^granch_fast/phase1/" | tr '\n' '\0' | xargs -0 git checkout -q HEAD --
+if git status --short | grep -v "^?? " | grep -v "granch_fast/phase1/" | grep -q .; then echo "SYNC FAILED"; exit 1; fi
+```
+
+Two rules behind it. (1) **Never `git reset --hard` on Sherlock**: `granch_fast/phase1/*.csv` are
+tracked, so a hard reset overwrites the regenerated tables with the committed laptop versions
+(it cost three tables on 2026-09-15). (2) **NUL-separated paths**: the repo tracks four paths
+containing spaces (`diagnostics/.Rproj.user/...`); plain `xargs` split them, git rejected the
+whole checkout batch, and — because a failing pipeline inside an `&&` list does not trip
+`set -e` — two jobs silently ran two-commits-old code (5.4 node-hours, 2026-09-15). The block
+above is line-by-line, so any failure aborts the job, and the guard line checks the result.
+The sbatch file itself is read at submission, so run the block on the login node before `sbatch`.
+
+Before submitting a chain, run it end to end at reduced size against a scratch copy of the tree:
+`RANCH_ROOT=<scratch> PY=<python> PROCS=6 bash sherlock/smoke_concept.sh` (~15 min on the laptop;
+one trial row per condition, 1 rollout, 1 pair). Five consecutive jobs died at steps that had
+never been exercised; the smoke is the cheap answer.
 
 Outputs land in `granch_fast/phase1/*.csv` (small; commit or rsync back):
 `adult_preds_selfcons_ext.csv`, `adult_scores21_selfcons_ext.csv`,

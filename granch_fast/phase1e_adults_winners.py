@@ -60,7 +60,7 @@ def _init(pairs):
 
 def _one_pair(args):
     """All R64 rollouts of one (winner, pair): returns per-rollout bg/dev arrays."""
-    (wid, s, metric, w, pi, window) = args
+    (wid, s, metric, w, pi, window, R) = args
     cfg = make_cfg(s); cfg.max_observation = T_CAP
     grid = make_grid(cfg)
     base = "surprisal" if metric == "surprisal_b" else metric
@@ -68,7 +68,7 @@ def _one_pair(args):
     f, v = _PAIRS[pi]
     fam = np.asarray(_EMB[f], float); dev = np.asarray(_EMB[v], float)
     bgs, dvs = [], []
-    for rr in range(R64):
+    for rr in range(R):
         rng = np.random.default_rng([5_000_000 + wid, pi, rr])
         bg, dv = rollout(cfg, grid, fam, dev, base, off, w, rng, s["sigma_true"], window=window)
         bgs.append(bg); dvs.append([dv[D] for D in range(1, MAX_D + 1)])
@@ -80,7 +80,9 @@ def main():
     ap.add_argument("--procs", type=int, default=24)
     ap.add_argument("--pairs", type=int, default=6)
     ap.add_argument("--window", default="exemplar_mean", choices=M.WINDOWS)
+    ap.add_argument("--rollouts", type=int, default=R64, help="fresh rollouts per (winner, pair); smoke tests: 1")
     args = ap.parse_args()
+    R = args.rollouts
     from granch_fast.phase1_adults import adult_pairs
     preds = pd.read_csv(f"{OUT}/adult_preds_selfcons_ext.csv")
     human = adult_long()
@@ -110,15 +112,15 @@ def main():
                  sigma_true=b.sigma_true, sd_epsilon=b.sd_epsilon)
         wn["s"] = s
         for pi in range(len(pairs)):
-            jobs.append((wid, s, wn["metric"], b.world_EIGs, pi, args.window))
-    print(f"\nre-evaluating {len(winners)} winners x {len(pairs)} pairs x {R64} rollouts ...")
+            jobs.append((wid, s, wn["metric"], b.world_EIGs, pi, args.window, R))
+    print(f"\nre-evaluating {len(winners)} winners x {len(pairs)} pairs x {R} rollouts ...")
     t0 = time.time()
     acc = {wid: ([], []) for wid in range(len(winners))}
     with Pool(args.procs, initializer=_init, initargs=(pairs,)) as pool:
         for wid, pi, bgs, dvs in pool.imap_unordered(_one_pair, jobs):
             acc[wid][0].append(bgs); acc[wid][1].append(dvs)
     out = []
-    print(f"\n=== RE-EVALUATION at R={R64} (grid -> fresh; the winner's-curse check) ===")
+    print(f"\n=== RE-EVALUATION at R={R} (grid -> fresh; the winner's-curse check) ===")
     for wid, wn in enumerate(winners):
         b = wn["row"]
         bg = np.concatenate(acc[wid][0]).mean(0); dv = np.concatenate(acc[wid][1]).mean(0)

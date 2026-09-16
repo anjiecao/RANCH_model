@@ -18,7 +18,12 @@ export RANCH_ROOT=$HOME/ranch
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
 source $RANCH_ROOT/venv/bin/activate
 cd $RANCH_ROOT/RANCH_model
-git fetch -q ~/ranch_reboot.bundle exact-inference-reboot && git ls-tree -r --name-only FETCH_HEAD | grep -v "^granch_fast/phase1/" | xargs git checkout -q FETCH_HEAD -- && git log --oneline -1 FETCH_HEAD   # code-only sync: never touch the output tables
+# code-only sync from GitHub (never touch the output tables in granch_fast/phase1/); every line aborts the job on failure
+git fetch -q origin exact-inference-reboot
+git reset -q --soft FETCH_HEAD
+git ls-tree -r --name-only HEAD | grep -v "^granch_fast/phase1/" | tr '\n' '\0' | xargs -0 git checkout -q HEAD --   # NUL-separated: four tracked paths contain spaces
+if git status --short | grep -v "^?? " | grep -v "granch_fast/phase1/" | grep -q .; then echo "SYNC FAILED: tracked code differs from HEAD"; git status --short | grep -v "^?? " | head; exit 1; fi
+git log --oneline -1
 PY=python
 A=granch_fast/phase1
 B=$HOME/ranch_window/RANCH_model/granch_fast/phase1

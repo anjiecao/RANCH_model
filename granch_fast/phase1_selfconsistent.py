@@ -82,16 +82,18 @@ def main():
     ap.add_argument("--procs", type=int, default=10)
     ap.add_argument("--rollouts", type=int, default=R)
     ap.add_argument("--limit-rows", type=int, default=None)
+    ap.add_argument("--every", type=int, default=1, help="take every k-th trial row (rows are ordered by trial number: "
+                                                         "24 -> one row per condition, for smoke tests)")
     ap.add_argument("--window", default="exemplar_mean", choices=M.WINDOWS,
                     help="eig_code hypothetical-window centering (oracle = published code)")
     args = ap.parse_args()
     S = settings_table(args.which)
     suf = "selfcons" if args.which == "base" else "selfcons_ext"
     seed0 = 1000 if args.which == "base" else 20000
-    trials = F.load_trials()
-    rows = trials.to_dict("records")
+    trials = F.load_trials().iloc[:: args.every]
     if args.limit_rows:
-        rows = rows[: args.limit_rows]
+        trials = trials.iloc[: args.limit_rows]
+    rows = trials.to_dict("records")
     print(f"{suf}: {len(S)} settings x {len(rows)} rows x {args.rollouts} rollouts x {len(WANT)} metrics x T={T_MAX}, window={args.window}")
     t0 = time.time()
     traj = np.empty((len(S), len(rows), args.rollouts, len(WANT), T_MAX), dtype=np.float32)
@@ -100,9 +102,8 @@ def main():
         for k, (si, out) in enumerate(pool.imap_unordered(_one, jobs)):
             traj[si] = out
             print(f"  {k+1}/{len(S)} settings done ({time.time()-t0:.0f}s)", flush=True)
-    tr = trials.iloc[: len(rows)]
     np.savez_compressed(f"{OUT}/infant_traj_{suf}.npz", traj=traj, metrics=np.array(WANT),
-                        trial_type=tr.trial_type.values, trial_number=tr.trial_number.values,
+                        trial_type=trials.trial_type.values, trial_number=trials.trial_number.values,
                         window=np.array(args.window))
     S.to_csv(f"{OUT}/infant_settings_{suf}.csv", index=False)
     print(f"saved ({time.time()-t0:.0f}s)")

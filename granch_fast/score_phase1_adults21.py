@@ -35,7 +35,7 @@ for _, row in P.iterrows():
 res = pd.DataFrame(rows); res.to_csv(f"{OUT}/adult_scores21_{WHICH}.csv", index=False)
 print(f"=== ADULTS ({WHICH}), Exp 1 — 21-condition linking (paper's aggregation): mean/best R2, best full RMSE, best 7-fold CV RMSE (ms) ===")
 print(f"{'metric':12s} {'meanR2':>7s} {'bestR2':>7s} {'RMSEfull':>9s} {'RMSEcv':>7s} | best-R2 setting (bg1 bg2 bg11 | dev)")
-for dm in ["eig_code", "eig_within", "kl", "mi", "surprisal_b", "surprisal"]:
+for dm in ["eig_code", "eig_within", "kl", "mi", "mi_concept", "surprisal_b", "surprisal"]:
     g = res[res.metric == dm].dropna(subset=["r2_21"])
     if g.empty: continue
     b = g.sort_values("r2_21", ascending=False).iloc[0]

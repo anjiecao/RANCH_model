@@ -120,3 +120,29 @@ def test_exp2_predictions_match_legacy(emb):
         assert fam_o == fam_t and dev_o == dev_t
     finally:
         RP2.R_INF, RP2.R_ADU = saved
+
+
+def test_gate_compare_aligns_metrics_stacks_selfcons_scores_and_flags_mismatches(tmp_path):
+    """ranch.gate.compare is the Phase-B acceptance criterion: trajectories aligned by metric
+    name, tables compared on the numeric columns only (a string column such as `window`
+    crashed np.issubdtype under pandas' string dtype, 2026-09-15), and the legacy combined
+    selfcons score table compared against the pipeline's base+ext tables (ext offset)."""
+    from ranch import gate
+    a, b = tmp_path / "ranch", tmp_path / "legacy"
+    a.mkdir(); b.mkdir()
+    rng = np.random.default_rng(0)
+    traj = rng.normal(size=(2, 3, 1, 2, 4)).astype(np.float32)
+    np.savez(b / "infant_traj_selfcons.npz", traj=traj, metrics=np.array(["mi", "kl"]))
+    np.savez(a / "infant_traj_selfcons.npz", traj=traj[:, :, :, ::-1], metrics=np.array(["kl", "mi"]))   # permuted axis, same data
+    rows = lambda offset, n: pd.DataFrame(dict(setting=[offset + i // 2 for i in range(2 * n)], metric=["mi", "kl"] * n,
+                                               world_EIGs=[0.1] * (2 * n), pooled_r2=np.arange(2 * n, dtype=float),
+                                               window=["exemplar_mean"] * (2 * n)))
+    base, ext = rows(0, 2), rows(0, 3)
+    pd.concat([base, ext.assign(setting=ext.setting + 2)]).to_csv(b / "infant_scores_selfcons.csv", index=False)
+    base.to_csv(a / "infant_scores_selfcons_base.csv", index=False); ext.to_csv(a / "infant_scores_selfcons_ext.csv", index=False)
+    preds = rows(0, 2); preds.to_csv(b / "adult_preds_selfcons.csv", index=False)
+    preds.assign(pooled_r2=preds.pooled_r2 + 1e-3).to_csv(a / "adult_preds_selfcons.csv", index=False)
+    rep = dict(gate.compare(str(a), str(b)))
+    assert rep["infant_traj_selfcons.npz"].startswith("OK")
+    assert rep["infant_scores_selfcons.csv"].startswith("OK rows 10/10")
+    assert rep["adult_preds_selfcons.csv"].startswith("MISMATCH") and "pooled_r2" in rep["adult_preds_selfcons.csv"]

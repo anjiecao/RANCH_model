@@ -42,15 +42,48 @@ def test_sbatch_scripts_parse():
         assert "-p mcfrank" in open(f).read() or "-p owners" in open(f).read()
 
 
-def test_cluster_jobs_never_reset_the_output_tables():
+SYNC_START, SYNC_END = "git fetch -q origin exact-inference-reboot", "git log --oneline -1"
+
+
+def _sync_block(sbatch):
+    lines = open(sbatch).read().splitlines()
+    i = next(k for k, l in enumerate(lines) if l.startswith(SYNC_START))
+    j = next(k for k, l in enumerate(lines) if k > i and l.startswith(SYNC_END))
+    return "\n".join(lines[i:j + 1])
+
+
+def test_cluster_jobs_sync_code_only_and_all_the_same_way():
     """`git reset --hard` in a job clobbers the tracked score tables in granch_fast/phase1
     with the committed (stale) versions -- it cost the 2026-09-15 regeneration three tables.
-    Jobs must sync code only."""
+    Jobs must sync code only, and every job must use the one block exercised below."""
+    blocks = set()
     for f in glob.glob(f"{ROOT}/sherlock/*.sbatch"):
         src = open(f).read()
         assert "reset --hard" not in src, f
         if "git fetch" in src:
-            assert 'grep -v "^granch_fast/phase1/"' in src, f
+            blocks.add(_sync_block(f))
+    assert len(blocks) == 1, "sync blocks differ across sbatch files"
+    (block,) = blocks
+    assert 'grep -v "^granch_fast/phase1/"' in block and "xargs -0" in block
+
+
+def test_sync_block_applies_to_a_clone_one_commit_behind(tmp_path):
+    """The repo tracks four paths containing spaces; plain `xargs` split them and git rejected
+    the whole checkout batch, so the 2026-09-15 concept study and gate silently ran stale
+    code (5.4 node-hours lost). Apply the sbatch sync block to a clone one commit behind: it
+    must end at HEAD with every tracked file outside granch_fast/phase1/ equal to HEAD."""
+    block = _sync_block(glob.glob(f"{ROOT}/sherlock/*.sbatch")[0])
+    clone = tmp_path / "clone"
+    subprocess.run(["git", "clone", "-q", "--shared", "-b", "exact-inference-reboot", ROOT, str(clone)], check=True)
+    subprocess.run(["git", "reset", "-q", "--hard", "HEAD~1"], cwd=clone, check=True)
+    r = subprocess.run(["bash", "-euo", "pipefail", "-c", block], cwd=clone, capture_output=True, text=True)
+    assert r.returncode == 0, r.stdout + r.stderr
+    rev = lambda cwd: subprocess.run(["git", "rev-parse", "HEAD"], cwd=cwd, capture_output=True, text=True).stdout.strip()
+    assert rev(clone) == rev(ROOT)
+    dirty = subprocess.run(["git", "status", "--short"], cwd=clone, capture_output=True, text=True).stdout.splitlines()
+    assert all(l.startswith("?? ") or "granch_fast/phase1/" in l for l in dirty), dirty
+    spaced = [p for p in subprocess.run(["git", "ls-files"], cwd=clone, capture_output=True, text=True).stdout.splitlines() if " " in p]
+    assert spaced and all((clone / p).exists() for p in spaced)
 
 
 def test_cluster_invoked_scripts_start_up():
@@ -70,6 +103,10 @@ def test_cluster_invoked_scripts_start_up():
         r = subprocess.run([sys.executable, f"{ROOT}/{s}", "--help"], capture_output=True, text=True, env=env, timeout=300)
         if r.returncode != 0:
             failures.append((s, r.stderr.strip().splitlines()[-1] if r.stderr.strip() else "?"))
+    for mod in ("ranch", "ranch.gate"):                # the gate job's `python -m ...` entry points
+        r = subprocess.run([sys.executable, "-m", mod, "--help"], capture_output=True, text=True, env=env, cwd=ROOT, timeout=300)
+        if r.returncode != 0:
+            failures.append((mod, r.stderr.strip().splitlines()[-1] if r.stderr.strip() else "?"))
     assert not failures, failures
 
 

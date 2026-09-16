@@ -40,13 +40,23 @@ def compare(ranch_dir, legacy_dir):
                        ("" if ok else f" max|diff| {np.abs(ta_c - tb_c).max() if ta_c.shape == tb_c.shape else 'shape'}")))
     for f in CSV:
         a, b = f"{ranch_dir}/{f}", f"{legacy_dir}/{f}"
-        if not (os.path.exists(a) and os.path.exists(b)):
-            report.append((f, "skipped (missing on one side)")); continue
-        da, db = pd.read_csv(a), pd.read_csv(b)
-        if "infant_scores_selfcons" in f:
-            db = db[db.metric.isin(da.metric.unique())]
+        if f == "infant_scores_selfcons.csv":
+            # the legacy scorer writes base+ext in one table (setting index = concat order);
+            # the pipeline scores the two kinds separately -- stack them, ext offset by the base count
+            parts = [pd.read_csv(f"{ranch_dir}/infant_scores_selfcons_{k}.csv")
+                     for k in ("base", "ext") if os.path.exists(f"{ranch_dir}/infant_scores_selfcons_{k}.csv")]
+            if not parts or not os.path.exists(b):
+                report.append((f, "skipped (missing on one side)")); continue
+            if len(parts) == 2:
+                parts[1] = parts[1].assign(setting=parts[1].setting + parts[0].setting.max() + 1)
+            da, db = pd.concat(parts, ignore_index=True), pd.read_csv(b)
+            db = db[db.metric.isin(da.metric.unique()) & db.setting.isin(da.setting.unique())]
+        else:
+            if not (os.path.exists(a) and os.path.exists(b)):
+                report.append((f, "skipped (missing on one side)")); continue
+            da, db = pd.read_csv(a), pd.read_csv(b)
         j = da.merge(db, on=KEY, suffixes=("_a", "_b"))
-        cols = [c for c in da.columns if c not in KEY and c in db.columns and np.issubdtype(da[c].dtype, np.number)]
+        cols = [c for c in da.columns if c not in KEY and c in db.columns and pd.api.types.is_numeric_dtype(da[c])]
         bad = []
         for c in cols:
             x, y = j[f"{c}_a"].values.astype(float), j[f"{c}_b"].values.astype(float)
