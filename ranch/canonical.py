@@ -38,9 +38,10 @@ CANONICAL = NamedConfiguration(
                 quadrature=Quadrature(n_sigma=80, n_eps=30)),
     sigma_true=0.1, variable=EIGConcept, w_infants=6.8e-5, w_adults=3.2e-5,
     adult_prior=Prior(0.0, 1.0, 1.0, 0.1, (0.001, 1.5)),
-    note="infants: this cell R2 .73 on the R=8 grid (grid best .755 at sigma_true .2 / sd_eps 1 -> .747 on 32 fresh "
-         "rollouts, hab .87 dis 1.12); adults 21-cond .73 on 64 fresh rollouts (hab .77 dis 1.15); "
-         "Exp-2 carried .51 / .61 with the correct violation orderings (2026-09-16)")
+    note="infants: this shared cell re-evaluates to R2 .64 +/- .02 on 32 fresh rollouts (grid .73; hab .87 dis 1.12); "
+         "the infant grid best is sigma_true .2 / sd_eps 1 / w 1e-5: .755 -> .747 re-evaluated -- pinning one world "
+         "noise for both populations costs ~.1 of infant R2 and is a team choice; adults 21-cond .73 on 64 fresh "
+         "rollouts (hab .77 dis 1.15); Exp-2 carried .51 / .61 with the correct violation orderings (2026-09-16)")
 
 TOTAL_EIG_REFERENCE = NamedConfiguration(
     name="reference: noisy world + inferred eps + total EIG (information about eps included)",
