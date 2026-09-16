@@ -152,13 +152,15 @@ def _adult_job(args):
         fam, dev = _EMB[f], _EMB[v]
         if mode == "mean_field":
             res = self_paced(sp.model, World(0.0), fam, dev, policy, max_D=MAX_D, mode="mean_field", T_cap=T_CAP,
-                             variables=sp.variables)
+                             variables=(var,))
             bgs.append(res.trajectories["bg"][0]); dvs.append(res.trajectories["dev"][0])
             continue
         mseed = list(W_ADULT[kind]).index(metric)
         for rr in range(rollouts):
+            # only the policy's variable is computed: a self-paced rollout keeps sample counts, nothing else
+            # (the implemented EIG's 5-point window alone costs 13 ms/glimpse; all five variables 36 ms vs 6 ms)
             res = self_paced(sp.model, World(sp.sigma_true, seed=[si, mseed, wi, pi, rr]), fam, dev, policy, max_D=MAX_D,
-                             mode="stochastic", T_cap=T_CAP, variables=sp.variables)
+                             mode="stochastic", T_cap=T_CAP, variables=(var,))
             bg, dv = res.trajectories["bg"][0], res.trajectories["dev"][0]
             n_capped += int((bg >= T_CAP).sum() + (dv >= T_CAP).sum())
             bgs.append(bg); dvs.append(dv)
@@ -249,7 +251,7 @@ def exp2_infants(sp, metric, w, rollouts=1, seed=11, T_max=60, durations=(8, 9),
             for D in durations:
                 for rr in range(rollouts):
                     world = World(sp.sigma_true, seed=[seed, vi, pi, D, rr] if sp.sigma_true > 0 else None)
-                    res = forced_exposure_then_test(sp.model, world, emb[r.fam], emb[r.test], D, T_max=T_max, variables=sp.variables)
+                    res = forced_exposure_then_test(sp.model, world, emb[r.fam], emb[r.test], D, T_max=T_max, variables=(var,))
                     vals.append(res.expected_samples(var, w, offset=off))
         out[vt] = float(np.mean(vals))
     return out
@@ -268,12 +270,12 @@ def exp2_adults(sp, metric, w, mode, rollouts=1, seed=13, n_per_type=6, emb=None
         for pi, (f, v) in enumerate(pairs[vt]):
             if mode == "mean_field":
                 res = self_paced(sp.model, World(0.0), emb[f], emb[v], policy, max_D=5, mode="mean_field", T_cap=T_CAP,
-                                 variables=sp.variables, probe_at=(1, 3, 5))
+                                 variables=(var,), probe_at=(1, 3, 5))
                 bgs.append(res.trajectories["bg"][0][:6]); devs.append(res.trajectories["dev"][0])
             else:
                 for rr in range(rollouts):
                     res = self_paced(sp.model, World(sp.sigma_true, seed=[seed, 100 + vi, pi, rr]), emb[f], emb[v], policy, max_D=5,
-                                     mode="stochastic", T_cap=T_CAP, variables=sp.variables, probe_at=(1, 3, 5))
+                                     mode="stochastic", T_cap=T_CAP, variables=(var,), probe_at=(1, 3, 5))
                     bgs.append(res.trajectories["bg"][0]); devs.append(res.trajectories["dev"][0])
         fams.append(np.mean(bgs, axis=0))
         if vt != "background":

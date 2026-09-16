@@ -97,7 +97,7 @@ def _infant_chunk(args):
     for i, r in enumerate(rows[lo:hi]):
         for rr in range(rollouts):
             res = forced_exposure_then_test(sp.model, World(sp.sigma_true, seed=[seed, lo + i, rr]), _EMB[r["fam"]], _EMB[r["test"]],
-                                            int(r["fam_duration"]), T_max=T_max, variables=sp.variables)
+                                            int(r["fam_duration"]), T_max=T_max, variables=(var,))   # only the selected variable
             out[i, rr] = res.trajectories[var.key][0] + off
     return lo, hi, out
 
@@ -150,7 +150,7 @@ def _adult_pair(args):
     bgs, dvs = [], []
     for rr in range(rollouts):
         res = self_paced(sp.model, World(sp.sigma_true, seed=[seed, pi, rr]), fam, dev, policy, max_D=max_D,
-                         mode="stochastic", T_cap=T_cap, variables=sp.variables)
+                         mode="stochastic", T_cap=T_cap, variables=(var,))   # only the policy's variable
         bgs.append(res.trajectories["bg"][0]); dvs.append(res.trajectories["dev"][0])
     return pi, np.array(bgs), np.array(dvs)
 
