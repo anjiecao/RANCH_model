@@ -262,6 +262,18 @@ regeneration — a free reproducibility check) and produced valid four-variable 
 tables; the gate died at its first command. Fixed and resubmitted after a local end-to-end smoke
 of both chains (`sherlock/smoke_concept.sh`); sync now goes through GitHub branches on both repos.
 
+*Status 2026-09-16 (morning).* The concept study completed (4 h 51 min, every step). Outcome
+(§5.6 and the report): the concept EIG reproduces the phenomena and the retracted numbers
+honestly — infants R² .747 ± .025 on 32 fresh rollouts, adults .64–.73 on 64, Exp-2 .51/.61 with
+the correct orderings — and it is the paper's own definition of EIG (information about (μ, σ);
+ε not named). `ranch.canonical.CANONICAL` now pins it (pending MCF). The gate is running
+(grids main/infeps/selfcons base+ext, scores, adults main + base into `phase1_ranch/`, then the
+diff); its verdict decides step (3) of the finishing sequence. Golden tables regenerated with a
+reviewed diff: every change traced to the formula fix, the window, the concept EIG, the R32/R64
+re-evaluations, or — for the deterministic adult table — a 5-pair pre-commit run (the current
+driver at `--pairs 6` reproduces the regenerated table to 1e-10). Lesson for §0 #8: a cached
+table must carry the arguments that produced it, not only the script name.
+
 *Finishing sequence (agreed 2026-09-15).* Phase B: (1) `EIGConcept` registered (engine
 `feature_eig_concept`, exact-quadrature reference test) and run through the noisy-world study
 (`sherlock/concept_study.sbatch`); (2) the gate (`sherlock/gate.sbatch` + `python -m ranch.gate`):
@@ -318,3 +330,12 @@ reproduction commands for every figure/table in the revision.
    had produced: proposed as a new registered variable (`EIGConcept`) with a moment-matched
    closed form validated against the exact quadrature, then a full noisy-world study.
    The canonical-model decision (§4) is reopened.
+   **Outcome (2026-09-16):** `EIGConcept` (`eig.feature_eig_concept`, exact-quadrature test)
+   run through the whole noisy-world study: infants R² .755 on the grid → .747 ± .025 on 32
+   fresh rollouts (hab .87, dis 1.12; flat across σ_true .1–.3 and the ε-prior width), adults
+   .64–.73 on 64 fresh rollouts, Exp-2 .51 / .61 with the correct orderings — the retracted
+   numbers, honestly. It is the paper's own definition of EIG (expected KL between successive
+   posteriors over (μ, σ); ε not named), so the described model is restored with the right
+   quantity; `CANONICAL` pins it (pending MCF). The total EIG stays at .23. Lesson for the
+   registry: a decision variable's *object* (what the information is about) is part of its
+   definition and must be stated; `EIG` and `EIGConcept` differ only there.

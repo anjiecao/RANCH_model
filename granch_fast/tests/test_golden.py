@@ -55,6 +55,14 @@ def test_phase2_generalization(golden, table, key):
         assert p.loc[m, "inf_order"] == v["inf_order"] and p.loc[m, "adu_order"] == v["adu_order"]
 
 
+def test_adult_winners_R64(golden):
+    """The re-evaluated adult winners (the numbers the report quotes) match their pins."""
+    w = pd.read_csv(f"{PHASE1}/adult_winners_R64.csv")
+    w = w[w.rule == "r2"].set_index("metric")
+    for m, v in golden["adult_winners_R64_r2rule"].items():
+        assert w.loc[m, "r2_21_R64"] == pytest.approx(v, abs=1e-3)
+
+
 def test_configuration_map(golden):
     cm = pd.read_csv(f"{GF}/config_map.csv").set_index("config")
     for cfg, (hab, dis) in golden["config_map"].items():

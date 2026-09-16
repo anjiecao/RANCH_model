@@ -7,7 +7,7 @@ PAPER <- "/Users/mcfrank/Projects/ranch/pkbb_paper_writing"
 GF <- "/Users/mcfrank/Projects/ranch/RANCH_model/granch_fast"
 FIGS <- "/Users/mcfrank/Projects/ranch/writeup/figs"
 COL_TT <- c("familiar"="#268bd2","novel"="#cb4b16")
-MET <- c("implemented EIG","KL","true EIG","surprisal")
+MET <- c("implemented EIG","KL","true EIG","concept EIG","surprisal")   # true EIG = total (incl. eps); concept EIG = eps a nuisance (2026-09-16)
 theme_p <- function(sz=13) theme_few(sz) + theme(strip.text=element_text(size=11),
   plot.title=element_text(size=12), legend.position="bottom")
 
@@ -36,33 +36,36 @@ pB1 <- ggplot() +
   facet_wrap(~panel, nrow=1, scales="free_y") +
   scale_color_manual(values=COL_TT, name="Test trial") +
   scale_x_continuous(breaks=c(0,1,2,3,4,6,8,9)) +
-  theme_p() + labs(x="Prior exposures", y="Behaviour: looking (s)   |   models: E[samples], native units",
+  theme_p() + labs(x="Prior exposures", y="looking (s)  |  E[samples] (native)",
     title="NOISY world, learner infers eps (the paper's spec made self-consistent): infant Exp-1, native-unit curves",
-    subtitle="Each decision variable at its best sign-consistent setting. Implemented EIG and KL lose dishabituation; true EIG produces habituation + dishabituation.")
-ggsave(file.path(FIGS,"figB1_selfcons_variants.png"), pB1, width=14.5, height=4.4, dpi=150, bg="white")
+    subtitle="Each decision variable at its best sign-consistent setting, curves from the R=32 re-evaluation. Only the concept EIG (information about mu, sigma^2; eps a nuisance) produces habituation + dishabituation;\nthe total EIG (which also counts information about eps) does not, nor do the realized-gain variables.")
+ggsave(file.path(FIGS,"figB1_selfcons_variants.png"), pB1, width=17, height=4.4, dpi=150, bg="white")
 
 ## ---------- figB2: mechanism ----------
 mech <- read_csv(file.path(GF,"selfcons_mechanism.csv"), show_col_types=FALSE) %>%
-  mutate(metric=factor(metric, levels=c("implemented EIG","true EIG")),
+  mutate(metric=factor(metric, levels=c("implemented EIG","true EIG","concept EIG")),
          world=factor(world, levels=c("noiseless world (published generation)","noisy world (sigma_true = 0.1)")),
          tt=ifelse(test_type=="background","familiar","novel"))
 pB2 <- ggplot(mech, aes(t, y, color=tt, fill=tt)) +
   geom_ribbon(aes(ymin=lo, ymax=hi), alpha=.25, color=NA) +
   geom_line(linewidth=1) + geom_point(size=1.4) +
-  facet_wrap(~ metric + world, nrow=2, scales="free_y",
+  facet_wrap(~ world + metric, nrow=2, scales="free_y",
              labeller=labeller(.multi_line=FALSE)) +
   scale_y_log10() +
   scale_color_manual(values=COL_TT, name="Test stimulus") +
   scale_fill_manual(values=COL_TT, guide="none") +
   theme_p() + labs(x="Test-trial sample number (after 8 exposures)", y="Decision variable (log scale)",
     title="Mechanism: the same learner (eps inferred, V1 a1 b0.1) in a noiseless vs. truly noisy world",
-    subtitle="Left column: exact inference collapses eps; decision variables are ~12 orders of magnitude smaller (gaps = numerically negative values dropped by the log axis).\nRight column: inference is self-consistent; implemented EIG holds familiar ~ novel (noise floor + typicality penalty); true EIG keeps novel elevated over a declining familiar.")
-ggsave(file.path(FIGS,"figB2_selfcons_mechanism.png"), pB2, width=11, height=6.4, dpi=150, bg="white")
+    subtitle=paste0("Top row: exact inference collapses eps; decision variables are ~12 orders of magnitude smaller (gaps = numerically negative values dropped by the log axis).\n",
+                    "Bottom row: inference is self-consistent. Implemented EIG holds familiar ~ novel (novel/familiar 1.05 -> 0.87 over 15 samples); the total EIG sits on a floor\n",
+                    "(familiar .073 -> .044, ratio 1.16 -> 1.01: information about eps, which the familiar supplies too); the concept EIG's familiar falls .029 -> .0004 (70x)\n",
+                    "with the novel 1.2-1.4x above it."))
+ggsave(file.path(FIGS,"figB2_selfcons_mechanism.png"), pB2, width=14, height=7, dpi=150, bg="white")
 
 ## ---------- figB3: configuration map ----------
 cm <- read_csv(file.path(GF,"config_map.csv"), show_col_types=FALSE) %>%
   mutate(config=str_wrap(config, 38))
-ord <- cm$config[c(1, 6, 3, 2, 5, 4, 7)]
+ord <- cm$config[c(1, 7, 3, 2, 6, 5, 4, 8)]   # human, the two that work, then the failures (row order = config_map.csv)
 cm <- cm %>% mutate(config=factor(config, levels=rev(ord)),
                     kind=factor(kind, levels=c("human","works","fails")))
 long <- bind_rows(cm %>% transmute(config, kind, panel="habituation ratio (fam dur10 / dur1; lower = habituates)", v=hab),
@@ -93,10 +96,10 @@ pB4 <- ggplot(ac, aes(trial_number, y, color=trial_type)) +
   scale_color_manual(values=COL_TT, name="Trial type") +
   scale_x_continuous(breaks=c(1,3,5,7,9,11)) +
   theme_p() + labs(x="Trial number (novel = deviant after n-1 familiar trials)",
-    y="Behaviour: dwell (s)   |   models: realized samples, native units",
+    y="dwell (s)  |  realized samples (native)",
     title="ADULTS, NOISY world, learner infers eps: self-paced Exp-1, stochastic rollouts, native units",
-    subtitle="Best sign-consistent non-saturated setting per decision variable (21-condition linking). Implemented EIG's novel curve falls BELOW familiar (dis 0.93); true EIG keeps novel elevated (dis 1.22).")
-ggsave(file.path(FIGS,"figB4_selfcons_adults.png"), pB4, width=14.5, height=4.4, dpi=150, bg="white")
+    subtitle="Each decision variable's winner on the 32-setting grid (21-condition linking), curves and R2 from its RE-EVALUATION on 64 fresh rollouts.\nThe concept EIG keeps the novel elevated over a declining familiar; surprisal's grid R2 of .56 was selection optimism (re-evaluated .00).")
+ggsave(file.path(FIGS,"figB4_selfcons_adults.png"), pB4, width=17, height=4.4, dpi=150, bg="white")
 cat("wrote figB1..figB4\n")
 
 ## ---------- figB5: channel decomposition of the forward-looking EIG ----------
@@ -106,7 +109,7 @@ cat("wrote figB1..figB4\n")
 # magnitudes are comparable across columns.
 ch <- read_csv(file.path(GF,"channels_decomp.csv"), show_col_types=FALSE) %>%
   mutate(channel=factor(channel, levels=c("I_mu (concept mean)","I_sigma (spread & noise)","total (true EIG)",
-                                           "KL (realized)","implemented EIG")),
+                                           "concept EIG (eps nuisance)","KL (realized)","implemented EIG")),
          tt=ifelse(test_type=="background","familiar","novel"))
 pB5 <- ggplot(ch %>% mutate(lo=pmax(lo, y/3)), aes(t, y, color=tt, fill=tt)) +
   geom_ribbon(aes(ymin=lo, ymax=hi), alpha=.25, color=NA) +
@@ -118,8 +121,9 @@ pB5 <- ggplot(ch %>% mutate(lo=pmax(lo, y/3)), aes(t, y, color=tt, fill=tt)) +
   theme_p(12) + theme(strip.placement="outside", strip.text.y.left=element_text(angle=90)) +
   labs(x="Test-trial sample number (after 8 exposures)", y="log scale; each row shares its axis across the three worlds",
        title="Where the forward-looking EIG's novelty preference comes from, and why realized gain loses it under noise",
-       subtitle=paste0("Same prior (V3 a1 b0.1) throughout. Rows 1-3: the mu-channel is stimulus-blind in every world; the (sigma^2, eps) channel carries all of the novel > familiar contrast\n",
-                       "and grows under noise, but the total's contrast is similar across worlds. Rows 4-5: realized KL and the implemented functional separate novel from familiar\n",
-                       "only in the noiseless world; under noise the familiar acquires a noise floor and the novel's update is partly absorbed as noise."))
-ggsave(file.path(FIGS,"figB5_channels.png"), pB5, width=12.5, height=10.5, dpi=150, bg="white")
+       subtitle=paste0("Same prior (V3 a1 b0.1) throughout. Rows 1-3: the mu-channel is stimulus-blind in every world; with eps inferred (column 3)\n",
+                       "the (sigma^2, eps) channel is dominated by information about eps, which the familiar supplies as well as the novel, so the total sits on a floor.\n",
+                       "Row 4: the concept EIG (eps a nuisance) equals the total when eps is fixed (columns 1-2) but habituates and dishabituates with eps inferred.\n",
+                       "Rows 5-6: realized KL and the implemented functional separate novel from familiar only in the noiseless world."))
+ggsave(file.path(FIGS,"figB5_channels.png"), pB5, width=12.5, height=12.5, dpi=150, bg="white")
 cat("wrote figB5\n")

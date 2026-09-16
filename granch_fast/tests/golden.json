@@ -1,112 +1,118 @@
 {
- "_note": "pinned from outputs of 2026-09-14 (clamped linkings; selfcons R32 re-evaluation)",
+ "_note": "pinned from outputs of 2026-09-16 (eq-15 fix; exemplar-mean window under noise; concept EIG; clamped linkings; selfcons R32 / adult R64 re-evaluations)",
  "infant_main_best": {
   "eig_code": {
-   "r2": 0.753012065137439,
-   "rmse": 4.064028314471678
+   "r2": 0.7530120652166034,
+   "rmse": 4.064028314844371
   },
   "eig_within": {
-   "r2": 0.7627227594586955,
-   "rmse": 4.05197061126746
+   "r2": 0.7627227592743752,
+   "rmse": 4.051970611472524
   },
   "kl": {
-   "r2": 0.7826058445310695,
-   "rmse": 4.028578117907073
+   "r2": 0.7826058445310828,
+   "rmse": 4.028578117907011
   },
   "mi": {
-   "r2": 0.7473984086421435,
-   "rmse": 4.072715895211638
+   "r2": 0.7474069918110057,
+   "rmse": 4.072779604951754
   },
   "surprisal_b": {
-   "r2": 0.7282950321015137,
+   "r2": 0.7282950321015434,
    "rmse": 4.106474488098113
   }
  },
  "infant_infeps_best": {
   "eig_code": {
-   "r2": 0.0601209220041145,
-   "rmse": 4.8092187619852
+   "r2": 0.0601209220041134,
+   "rmse": 4.809218761985196
   },
   "eig_within": {
-   "r2": 0.0628014735449406,
-   "rmse": 4.806670514804795
+   "r2": 0.0601249416931992,
+   "rmse": 4.8092104121728125
   },
   "kl": {
-   "r2": 0.3961438900223674,
-   "rmse": 4.47614333156389
+   "r2": 0.3961438900223943,
+   "rmse": 4.47614333156387
   },
   "mi": {
-   "r2": 0.0601214739839836,
-   "rmse": 4.8092185019567495
+   "r2": 0.0601275119733912,
+   "rmse": 4.809215462013721
   },
   "surprisal_b": {
-   "r2": 0.7936176107565874,
-   "rmse": 4.221869228920417
+   "r2": 0.793617610756587,
+   "rmse": 4.221869228920418
   }
  },
  "adult21_main_best_r2": {
-  "eig_code": 0.8982515727814885,
-  "eig_within": 0.9018815724309972,
-  "kl": 0.8984935505894568,
-  "mi": 0.8283675446010024,
-  "surprisal_b": 0.8730319998488546
+  "eig_code": 0.900456145635521,
+  "eig_within": 0.8986405668902856,
+  "kl": 0.8971660316407633,
+  "mi": 0.8544156850335406,
+  "surprisal_b": 0.8739365311464247
  },
  "phase2_paper_rule": {
   "eig_code": {
-   "inf": 0.5206431218599988,
-   "adu": 0.7464964948425231,
+   "inf": 0.5206431218600657,
+   "adu": 0.7464964948276073,
    "inf_order": "anim>iden>numb>pose>back",
    "adu_order": "anim>iden>numb>pose"
   },
   "eig_within": {
-   "inf": 0.5213747199852842,
-   "adu": 0.7075773806444358,
+   "inf": 0.5213747199849174,
+   "adu": 0.7075773806447953,
    "inf_order": "anim>iden>numb>pose>back",
    "adu_order": "anim>iden>numb>pose"
   },
   "kl": {
-   "inf": 0.4384522312610895,
-   "adu": 0.7058173143631243,
+   "inf": 0.4384522312609477,
+   "adu": 0.7058173143681027,
    "inf_order": "anim>iden>numb>pose>back",
    "adu_order": "anim>iden>numb>pose"
   },
   "mi": {
-   "inf": 0.4823820797773832,
-   "adu": 0.6069217638371903,
+   "inf": 0.4823100697006289,
+   "adu": 0.6120519759432557,
    "inf_order": "anim>iden>numb>pose>back",
    "adu_order": "anim>iden>numb>pose"
   },
   "surprisal_b": {
-   "inf": 0.4701799495485594,
-   "adu": 0.5561647422180405,
+   "inf": 0.4701799495486248,
+   "adu": 0.5561647422180397,
    "inf_order": "anim>iden>numb>pose>back",
    "adu_order": "anim>iden>numb>pose"
   }
  },
  "phase2_selfcons_paper_rule": {
   "eig_code": {
-   "inf": 0.3577742710822825,
-   "adu": 0.1733782946364242,
+   "inf": 0.3734854800316645,
+   "adu": 0.2504905818781807,
    "inf_order": "back>iden>numb>pose>anim",
-   "adu_order": "numb>iden>pose>anim"
+   "adu_order": "numb>anim>pose>iden"
   },
   "mi": {
-   "inf": 0.4927229030817944,
-   "adu": 0.6836851072562695,
-   "inf_order": "anim>iden>numb>pose>back",
-   "adu_order": "anim>iden>numb>pose"
+   "inf": 0.0346784131681432,
+   "adu": 0.2762006733477797,
+   "inf_order": "iden>back>anim>numb>pose",
+   "adu_order": "anim>pose>iden>numb"
   },
   "kl": {
-   "inf": 0.1267148904103456,
-   "adu": 0.3097502198323673,
+   "inf": 0.1267148904100796,
+   "adu": 0.3938409475836303,
    "inf_order": "iden>numb>anim>back>pose",
-   "adu_order": "anim>pose>numb>iden"
+   "adu_order": "anim>iden>numb>pose"
   },
   "surprisal_b": {
-   "inf": 0.4935788164734503,
-   "adu": 0.2179321858949428,
+   "inf": 0.49357881647345,
+   "adu": 0.0031397321237838,
    "inf_order": "anim>iden>numb>pose>back",
-   "adu_order": "anim>pose>iden>numb"
+   "adu_order": "pose>iden>anim>numb"
+  },
+  "mi_concept": {
+   "inf": 0.5096167446995887,
+   "adu": 0.6126178477209235,
+   "inf_order": "anim>iden>numb>pose>back",
+   "adu_order": "anim>iden>numb>pose"
   }
  },
  "config_map": {
@@ -119,32 +125,44 @@
    2.8048168646890477
   ],
   "CORRECTED: noiseless + FIXED eps + implemented EIG": [
-   0.5485220729867272,
-   1.5802203149599834
+   0.5485220729816844,
+   1.5802203148892568
   ],
   "noiseless + inferred eps, EXACT inference (any DV; degenerate)": [
-   0.5110529704012652,
-   1.000000000000024
+   0.5083987690178239,
+   1.000000000000032
   ],
   "noisy + inferred eps + implemented EIG": [
-   0.9327237034033596,
-   0.9829155290691995
+   0.8922961440764556,
+   0.983894597784147
   ],
-  "CONCEPTUAL: noisy + inferred eps + TRUE EIG": [
-   0.828467107402787,
-   1.1871981056997505
+  "noisy + inferred eps + total EIG (incl. information about eps)": [
+   0.6389206883315278,
+   1.0310646868228637
+  ],
+  "CONCEPTUAL: noisy + inferred eps + CONCEPT EIG (eps a nuisance)": [
+   0.8729929329814164,
+   1.1178357257729674
   ],
   "noiseless + fixed eps + true EIG (max-dishab setting)": [
-   0.9229807364888872,
-   1.1772792395362777
+   0.9334971888148316,
+   1.176685947416619
   ]
  },
  "selfcons_winners_R32": {
-  "eig_code": 0.035,
+  "eig_code": 0.076,
   "kl": 0.231,
-  "mi": 0.729,
+  "mi": 0.229,
   "surprisal_b": 0.579,
-  "_source": "phase1/stageB_R32.log, 2026-09-14"
+  "mi_concept": 0.747,
+  "_source": "sherlock/logs/ranch-concept-43677438.out (Stage B at R=32), 2026-09-16"
+ },
+ "adult_winners_R64_r2rule": {
+  "eig_code": 0.2224242861266691,
+  "mi": 0.2300896434556406,
+  "kl": 0.2630075730299529,
+  "surprisal_b": 0.0037912443722348,
+  "mi_concept": 0.6391322526287053
  },
  "channel_ratios_t1_t5": {
   "1. noiseless world, eps fixed .1": {
@@ -153,12 +171,16 @@
     0.9739079810149367
    ],
    "I_sigma (spread & noise)": [
-    8.724029239518151,
-    8.837828552945973
+    3.260313519923399,
+    7.804428604689397
    ],
    "total (true EIG)": [
-    1.3200155420262245,
-    1.5012201897558721
+    1.2895689954084866,
+    1.4957735927096063
+   ],
+   "concept EIG (eps nuisance)": [
+    1.2895689954085197,
+    1.4957735927103288
    ],
    "KL (realized)": [
     1.3695730419975267,
@@ -175,20 +197,24 @@
     0.9759218472610781
    ],
    "I_sigma (spread & noise)": [
-    1.6859203003525225,
-    3.454046479105995
+    1.542874320351269,
+    3.3332026638436454
    ],
    "total (true EIG)": [
-    1.1921704900556052,
-    1.3991743003406225
+    1.1782257997536478,
+    1.3953898251545545
+   ],
+   "concept EIG (eps nuisance)": [
+    1.1782257997536996,
+    1.3953898251548253
    ],
    "KL (realized)": [
     1.3905357895052128,
     1.3903417661211337
    ],
    "implemented EIG": [
-    1.0260173240151909,
-    1.196075436082472
+    1.078447420084356,
+    1.1843112450450661
    ]
   },
   "3. noisy world (.1), eps inferred": {
@@ -197,20 +223,24 @@
     0.978931197458625
    ],
    "I_sigma (spread & noise)": [
-    1.685968494050103,
-    3.4605984510007732
+    1.1117114677069466,
+    1.0270972644136767
    ],
    "total (true EIG)": [
-    1.2370462401171696,
-    1.5325823483674323
+    1.084806730495809,
+    1.025469934307086
+   ],
+   "concept EIG (eps nuisance)": [
+    1.160040550300598,
+    1.3347038737315204
    ],
    "KL (realized)": [
     1.3736345935706213,
     1.0231777979280736
    ],
    "implemented EIG": [
-    0.9604027157981991,
-    0.9317473318280883
+    1.008637437590918,
+    0.9310109396161721
    ]
   }
  }

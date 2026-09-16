@@ -9,7 +9,7 @@ from conftest import cfg_inferred, cfg_published_infeps
 from granch_fast import fit_infants as F
 from granch_fast.linking_mixed import infant_long, adult_long
 from reproduce_cv import human_condition_means, cv_rmse_r2
-from ranch import data, linking, CANONICAL, PUBLISHED_SPEC, PUBLISHED_CORRECTED, CONFIGURATIONS, EIG
+from ranch import data, linking, CANONICAL, PUBLISHED_SPEC, PUBLISHED_CORRECTED, CONFIGURATIONS, EIG, EIGConcept
 
 
 def test_loaders_match_legacy():
@@ -40,7 +40,7 @@ def test_split_half_cv_matches_legacy(human_cm):
 
 
 def test_named_configurations():
-    assert CANONICAL.variable is EIG and CANONICAL.sigma_true > 0 and CANONICAL.model.noise.inferred_
+    assert CANONICAL.variable is EIGConcept and CANONICAL.sigma_true > 0 and CANONICAL.model.noise.inferred_
     a, b = CANONICAL.model.fast_config(window_half_width=0.1, n_z=5), cfg_inferred()
     for k in ("V_prior", "alpha_prior", "beta_prior", "eps_box", "n_sigma", "n_eps", "infer_eps", "sd_epsilon"):
         assert getattr(a, k) == getattr(b, k), k
@@ -48,4 +48,6 @@ def test_named_configurations():
     for k in ("V_prior", "alpha_prior", "beta_prior", "eps_box", "n_sigma", "n_eps", "infer_eps"):
         assert getattr(a, k) == getattr(b, k), k
     assert PUBLISHED_CORRECTED.sigma_true == 0.0 and not PUBLISHED_CORRECTED.model.noise.inferred_
-    assert len(CONFIGURATIONS) == 3
+    from ranch.canonical import TOTAL_EIG_REFERENCE
+    assert TOTAL_EIG_REFERENCE.variable is EIG and TOTAL_EIG_REFERENCE.model is CANONICAL.model   # same learner, EIG about everything incl. eps
+    assert len(CONFIGURATIONS) == 4

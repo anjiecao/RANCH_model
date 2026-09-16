@@ -166,3 +166,6 @@ cython_debug/
 granch_fast/phase1/*.npz
 granch_fast/phase1/*.log
 sherlock/*.out
+
+# regenerable trajectory grids (hundreds of MB; kept on the cluster and in the pipeline, not in git)
+granch_fast/phase1/*.npz

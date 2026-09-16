@@ -1,0 +1,310 @@
+20db340 Cluster sync via GitHub with a tested code-only block; end-to-end smoke of the concept chain
+=== 2026-09-15 22:10:22  selfcons base with mi_concept
+selfcons: 16 settings x 480 rows x 8 rollouts x 5 metrics x T=40, window=exemplar_mean
+  1/16 settings done (2467s)
+  2/16 settings done (2485s)
+  3/16 settings done (2488s)
+  4/16 settings done (2488s)
+  5/16 settings done (2491s)
+  6/16 settings done (2505s)
+  7/16 settings done (2507s)
+  8/16 settings done (2510s)
+  9/16 settings done (2513s)
+  10/16 settings done (2520s)
+  11/16 settings done (2524s)
+  12/16 settings done (2534s)
+  13/16 settings done (2540s)
+  14/16 settings done (2543s)
+  15/16 settings done (2543s)
+  16/16 settings done (2556s)
+saved (2558s)
+=== 2026-09-15 22:53:05  selfcons ext with mi_concept
+selfcons_ext: 80 settings x 480 rows x 8 rollouts x 5 metrics x T=40, window=exemplar_mean
+  1/80 settings done (2441s)
+  2/80 settings done (2450s)
+  3/80 settings done (2458s)
+  4/80 settings done (2459s)
+  5/80 settings done (2461s)
+  6/80 settings done (2465s)
+  7/80 settings done (2468s)
+  8/80 settings done (2473s)
+  9/80 settings done (2475s)
+  10/80 settings done (2475s)
+  11/80 settings done (2476s)
+  12/80 settings done (2482s)
+  13/80 settings done (2483s)
+  14/80 settings done (2485s)
+  15/80 settings done (2490s)
+  16/80 settings done (2494s)
+  17/80 settings done (2496s)
+  18/80 settings done (2496s)
+  19/80 settings done (2499s)
+  20/80 settings done (2499s)
+  21/80 settings done (2505s)
+  22/80 settings done (2510s)
+  23/80 settings done (2516s)
+  24/80 settings done (2522s)
+  25/80 settings done (4929s)
+  26/80 settings done (4932s)
+  27/80 settings done (4932s)
+  28/80 settings done (4939s)
+  29/80 settings done (4946s)
+  30/80 settings done (4946s)
+  31/80 settings done (4950s)
+  32/80 settings done (4959s)
+  33/80 settings done (4969s)
+  34/80 settings done (4970s)
+  35/80 settings done (4975s)
+  36/80 settings done (4976s)
+  37/80 settings done (4977s)
+  38/80 settings done (4978s)
+  39/80 settings done (4979s)
+  40/80 settings done (4980s)
+  41/80 settings done (4984s)
+  42/80 settings done (4990s)
+  43/80 settings done (4995s)
+  44/80 settings done (4997s)
+  45/80 settings done (5015s)
+  46/80 settings done (5021s)
+  47/80 settings done (5025s)
+  48/80 settings done (5042s)
+  49/80 settings done (7410s)
+  50/80 settings done (7416s)
+  51/80 settings done (7421s)
+  52/80 settings done (7428s)
+  53/80 settings done (7430s)
+  54/80 settings done (7430s)
+  55/80 settings done (7439s)
+  56/80 settings done (7446s)
+  57/80 settings done (7449s)
+  58/80 settings done (7450s)
+  59/80 settings done (7459s)
+  60/80 settings done (7459s)
+  61/80 settings done (7463s)
+  62/80 settings done (7468s)
+  63/80 settings done (7468s)
+  64/80 settings done (7469s)
+  65/80 settings done (7469s)
+  66/80 settings done (7484s)
+  67/80 settings done (7501s)
+  68/80 settings done (7510s)
+  69/80 settings done (7514s)
+  70/80 settings done (7525s)
+  71/80 settings done (7532s)
+  72/80 settings done (7543s)
+  73/80 settings done (9876s)
+  74/80 settings done (9879s)
+  75/80 settings done (9881s)
+  76/80 settings done (9898s)
+  77/80 settings done (9910s)
+  78/80 settings done (9915s)
+  79/80 settings done (9920s)
+  80/80 settings done (9932s)
+saved (9944s)
+=== 2026-09-16 01:38:50  score selfcons
+combined base+ext: 96 settings
+=== INFANTS, Exp 1 — SELF-CONSISTENT noise (inferred eps, noisy samples) ===
+metric        mean RMSE  best RMSE  best R2  best r2_w | best-RMSE setting
+eig_code          4.732      4.418    0.459      0.023 | V3 a1 b1 sd0.5 sig_true0.1 w1.0e-03 (bg1 43.54 bg10 36.28 dev10 37.97)
+kl                4.673      4.466    0.411      0.021 | V1 a1 b0.1 sd0.5 sig_true0.1 w1.0e-07 (bg1 498.58 bg10 494.13 dev10 496.35)
+mi                4.686      4.571    0.289      0.017 | V3 a1 b0.1 sd0.5 sig_true0.1 w4.6e-04 (bg1 123.88 bg10 79.97 dev10 82.63)
+surprisal         4.713      4.189    0.780      0.040 | V3 a10 b1 sd0.1 sig_true0.2 w1.0e+02 (bg1 1.00 bg10 1.00 dev10 1.00)
+surprisal_b       4.559      4.110    0.719      0.036 | V1 a10 b0.1 sd1 sig_true0.2 w5.6e-02 (bg1 79.95 bg10 76.26 dev10 80.69)
+mi_concept        4.638      4.076    0.755      0.036 | V3 a1 b0.1 sd1 sig_true0.2 w1.0e-05 (bg1 48.10 bg10 41.22 dev10 46.84)
+
+=== best SIGN-CONSISTENT (pooled_r > 0, non-saturated) by pooled R2 ===
+eig_code     R2 0.459 r +0.68 rmse 4.418 | V3 a1 b1 sd0.5 sig_true0.1 w1.0e-03 (hab 0.83 dis 1.05)
+kl           R2 0.373 r +0.61 rmse 4.492 | V3 a1 b0.1 sd0.5 sig_true0.1 w4.6e-05 (hab 0.71 dis 1.06)
+mi           R2 0.289 r +0.54 rmse 4.571 | V3 a1 b0.1 sd0.5 sig_true0.1 w4.6e-04 (hab 0.65 dis 1.03)
+surprisal    R2 0.618 r +0.79 rmse 4.214 | V3 a10 b1 sd0.1 sig_true0.2 w5.6e+00 (hab 0.96 dis 1.02)
+surprisal_b  R2 0.719 r +0.85 rmse 4.110 | V1 a10 b0.1 sd1 sig_true0.2 w5.6e-02 (hab 0.95 dis 1.06)
+mi_concept   R2 0.755 r +0.87 rmse 4.076 | V3 a1 b0.1 sd1 sig_true0.2 w1.0e-05 (hab 0.86 dis 1.14)
+
+best sign-consistent pooled R2 by sigma_true x metric:
+sigma_true     0.1    0.2    0.3    0.5
+metric                                 
+eig_code     0.459  0.207  0.213  0.211
+kl           0.373  0.344  0.339  0.335
+mi           0.289  0.241  0.224  0.218
+mi_concept   0.749  0.755  0.702  0.449
+surprisal    0.418  0.640  0.490  0.422
+surprisal_b  0.719  0.719  0.618  0.508
+
+best sign-consistent pooled R2 by sd_epsilon x metric:
+sd_epsilon     0.1    0.5    1.0
+metric                          
+eig_code     0.235  0.459  0.211
+kl           0.344  0.373  0.303
+mi           0.276  0.289  0.243
+mi_concept   0.749  0.737  0.755
+surprisal    0.640  0.548  0.453
+surprisal_b  0.719  0.666  0.719
+=== 2026-09-16 01:39:35  selfcons winners R32
+unique winner settings: [(3.0, 1.0, 1.0, 0.5, 0.1), (3.0, 1.0, 0.1, 0.5, 0.1), (1.0, 10.0, 0.1, 1.0, 0.2), (3.0, 1.0, 0.1, 1.0, 0.2)]
+  8/64 chunks (611s)
+  16/64 chunks (665s)
+  24/64 chunks (754s)
+  32/64 chunks (1182s)
+  40/64 chunks (1324s)
+  48/64 chunks (1435s)
+  56/64 chunks (1838s)
+  64/64 chunks (2080s)
+
+=== Stage B: winners at R=32 (pooled R2 full; mean+/-SD over 4 disjoint R=8 groups) ===
+eig_code     V3 a1 b1 sd0.5 st0.1 w1.0e-03 | grid R2 0.459 -> R32 R2 0.076 (r +0.28, hab 0.89, dis 0.98); R8-group R2 0.079 +/- 0.056
+kl           V3 a1 b0.1 sd0.5 st0.1 w4.6e-05 | grid R2 0.373 -> R32 R2 0.231 (r +0.48, hab 0.73, dis 1.03); R8-group R2 0.224 +/- 0.106
+mi           V3 a1 b0.1 sd0.5 st0.1 w4.6e-04 | grid R2 0.289 -> R32 R2 0.229 (r +0.48, hab 0.64, dis 1.03); R8-group R2 0.222 +/- 0.061
+surprisal_b  V1 a10 b0.1 sd1 st0.2 w5.6e-02 | grid R2 0.719 -> R32 R2 0.579 (r +0.76, hab 0.96, dis 1.06); R8-group R2 0.497 +/- 0.089
+mi_concept   V3 a1 b0.1 sd1 st0.2 w1.0e-05 | grid R2 0.755 -> R32 R2 0.747 (r +0.86, hab 0.87, dis 1.12); R8-group R2 0.742 +/- 0.025
+=== 2026-09-16 02:14:20  adults base mi_concept merge
+adults selfcons: 8 settings x 1 metrics x 9 w x 6 pairs x 16 rollouts, window=exemplar_mean -> 72 jobs
+  20/72 jobs done (34s)
+  40/72 jobs done (76s)
+  60/72 jobs done (117s)
+  72/72 jobs done (279s)
+merged: replaced ['mi_concept'] rows in /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1/adult_preds_selfcons.csv
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1/adult_preds_selfcons.csv: 360 rows (279s)
+=== 2026-09-16 02:19:00  score adults selfcons base
+CONSTANT baseline: condition-mean RMSE 414 ms (SD of the 75 condition means)
+
+=== ADULTS, Exp 1 — condition-mean linking (R2 full fit; 10-fold CV RMSE in ms) ===
+metric        mean R2  best R2  best RMSE | best-R2 setting (bg1 bg2 bg11 | dev1 dev5 dev10)
+eig_code        0.446    0.674        229 | V1 a1 b1 epsnan w1.0e-02  (13.79 7.03 5.79 | 7.16 6.31 4.72)  within r2 nan
+kl              0.514    0.699        217 | V1 a10 b0.1 epsnan w3.2e-03  (20.89 10.84 5.86 | 11.43 7.35 6.80)  within r2 nan
+mi              0.535    0.672        229 | V1 a1 b0.1 epsnan w1.0e-01  (7.24 3.54 1.96 | 4.05 2.44 2.06)  within r2 nan
+mi_concept      0.403    0.834        164 | V1 a1 b0.1 epsnan w3.2e-05  (24.22 19.68 17.53 | 20.80 19.70 22.36)  within r2 nan
+surprisal_b     0.128    0.543        280 | V1 a10 b1 epsnan w4.2e+00  (2.74 2.36 2.33 | 2.41 2.56 2.05)  within r2 nan
+
+best R2 by fixed eps (developmental contrast), eig_code:
+Series([], )
+
+PAPER Table 1 (adults, grid): EIG R2 .883/.905 | KL .882/.899 | Surprisal .647/.845 | NoLearn .037/.304 | NoNoise .504/.615 (mean/best R2); RMSE(s) EIG .222/.166
+=== ADULTS (selfcons), Exp 1 — 21-condition linking (paper's aggregation): mean/best R2, best full RMSE, best 7-fold CV RMSE (ms) ===
+metric        meanR2  bestR2  RMSEfull  RMSEcv | best-R2 setting (bg1 bg2 bg11 | dev)
+eig_code       0.149   0.264       312     331 | V1 a1 b0.1 epsnan w3.2e-06 (80.00 79.39 75.21 | 77.18)
+kl             0.192   0.315       301     318 | V1 a10 b0.1 epsnan w3.2e-03 (20.89 10.84 5.86 | 8.33)
+mi             0.186   0.267       312     358 | V1 a1 b0.1 epsnan w1.0e-01 (7.24 3.54 1.96 | 2.53)
+mi_concept     0.183   0.692       202     192 | V1 a1 b0.1 epsnan w3.2e-05 (24.22 19.68 17.53 | 20.67)
+surprisal_b    0.077   0.504       256     255 | V1 a10 b0.1 epsnan w7.5e-02 (49.31 47.67 42.45 | 48.20)
+constant baseline: RMSE 364 ms
+
+best R2_21 by eps_fixed:
+Empty DataFrame
+Columns: []
+Index: []
+
+paper's published grid curves (param-averaged figure data), same statistic:
+  EIG         : R2 0.836 RMSE full 147 cv 151 (slope +21)
+  KL          : R2 0.882 RMSE full 125 cv 127 (slope +42)
+  Surprisal   : R2 0.766 RMSE full 176 cv 189 (slope +130)
+  No Noise    : R2 0.378 RMSE full 287 cv 312 (slope +1301)
+  No Learning : R2 0.018 RMSE full 361 cv 375 (slope +29785)
+paper Table 1 (per-param best/mean, its own CV): EIG R2 .905/.883 RMSE 166/222 ms; KL .899/.882; surprisal .845/.647; no-learning .304/.037; no-noise .615/.504
+=== 2026-09-16 02:19:05  adults ext mi_concept merge
+adults selfcons_ext: 32 settings x 1 metrics x 11 w x 6 pairs x 16 rollouts, window=exemplar_mean -> 352 jobs
+  20/352 jobs done (34s)
+  40/352 jobs done (61s)
+  60/352 jobs done (87s)
+  80/352 jobs done (114s)
+  100/352 jobs done (145s)
+  120/352 jobs done (187s)
+  140/352 jobs done (215s)
+  160/352 jobs done (247s)
+  180/352 jobs done (279s)
+  200/352 jobs done (314s)
+  220/352 jobs done (345s)
+  240/352 jobs done (365s)
+  260/352 jobs done (387s)
+  280/352 jobs done (416s)
+  300/352 jobs done (450s)
+  320/352 jobs done (483s)
+  340/352 jobs done (518s)
+  352/352 jobs done (631s)
+merged: replaced ['mi_concept'] rows in /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1/adult_preds_selfcons_ext.csv
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1/adult_preds_selfcons_ext.csv: 1760 rows (631s)
+=== 2026-09-16 02:29:37  adults winners R64
+=== grid winners (sign-consistent b21>0, non-saturated bg1<76) ===
+eig_code     [r2  ] R2 0.297 rmse 337 | V3 a1 b0.1 sd0.5 st0.2 w3.2e-03 (hab 0.29 dis 1.43)
+eig_code     [rmse] R2 0.297 rmse 337 | V3 a1 b0.1 sd0.5 st0.2 w3.2e-03 (hab 0.29 dis 1.43)
+mi           [r2  ] R2 0.319 rmse 310 | V3 a10 b0.1 sd0.5 st0.1 w3.2e-03 (hab 0.25 dis 1.54)
+mi           [rmse] R2 0.319 rmse 310 | V3 a10 b0.1 sd0.5 st0.1 w3.2e-03 (hab 0.25 dis 1.54)
+kl           [r2  ] R2 0.387 rmse 301 | V3 a10 b0.1 sd0.5 st0.1 w3.2e-01 (hab 0.47 dis 1.13)
+kl           [rmse] R2 0.355 rmse 297 | V3 a10 b0.1 sd1 st0.1 w3.2e-02 (hab 0.29 dis 1.44)
+surprisal_b  [r2  ] R2 0.559 rmse 233 | V3 a10 b1 sd1 st0.2 w1.6e+01 (hab 0.87 dis 1.02)
+surprisal_b  [rmse] R2 0.559 rmse 233 | V3 a10 b1 sd1 st0.2 w1.6e+01 (hab 0.87 dis 1.02)
+mi_concept   [r2  ] R2 0.699 rmse 204 | V1 a1 b0.1 sd1 st0.1 w3.2e-05 (hab 0.74 dis 1.17)
+mi_concept   [rmse] R2 0.692 rmse 192 | V1 a1 b0.1 sd0.5 st0.1 w3.2e-05 (hab 0.72 dis 1.18)
+
+re-evaluating 7 winners x 6 pairs x 64 rollouts ...
+
+=== RE-EVALUATION at R=64 (grid -> fresh; the winner's-curse check) ===
+eig_code     [r2  ] V3 a1 b0.1 sd0.5 st0.2 w3.2e-03 | grid R2 0.297 -> R64 R2 0.222 (b +33; hab 0.27 dis 1.38)
+mi           [r2  ] V3 a10 b0.1 sd0.5 st0.1 w3.2e-03 | grid R2 0.319 -> R64 R2 0.230 (b +35; hab 0.28 dis 1.41)
+kl           [r2  ] V3 a10 b0.1 sd0.5 st0.1 w3.2e-01 | grid R2 0.387 -> R64 R2 0.263 (b +600; hab 0.49 dis 1.18)
+kl           [rmse] V3 a10 b0.1 sd1 st0.1 w3.2e-02 | grid R2 0.355 -> R64 R2 0.265 (b +164; hab 0.30 dis 1.28)
+surprisal_b  [r2  ] V3 a10 b1 sd1 st0.2 w1.6e+01 | grid R2 0.559 -> R64 R2 0.004 (b -662; hab 0.93 dis 1.05)
+mi_concept   [r2  ] V1 a1 b0.1 sd1 st0.1 w3.2e-05 | grid R2 0.699 -> R64 R2 0.639 (b +238; hab 0.76 dis 1.13)
+mi_concept   [rmse] V1 a1 b0.1 sd0.5 st0.1 w3.2e-05 | grid R2 0.692 -> R64 R2 0.728 (b +219; hab 0.77 dis 1.15)
+
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1/adult_winners_R64.csv (280s)
+=== 2026-09-16 02:34:29  phase2 selfcons
+[eig_code | paper] INFANTS V3 a1 b1 sd0.5 st0.1 w1.0e-03: Exp1 rmse 4.42 R2 0.46 -> Exp2 R2 0.373 RMSE 2.14 s; order back>iden>numb>pose>anim; back 37.33 pose 34.81 numb 36.12 iden 36.56 anim 33.41
+            ADULTS  V3 a1 b0.1 sd0.5 st0.2 w3.2e-03: Exp1 R2 0.297 -> Exp2 R2 0.250 RMSE 0.259 s; dishab order numb>anim>pose>iden; fam1 31.64 fam6 11.56 pose 14.20 numb 15.25 iden 13.63 anim 14.81
+[eig_code | r2] INFANTS V3 a1 b1 sd0.5 st0.1 w1.0e-03: Exp1 rmse 4.42 R2 0.46 -> Exp2 R2 0.373 RMSE 2.14 s; order back>iden>numb>pose>anim; back 37.33 pose 34.81 numb 36.12 iden 36.56 anim 33.41
+            ADULTS  V3 a1 b0.1 sd0.5 st0.2 w3.2e-03: Exp1 R2 0.297 -> Exp2 R2 0.250 RMSE 0.259 s; dishab order numb>anim>pose>iden; fam1 31.64 fam6 11.56 pose 14.20 numb 15.25 iden 13.63 anim 14.81
+[mi | paper] INFANTS V3 a1 b0.1 sd0.5 st0.1 w4.6e-04: Exp1 rmse 4.57 R2 0.29 -> Exp2 R2 0.035 RMSE 2.10 s; order iden>back>anim>numb>pose; back 74.93 pose 68.65 numb 73.99 iden 76.30 anim 74.74
+            ADULTS  V3 a10 b0.1 sd0.5 st0.1 w3.2e-03: Exp1 R2 0.319 -> Exp2 R2 0.276 RMSE 0.254 s; dishab order anim>pose>iden>numb; fam1 30.47 fam6 11.07 pose 13.56 numb 12.28 iden 12.94 anim 14.62
+[mi | r2] INFANTS V3 a1 b0.1 sd0.5 st0.1 w4.6e-04: Exp1 rmse 4.57 R2 0.29 -> Exp2 R2 0.035 RMSE 2.10 s; order iden>back>anim>numb>pose; back 74.93 pose 68.65 numb 73.99 iden 76.30 anim 74.74
+            ADULTS  V3 a10 b0.1 sd0.5 st0.1 w3.2e-03: Exp1 R2 0.319 -> Exp2 R2 0.276 RMSE 0.254 s; dishab order anim>pose>iden>numb; fam1 30.47 fam6 11.07 pose 13.56 numb 12.28 iden 12.94 anim 14.62
+[kl | paper] INFANTS V3 a1 b0.1 sd0.5 st0.1 w4.6e-05: Exp1 rmse 4.49 R2 0.37 -> Exp2 R2 0.127 RMSE 2.00 s; order iden>numb>anim>back>pose; back 171.60 pose 140.48 numb 174.56 iden 177.89 anim 173.57
+            ADULTS  V3 a10 b0.1 sd1 st0.1 w3.2e-02: Exp1 R2 0.355 -> Exp2 R2 0.394 RMSE 0.233 s; dishab order anim>iden>numb>pose; fam1 7.66 fam6 2.88 pose 3.55 numb 3.60 iden 3.76 anim 4.02
+[kl | r2] INFANTS V3 a1 b0.1 sd0.5 st0.1 w4.6e-05: Exp1 rmse 4.49 R2 0.37 -> Exp2 R2 0.127 RMSE 2.00 s; order iden>numb>anim>back>pose; back 171.60 pose 140.48 numb 174.56 iden 177.89 anim 173.57
+            ADULTS  V3 a10 b0.1 sd0.5 st0.1 w3.2e-01: Exp1 R2 0.387 -> Exp2 R2 0.419 RMSE 0.228 s; dishab order anim>iden>pose>numb; fam1 2.63 fam6 1.45 pose 1.72 numb 1.67 iden 1.80 anim 1.96
+[surprisal_b | paper] INFANTS V1 a10 b0.1 sd1 st0.2 w5.6e-02: Exp1 rmse 4.11 R2 0.72 -> Exp2 R2 0.494 RMSE 1.52 s; order anim>iden>numb>pose>back; back 75.71 pose 75.92 numb 78.44 iden 80.86 anim 94.08
+            ADULTS  V3 a10 b1 sd1 st0.2 w1.6e+01: Exp1 R2 0.559 -> Exp2 R2 0.003 RMSE 0.299 s; dishab order pose>iden>anim>numb; fam1 1.38 fam6 1.31 pose 1.40 numb 1.31 iden 1.34 anim 1.32
+[surprisal_b | r2] INFANTS V1 a10 b0.1 sd1 st0.2 w5.6e-02: Exp1 rmse 4.11 R2 0.72 -> Exp2 R2 0.494 RMSE 1.52 s; order anim>iden>numb>pose>back; back 75.71 pose 75.92 numb 78.44 iden 80.86 anim 94.08
+            ADULTS  V3 a10 b1 sd1 st0.2 w1.6e+01: Exp1 R2 0.559 -> Exp2 R2 0.003 RMSE 0.299 s; dishab order pose>iden>anim>numb; fam1 1.38 fam6 1.31 pose 1.40 numb 1.31 iden 1.34 anim 1.32
+[mi_concept | paper] INFANTS V3 a1 b0.1 sd1 st0.2 w1.0e-05: Exp1 rmse 4.08 R2 0.75 -> Exp2 R2 0.510 RMSE 1.50 s; order anim>iden>numb>pose>back; back 38.71 pose 38.93 numb 40.65 iden 42.41 anim 48.61
+            ADULTS  V1 a1 b0.1 sd0.5 st0.1 w3.2e-05: Exp1 R2 0.692 -> Exp2 R2 0.613 RMSE 0.186 s; dishab order anim>iden>numb>pose; fam1 21.94 fam6 18.49 pose 19.41 numb 19.96 iden 20.12 anim 22.98
+[mi_concept | r2] INFANTS V3 a1 b0.1 sd1 st0.2 w1.0e-05: Exp1 rmse 4.08 R2 0.75 -> Exp2 R2 0.510 RMSE 1.50 s; order anim>iden>numb>pose>back; back 38.71 pose 38.93 numb 40.65 iden 42.41 anim 48.61
+            ADULTS  V1 a1 b0.1 sd1 st0.1 w3.2e-05: Exp1 R2 0.699 -> Exp2 R2 0.640 RMSE 0.179 s; dishab order anim>iden>numb>pose; fam1 22.06 fam6 18.47 pose 19.41 numb 19.94 iden 20.12 anim 22.96
+
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1/phase2_selfcons_results.csv (1205s)
+=== 2026-09-16 02:54:35  lesions
+NO-LEARNING lesion (constant DV): fit = constant baseline; infant pooled RMSE = 3.068 s, R2 undefined (zero model variance)
+infant lesion trajectories done (135s)
+
+=== NO-NOISE-LEARNER lesion of B, INFANTS (V3 a1 b0.1; best sign-consistent per metric) ===
+eig_code     R2 0.668 r +0.82 st0.2 w4.6e-07 (hab 0.96 dis 1.06)
+kl           R2 0.766 r +0.88 st0.1 w2.2e-02 (hab 0.91 dis 1.10)
+mi            no sign-consistent non-saturated fit (best any-sign R2 0.062)
+surprisal_b  R2 0.595 r +0.77 st0.2 w5.6e+00 (hab 0.93 dis 1.03)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+
+=== NO-NOISE-LEARNER lesion of B, ADULTS (V1 a1 b0.1, st .1, true-EIG stopping) ===
+R2 0.057 (b +39318) w1.0e-04 hab 1.00 dis 1.00
+
+done
+=== 2026-09-16 02:57:09  channels
+1. noiseless world, eps fixed .1: done
+2. noisy world (.1), eps fixed .1: done
+3. noisy world (.1), eps inferred: done
+
+novel/familiar ratio at test sample 1 and 5, by quantity (familiar level in parentheses):
+  1. noiseless world, eps fixed .1     I_mu (concept mean)        t1    0.99   t5    0.97   (fam t1 0.0171, t5 0.00184)
+  1. noiseless world, eps fixed .1     I_sigma (spread & noise)   t1    3.26   t5    7.80   (fam t1 0.00259, t5 0.000152)
+  1. noiseless world, eps fixed .1     total (true EIG)           t1    1.29   t5    1.50   (fam t1 0.0197, t5 0.00199)
+  1. noiseless world, eps fixed .1     KL (realized)              t1    1.37   t5    2.45   (fam t1 0.0408, t5 2.29e-05)
+  1. noiseless world, eps fixed .1     implemented EIG            t1    1.51   t5    1.88   (fam t1 0.00216, t5 2.38e-05)
+  2. noisy world (.1), eps fixed .1    I_mu (concept mean)        t1    0.99   t5    0.98   (fam t1 0.0165, t5 0.00175)
+  2. noisy world (.1), eps fixed .1    I_sigma (spread & noise)   t1    1.54   t5    3.33   (fam t1 0.00842, t5 0.000379)
+  2. noisy world (.1), eps fixed .1    total (true EIG)           t1    1.18   t5    1.40   (fam t1 0.0249, t5 0.00213)
+  2. noisy world (.1), eps fixed .1    KL (realized)              t1    1.39   t5    1.39   (fam t1 0.0585, t5 0.00305)
+  2. noisy world (.1), eps fixed .1    implemented EIG            t1    1.08   t5    1.18   (fam t1 0.0633, t5 0.00807)
+  3. noisy world (.1), eps inferred    I_mu (concept mean)        t1    0.99   t5    0.98   (fam t1 0.0164, t5 0.00183)
+  3. noisy world (.1), eps inferred    I_sigma (spread & noise)   t1    1.11   t5    1.03   (fam t1 0.0554, t5 0.0523)
+  3. noisy world (.1), eps inferred    total (true EIG)           t1    1.08   t5    1.03   (fam t1 0.0718, t5 0.0541)
+  3. noisy world (.1), eps inferred    KL (realized)              t1    1.37   t5    1.02   (fam t1 0.0607, t5 0.0535)
+  3. noisy world (.1), eps inferred    implemented EIG            t1    1.01   t5    0.93   (fam t1 0.181, t5 0.123)
+=== 2026-09-16 03:01:28  done

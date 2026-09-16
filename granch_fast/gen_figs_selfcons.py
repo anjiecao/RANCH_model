@@ -2,9 +2,9 @@
   B1: infant Exp-1 familiar/novel condition curves per decision variable (each at its
       best non-saturated setting from the selfcons grid)  -> exp1_infant_selfcons.csv
   B2: mechanism -- test-trial decision-variable trajectories after 8 exposures,
-      noiseless vs noisy world, implemented EIG vs true EIG, same learner spec
-      (V1 a1 b0.1, eps inferred with prior N(0.001, 0.5))  -> selfcons_mechanism.csv
-  B3: configuration map -- habituation & dishabituation ratios across the six model
+      noiseless vs noisy world, implemented EIG vs total true EIG vs concept EIG, same
+      learner spec (V1 a1 b0.1, eps inferred with prior N(0.001, 0.5)) -> selfcons_mechanism.csv
+  B3: configuration map -- habituation & dishabituation ratios across the model
       configurations + published grid + human               -> config_map.csv
 """
 import os
@@ -14,16 +14,21 @@ import sys
 import numpy as np
 import pandas as pd
 
-ROOT = "/Users/mcfrank/Projects/ranch/RANCH_model"
+RANCH = os.environ.get("RANCH_ROOT", "/Users/mcfrank/Projects/ranch")
+ROOT = f"{RANCH}/RANCH_model"
 sys.path.insert(0, ROOT)
-sys.path.insert(0, "/Users/mcfrank/Projects/ranch/pkbb_paper_writing")
+sys.path.insert(0, f"{RANCH}/pkbb_paper_writing")
+from granch_fast import metrics as M
+from granch_fast import fit_infants as F
 from granch_fast.metrics import expected_samples
+from granch_fast.run_fast import make_grid
+from granch_fast.phase1_infants import make_cfg as make_cfg_det
 from reproduce_cv import human_condition_means
 
 GF = f"{ROOT}/granch_fast"
 OUT = f"{GF}/phase1"
-PAPER = "/Users/mcfrank/Projects/ranch/pkbb_paper_writing"
-LABEL = {"eig_code": "implemented EIG", "kl": "KL", "mi": "true EIG", "surprisal_b": "surprisal"}
+PAPER = f"{RANCH}/pkbb_paper_writing"
+LABEL = {"eig_code": "implemented EIG", "kl": "KL", "mi": "true EIG", "surprisal_b": "surprisal", "mi_concept": "concept EIG"}
 
 z = np.load(f"{OUT}/infant_traj_selfcons.npz", allow_pickle=True)
 traj, mets = z["traj"], [str(m) for m in z["metrics"]]          # (S, 480, 8, 4, 40)
@@ -57,7 +62,7 @@ def cond_and_r(tr3, w):
     return cond, float(np.corrcoef(j.es, j.LT)[0, 1])
 
 rows, picks, b1_meta = [], [], []
-for dm in ["eig_code", "kl", "mi", "surprisal_b"]:
+for dm in ["eig_code", "kl", "mi", "mi_concept", "surprisal_b"]:
     g = sc[(sc.metric == dm) & (sc.pooled_r > 0) & (sc.pred_bg1 < 450) & (sc.pred_bg10 > 1.02)].dropna(subset=["pooled_r2"])
     b = g.sort_values("pooled_r2", ascending=False).iloc[0]
     base = "surprisal" if dm == "surprisal_b" else dm
@@ -90,11 +95,13 @@ S2 = pd.read_csv(f"{OUT}/infant_settings_infeps.csv")
 si2 = S2[(S2.V_prior == 1) & (S2.alpha_prior == 1) & (S2.beta_prior == 0.1) & np.isclose(S2.sd_epsilon, 0.5)].index[0]
 meta2 = pd.DataFrame({"trial_type": z2["trial_type"], "trial_number": z2["trial_number"]})
 T_SHOW = 15
+emb = F.load_embeddings(); trials = F.load_trials()
+cfg2 = make_cfg_det(S2.iloc[si2]); grid2 = make_grid(cfg2)
 mech = []
 for tt in ["background", "deviant"]:
     idx = meta.index[(meta.trial_type == tt) & (meta.trial_number == 9)].to_numpy()
     idx2 = meta2.index[(meta2.trial_type == tt) & (meta2.trial_number == 9)].to_numpy()
-    for dm in ["eig_code", "mi"]:
+    for dm in ["eig_code", "mi", "mi_concept"]:
         # noisy world (selfcons cache): mean over instances & rollouts; se over rollouts of inst-means
         a = traj[si, idx][:, :, mets.index(dm), :T_SHOW].astype(float)          # (inst, 8, T)
         m = a.mean((0, 1)); se = a.mean(0).std(0) / np.sqrt(a.shape[1])
@@ -102,7 +109,11 @@ for tt in ["background", "deviant"]:
             mech.append(dict(world="noisy world (sigma_true = 0.1)", metric=LABEL[dm], test_type=tt,
                              t=t + 1, y=m[t], lo=m[t] - se[t], hi=m[t] + se[t]))
         # noiseless world (paper spec, exact inference; deterministic)
-        d = z2["traj"][si2, idx2, mets2.index(dm), :T_SHOW].astype(float).mean(0)
+        if dm in mets2:
+            d = z2["traj"][si2, idx2, mets2.index(dm), :T_SHOW].astype(float).mean(0)
+        else:   # the concept EIG is not in the infeps cache: deterministic, computed here for the dur-8 rows
+            d = np.mean([M.infant_trajectories(cfg2, grid2, emb[r.fam], emb[r.test], 8, T_SHOW, sigma_true=0.0, want=(dm,))[dm]
+                         for r in trials.iloc[idx2].itertuples(index=False)], axis=0)
         for t in range(T_SHOW):
             mech.append(dict(world="noiseless world (published generation)", metric=LABEL[dm], test_type=tt,
                              t=t + 1, y=d[t], lo=d[t], hi=d[t]))
@@ -133,7 +144,9 @@ bm = pd.read_csv(f"{GF}/exp1_infant_selfcons_meta.csv")
 be = bm[bm.metric == "implemented EIG"].iloc[0]
 cfgs.append(dict(config="noisy + inferred eps + implemented EIG", hab=be.hab, dis=be.dis, kind="fails"))
 be2 = bm[bm.metric == "true EIG"].iloc[0]
-cfgs.append(dict(config="CONCEPTUAL: noisy + inferred eps + TRUE EIG", hab=be2.hab, dis=be2.dis, kind="works"))
+cfgs.append(dict(config="noisy + inferred eps + total EIG (incl. information about eps)", hab=be2.hab, dis=be2.dis, kind="fails"))
+be3 = bm[bm.metric == "concept EIG"].iloc[0]
+cfgs.append(dict(config="CONCEPTUAL: noisy + inferred eps + CONCEPT EIG (eps a nuisance)", hab=be3.hab, dis=be3.dis, kind="works"))
 smain_mi = smain[(smain.metric == "mi") & (smain.pred_bg1 < 450) & (smain.pred_bg10 > 1.05)]
 b = smain_mi.sort_values("pred_dev10", ascending=False)
 b = b.assign(dd=b.pred_dev10 / b.pred_bg10).sort_values("dd", ascending=False).iloc[0]

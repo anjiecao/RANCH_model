@@ -42,10 +42,11 @@ from reproduce_cv import human_condition_means, cv_rmse_r2
 
 T_MAX = 40
 R = 16
-WANT = ("eig_code", "mi", "kl", "surprisal")
+WANT = ("eig_code", "mi", "kl", "surprisal", "mi_concept")     # mi_concept added 2026-09-16 (appended: seeds unchanged)
 W_GRID = {"eig_code": np.logspace(-7, -1, 19), "kl": np.logspace(-7, -1, 19), "mi": np.logspace(-5, 0, 19),
-          "surprisal_b": np.logspace(-2.5, 2, 19)}
+          "surprisal_b": np.logspace(-2.5, 2, 19), "mi_concept": np.logspace(-5, 0, 19)}
 W_ADU = list(np.logspace(-4.5, 0.5, 11))
+ADULT_BASES = ("mi", "mi_concept")          # the adult lesion is run for both forward-looking variables
 
 
 def lesion_cfg(V, a, b, sigma_true):
@@ -82,17 +83,17 @@ def _chunk(args):
 
 
 def _adult_job(args):
-    wi, w, pi, pairs, st = args
+    wi, w, pi, pairs, st, base = args
     cfg = lesion_cfg(1.0, 1.0, 0.1, st); cfg.max_observation = T_CAP
     grid = make_grid(cfg)
     f, v = pairs[pi]
     fam = np.asarray(_EMB[f], float); dev = np.asarray(_EMB[v], float)
     bgs, dvs = [], []
     for rr in range(R):
-        rng = np.random.default_rng([515151, wi, pi, rr])
-        bg, dv = rollout(cfg, grid, fam, dev, "mi", 0.0, w, rng, st)
+        rng = np.random.default_rng([515151, ADULT_BASES.index(base), wi, pi, rr]) if base != "mi" else np.random.default_rng([515151, wi, pi, rr])
+        bg, dv = rollout(cfg, grid, fam, dev, base, 0.0, w, rng, st)
         bgs.append(bg); dvs.append([dv[D] for D in range(1, MAX_D + 1)])
-    return wi, np.array(bgs), np.array(dvs)
+    return base, wi, np.array(bgs), np.array(dvs)
 
 
 def main():
@@ -148,34 +149,37 @@ def main():
         print(f"{dm:12s} R2 {b.pooled_r2:.3f} r {b.pooled_r:+.2f} st{b.sigma_true:g} w{b.world_EIGs:.1e} "
               f"(hab {b.bg10/b.bg1:.2f} dis {b.dev10/b.bg10:.2f})")
 
-    # ---------- adults (true-EIG stopping, the B model's decision variable) ----------
+    # ---------- adults (forward-looking stopping: total true EIG, and concept EIG) ----------
     from granch_fast.phase1_adults import adult_pairs
     pairs = adult_pairs(6)
     human = adult_long()
     st = 0.1
-    jobsA = [(wi, w, pi, pairs, st) for wi, w in enumerate(W_ADU) for pi in range(len(pairs))]
-    acc = {wi: ([], []) for wi in range(len(W_ADU))}
+    jobsA = [(wi, w, pi, pairs, st, base) for base in ADULT_BASES for wi, w in enumerate(W_ADU) for pi in range(len(pairs))]
+    acc = {(base, wi): ([], []) for base in ADULT_BASES for wi in range(len(W_ADU))}
     with Pool(args.procs, initializer=_init, initargs=(rows,)) as pool:
-        for wi, bgs, dvs in pool.imap_unordered(_adult_job, jobsA):
-            acc[wi][0].append(bgs); acc[wi][1].append(dvs)
+        for base, wi, bgs, dvs in pool.imap_unordered(_adult_job, jobsA):
+            acc[(base, wi)][0].append(bgs); acc[(base, wi)][1].append(dvs)
     outA = []
-    for wi, w in enumerate(W_ADU):
-        bg = np.concatenate(acc[wi][0]).mean(0); dv = np.concatenate(acc[wi][1]).mean(0)
-        row = dict(world_EIGs=w, **{f"bg_{i+1}": bg[i] for i in range(MAX_D + 1)},
-                   **{f"dev_{D}": dv[D - 1] for D in range(1, MAX_D + 1)})
-        cm = condition_mean_fit(human, pred21(pd.Series(row)), ["trial_type", "trial_number"], n_folds=7)
-        row.update(r2_21=cm["r2"], rmse21_cv=cm["rmse"], b21=cm["b"])
-        outA.append(row)
+    for base in ADULT_BASES:
+        for wi, w in enumerate(W_ADU):
+            bg = np.concatenate(acc[(base, wi)][0]).mean(0); dv = np.concatenate(acc[(base, wi)][1]).mean(0)
+            row = dict(metric=base, world_EIGs=w, **{f"bg_{i+1}": bg[i] for i in range(MAX_D + 1)},
+                       **{f"dev_{D}": dv[D - 1] for D in range(1, MAX_D + 1)})
+            cm = condition_mean_fit(human, pred21(pd.Series(row)), ["trial_type", "trial_number"], n_folds=7)
+            row.update(r2_21=cm["r2"], rmse21_cv=cm["rmse"], b21=cm["b"])
+            outA.append(row)
     outA = pd.DataFrame(outA)
     outA.to_csv(f"{OUT}/lesion_noiseless_learner_adults.csv", index=False)
-    g = outA[(outA.b21 > 0) & (outA.bg_1 < 76)].dropna(subset=["r2_21"])
-    print("\n=== NO-NOISE-LEARNER lesion of B, ADULTS (V1 a1 b0.1, st .1, true-EIG stopping) ===")
-    if g.empty:
-        print(f"no sign-consistent non-saturated fit (best any-sign R2 {outA.r2_21.max():.3f})")
-    else:
-        b = g.sort_values("r2_21", ascending=False).iloc[0]
-        print(f"R2 {b.r2_21:.3f} (b {b.b21:+.0f}) w{b.world_EIGs:.1e} hab {b.bg_11/b.bg_1:.2f} "
-              f"dis {np.mean([b[f'dev_{D}'] for D in range(1, 11)])/b.bg_11:.2f}")
+    print("\n=== NO-NOISE-LEARNER lesion, ADULTS (V1 a1 b0.1, st .1; stopping on the named variable) ===")
+    for base in ADULT_BASES:
+        oa = outA[outA.metric == base]
+        g = oa[(oa.b21 > 0) & (oa.bg_1 < 76)].dropna(subset=["r2_21"])
+        if g.empty:
+            print(f"{base:12s} no sign-consistent non-saturated fit (best any-sign R2 {oa.r2_21.max():.3f})")
+        else:
+            b = g.sort_values("r2_21", ascending=False).iloc[0]
+            print(f"{base:12s} R2 {b.r2_21:.3f} (b {b.b21:+.0f}) w{b.world_EIGs:.1e} hab {b.bg_11/b.bg_1:.2f} "
+                  f"dis {np.mean([b[f'dev_{D}'] for D in range(1, 11)])/b.bg_11:.2f}")
     print("\ndone")
 
 

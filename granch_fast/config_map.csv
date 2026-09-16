@@ -1,8 +1,9 @@
 config,hab,dis,kind
 "human (infants, Exp 1)",0.5747118331285528,1.7157335378459528,human
 PUBLISHED: noiseless + inferred eps + implemented EIG + grid,0.34213487456205405,2.8048168646890477,works
-CORRECTED: noiseless + FIXED eps + implemented EIG,0.5485220729867272,1.5802203149599834,works
-"noiseless + inferred eps, EXACT inference (any DV; degenerate)",0.5110529704012652,1.000000000000024,fails
-noisy + inferred eps + implemented EIG,0.9327237034033596,0.9829155290691995,fails
-CONCEPTUAL: noisy + inferred eps + TRUE EIG,0.828467107402787,1.1871981056997505,works
-noiseless + fixed eps + true EIG (max-dishab setting),0.9229807364888873,1.1772792395362777,fails
+CORRECTED: noiseless + FIXED eps + implemented EIG,0.5485220729816844,1.5802203148892568,works
+"noiseless + inferred eps, EXACT inference (any DV; degenerate)",0.5083987690178239,1.000000000000032,fails
+noisy + inferred eps + implemented EIG,0.8922961440764556,0.983894597784147,fails
+noisy + inferred eps + total EIG (incl. information about eps),0.6389206883315278,1.0310646868228637,fails
+CONCEPTUAL: noisy + inferred eps + CONCEPT EIG (eps a nuisance),0.8729929329814164,1.1178357257729674,works
+noiseless + fixed eps + true EIG (max-dishab setting),0.9334971888148316,1.176685947416619,fails

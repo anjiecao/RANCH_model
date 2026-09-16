@@ -4,17 +4,20 @@ forward-looking EIG -- not the corrected published implementation. The other two
 as named references: what was published (degenerate under exact inference) and its
 corrected form (realized gain in a clean world).
 
-REOPENED 2026-09-15: that decision rested on a result produced by the eq-15 slip. With the
-correct mutual information the CANONICAL configuration below does NOT reproduce the phenomena
-(infants R2 .23 on re-evaluation, native dishabituation 1.03; adults .27). Its parameter pins
-are left as the record of the superseded analysis; PUBLISHED_CORRECTED is, on present
-evidence, the only configuration that produces the phenomena natively. A concept-only EIG
-(eps as nuisance) is under study as a possible replacement decision variable.
+2026-09-15/16: the EIG in that decision is the CONCEPT EIG, I(z; mu, sigma^2 | data) with eps
+marginalized as a nuisance -- which is the paper's own equation for EIG (expected KL between
+successive posteriors over (mu, sigma)) computed exactly. The total EIG (including
+information about eps) was what the retracted 2026-09-14 result had been credited to; under
+the correct formula it does not reproduce the phenomena (infants R2 .23, dis 1.03), while the
+concept EIG does (infants .75 +/- .03 on 32 fresh rollouts, adults .64-.73 on 64, Exp-2
+.51/.61 with the correct orderings; noisy-world study of 2026-09-16). Pins below are the
+shared (sigma_true .1, sd_eps .5) cell; the infant grid best is (sigma_true .2, sd_eps 1),
+R2 .747 re-evaluated. Pending MCF's confirmation of the variable change.
 """
 from dataclasses import dataclass
 
 from .config import Prior, LearnerNoise, Quadrature, Model
-from .decision import EIG, RealizedGain
+from .decision import EIG, EIGConcept, RealizedGain
 
 
 @dataclass(frozen=True)
@@ -30,12 +33,21 @@ class NamedConfiguration:
 
 
 CANONICAL = NamedConfiguration(
-    name="canonical: noisy world + inferred eps + true EIG",
+    name="canonical: noisy world + inferred eps + concept EIG (eps a nuisance)",
     model=Model(Prior(0.0, 3.0, 1.0, 0.1, (0.001, 1.5)), LearnerNoise.inferred(1e-3, 0.5, (1e-3, 1.2)),
                 quadrature=Quadrature(n_sigma=80, n_eps=30)),
-    sigma_true=0.1, variable=EIG, w_infants=3.6e-5, w_adults=3.2e-5,
+    sigma_true=0.1, variable=EIGConcept, w_infants=6.8e-5, w_adults=3.2e-5,
     adult_prior=Prior(0.0, 1.0, 1.0, 0.1, (0.001, 1.5)),
-    note="infants R2 .73 (R=32), adults 21-cond .68, Exp-2 .49/.68 with correct orderings (pre-fix values)")
+    note="infants: this cell R2 .73 on the R=8 grid (grid best .755 at sigma_true .2 / sd_eps 1 -> .747 on 32 fresh "
+         "rollouts, hab .87 dis 1.12); adults 21-cond .73 on 64 fresh rollouts (hab .77 dis 1.15); "
+         "Exp-2 carried .51 / .61 with the correct violation orderings (2026-09-16)")
+
+TOTAL_EIG_REFERENCE = NamedConfiguration(
+    name="reference: noisy world + inferred eps + total EIG (information about eps included)",
+    model=CANONICAL.model, sigma_true=0.1, variable=EIG, w_infants=4.6e-4, w_adults=3.2e-3,
+    adult_prior=Prior(0.0, 10.0, 1.0, 0.1, (0.001, 1.5)),
+    note="the configuration the retracted 2026-09-14 finding was credited to: with the correct formula, "
+         "infants R2 .23 (dis 1.03), adults .23, Exp-2 .04/.28 -- the familiar supplies information about eps too")
 
 PUBLISHED_CORRECTED = NamedConfiguration(
     name="published implementation, corrected: noiseless world + fixed eps + realized gain",
@@ -53,4 +65,4 @@ PUBLISHED_SPEC = NamedConfiguration(
     w_infants=1e-4, w_adults=1e-4, adult_prior=Prior(0.0, 1.0, 10.0, 0.1, (0.001, 1.5)),
     note="eps posterior collapses on identical glimpses; ~1 sample at any w (the grid approximation was load-bearing)")
 
-CONFIGURATIONS = {c.name: c for c in (CANONICAL, PUBLISHED_CORRECTED, PUBLISHED_SPEC)}
+CONFIGURATIONS = {c.name: c for c in (CANONICAL, PUBLISHED_CORRECTED, PUBLISHED_SPEC, TOTAL_EIG_REFERENCE)}

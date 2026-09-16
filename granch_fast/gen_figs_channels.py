@@ -24,7 +24,7 @@ sys.path.insert(0, f"{RANCH}/pkbb_paper_writing")
 from granch_fast.run_fast import FastConfig, make_grid
 from granch_fast import metrics as M
 from granch_fast import fit_infants as F
-from granch_fast.eig import feature_eig_channels
+from granch_fast.eig import feature_eig_channels, feature_eig_concept
 
 T_SHOW = 15
 R = 16
@@ -37,12 +37,14 @@ CONFIGS = {
     "3. noisy world (.1), eps inferred": (0.1, FastConfig(**PRIOR, epsilon=0.1, n_z=5, mu_epsilon=1e-3, sd_epsilon=0.5, infer_eps=True,
                                                           eps_box=(1e-3, 1.2), n_eps=30, n_sigma=80)),
 }
-COLS = ["I_mu (concept mean)", "I_sigma (spread & noise)", "total (true EIG)", "KL (realized)", "implemented EIG"]
+COLS = ["I_mu (concept mean)", "I_sigma (spread & noise)", "total (true EIG)", "concept EIG (eps nuisance)",
+        "KL (realized)", "implemented EIG"]
 
 
 def channel_trajectory(cfg, grid, fam_vec, test_vec, rng, sigma_true):
-    """(T_SHOW, 5) array after each test sample: [I_mu, I_sigma, true EIG, realized KL,
-    implemented EIG], summed over features."""
+    """(T_SHOW, 6) array after each test sample: [I_mu, I_sigma, true EIG (their sum), concept EIG
+    I(z; mu, sigma^2 | data) with eps a nuisance (added 2026-09-16), realized KL, implemented
+    EIG], summed over features."""
     st = M.State(cfg, grid, FAM_DUR + 1)
     noise = (lambda v: v + rng.normal(0.0, sigma_true, size=len(v))) if sigma_true > 0 else (lambda v: v)
     fam_vec = np.asarray(fam_vec, float); test_vec = np.asarray(test_vec, float)
@@ -58,12 +60,13 @@ def channel_trajectory(cfg, grid, fam_vec, test_vec, rng, sigma_true):
     for t in range(T_SHOW):
         z = noise(test_vec)
         o = st.step(FAM_DUR, z, M.window_center(st, FAM_DUR, z, test_vec, "exemplar_mean"), want=("mi", "kl", "eig_code"))
-        ch = np.zeros(2)
+        ch = np.zeros(2); concept = 0.0
         for d in range(cfg.n_feature):
             n_star, zbar_star, _ = st.stats[d][FAM_DUR]
             ch += feature_eig_channels(st.fps[d], n_star, zbar_star)
+            concept += feature_eig_concept(st.fps[d], n_star, zbar_star)
         assert abs(ch.sum() - o["mi"]) < 1e-9 * max(1.0, abs(o["mi"]))   # channels sum to the engine's mi
-        out[t] = [ch[0], ch[1], o["mi"], o["kl"], o["eig_code"]]
+        out[t] = [ch[0], ch[1], o["mi"], concept, o["kl"], o["eig_code"]]
     return out
 
 
