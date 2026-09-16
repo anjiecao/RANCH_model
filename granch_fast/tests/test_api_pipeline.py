@@ -6,12 +6,12 @@ import pandas as pd
 import pytest
 
 from granch_fast import metrics as M
-from granch_fast import phase1_selfconsistent as P1S
-from granch_fast import phase1b_adults_selfcons as P1B
-from granch_fast import score_phase1_selfcons as SPS
-from granch_fast import run_phase2_selfcons as RP2
-from granch_fast.phase1_adults import _adult_curves_offset
-from granch_fast.phase1_infants import make_cfg as legacy_make_cfg
+from granch_fast.legacy import phase1_selfconsistent as P1S
+from granch_fast.legacy import phase1b_adults_selfcons as P1B
+from granch_fast.legacy import score_phase1_selfcons as SPS
+from granch_fast.legacy import run_phase2_selfcons as RP2
+from granch_fast.legacy.phase1_adults import _adult_curves_offset
+from granch_fast.legacy.phase1_infants import make_cfg as legacy_make_cfg
 from granch_fast.run_fast import make_grid
 from ranch import data, pipeline
 from ranch.settings import settings_table, spec, variable_for
@@ -91,7 +91,7 @@ def test_legacy_phase2_selfcons_adult_scores_loader(tmp_path):
     """run_phase2_selfcons must handle both adult score tables: the base one (no world/noise
     columns; taken from the predictions) and the ext one (already carries them). The finish
     job of 2026-09-15 died on the second case (suffixed duplicate columns)."""
-    from granch_fast.run_phase2_selfcons import load_adult_scores
+    from granch_fast.legacy.run_phase2_selfcons import load_adult_scores
     preds = pd.DataFrame(dict(setting=[0, 0], metric=["mi", "mi"], world_EIGs=[1e-4, 1e-3], sigma_true=[0.1, 0.1], sd_epsilon=[0.5, 0.5]))
     base = pd.DataFrame(dict(setting=[0, 0], metric=["mi", "mi"], world_EIGs=[1e-4, 1e-3], r2_21=[0.5, 0.4], rmse21_cv=[100.0, 110.0], b21=[10.0, 9.0], bg1=[20.0, 30.0]))
     ext = base.assign(sigma_true=0.1, sd_epsilon=0.5)

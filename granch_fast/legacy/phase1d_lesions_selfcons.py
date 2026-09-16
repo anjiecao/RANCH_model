@@ -35,9 +35,9 @@ from granch_fast.run_fast import FastConfig, make_grid
 from granch_fast import metrics as M
 from granch_fast import fit_infants as F
 from granch_fast.linking_mixed import adult_long, condition_mean_fit
-from granch_fast.phase1b_adults_selfcons import rollout, T_CAP, MAX_D
-from granch_fast.phase1e_adults_winners import pred21
-from granch_fast.phase1_infants import OUT
+from granch_fast.legacy.phase1b_adults_selfcons import rollout, T_CAP, MAX_D
+from granch_fast.legacy.phase1e_adults_winners import pred21
+from granch_fast.legacy.phase1_infants import OUT
 from reproduce_cv import human_condition_means, cv_rmse_r2
 
 T_MAX = 40
@@ -150,7 +150,7 @@ def main():
               f"(hab {b.bg10/b.bg1:.2f} dis {b.dev10/b.bg10:.2f})")
 
     # ---------- adults (forward-looking stopping: total true EIG, and concept EIG) ----------
-    from granch_fast.phase1_adults import adult_pairs
+    from granch_fast.legacy.phase1_adults import adult_pairs
     pairs = adult_pairs(6)
     human = adult_long()
     st = 0.1

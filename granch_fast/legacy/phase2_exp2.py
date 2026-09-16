@@ -82,7 +82,7 @@ def adult_exp2_predictions(cfg, grid, metric, w, offset=0.0, n_per_type=6):
             if offset == 0.0:
                 bg, dv = M.adult_curves(cfg, grid, _EMB[f], _EMB[v], base, w, max_D=5)
             else:
-                from granch_fast.phase1_adults import _adult_curves_offset
+                from granch_fast.legacy.phase1_adults import _adult_curves_offset
                 bg, dv = _adult_curves_offset(cfg, grid, _EMB[f], _EMB[v], base, w, offset)
             bgs.append(bg[:6]); devs.append(dv)
         fams.append(np.mean(bgs, axis=0))

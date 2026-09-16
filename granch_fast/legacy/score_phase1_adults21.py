@@ -8,7 +8,7 @@ for _v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "VECLIB
 RANCH = os.environ.get("RANCH_ROOT", "/Users/mcfrank/Projects/ranch")
 sys.path.insert(0, f"{RANCH}/RANCH_model")
 from granch_fast.linking_mixed import adult_long
-from granch_fast.phase1_infants import OUT
+from granch_fast.legacy.phase1_infants import OUT
 WHICH = sys.argv[1] if len(sys.argv) > 1 else "main"
 human = adult_long(); hb = human.groupby(["trial_type", "trial_number"]).LT.mean()
 KEYS = list(hb.index)

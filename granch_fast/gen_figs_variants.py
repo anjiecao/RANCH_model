@@ -22,9 +22,9 @@ import pandas as pd
 ROOT = "/Users/mcfrank/Projects/ranch/RANCH_model"
 sys.path.insert(0, ROOT)
 from granch_fast.run_fast import make_grid
-from granch_fast.phase1_infants import make_cfg, OUT
-from granch_fast.run_phase2 import infant_condition_preds
-from granch_fast.phase2_exp2 import adult_exp2_predictions, VT
+from granch_fast.legacy.phase1_infants import make_cfg, OUT
+from granch_fast.legacy.run_phase2 import infant_condition_preds
+from granch_fast.legacy.phase2_exp2 import adult_exp2_predictions, VT
 
 GF = f"{ROOT}/granch_fast"
 METRICS = ["eig_code", "kl", "mi", "surprisal_b"]

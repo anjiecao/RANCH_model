@@ -9,9 +9,9 @@ import pandas as pd
 ROOT = "/Users/mcfrank/Projects/ranch/RANCH_model"
 sys.path.insert(0, ROOT)
 from granch_fast import metrics as M
-from granch_fast.phase1_infants import OUT
+from granch_fast.legacy.phase1_infants import OUT
 from granch_fast.linking_mixed import infant_long
-from granch_fast.run_phase2 import infant_condition_preds
+from granch_fast.legacy.run_phase2 import infant_condition_preds
 
 PAPER = "/Users/mcfrank/Projects/ranch/pkbb_paper_writing"
 METRICS = ["eig_code", "eig_within", "kl", "mi", "surprisal_b"]

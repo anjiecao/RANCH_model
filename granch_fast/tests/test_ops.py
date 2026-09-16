@@ -16,9 +16,10 @@ GF = f"{ROOT}/granch_fast"
 
 
 def test_every_multiprocessing_driver_pins_blas_threads():
-    """Any script that opens a Pool must pin OMP/BLAS threads to 1 (the load-200 incident)."""
+    """Any script that opens a Pool must pin OMP/BLAS threads to 1 (the load-200 incident).
+    The package's pools rely on the caller's environment (the cluster scripts export the pins)."""
     offenders = []
-    for f in glob.glob(f"{GF}/*.py") + glob.glob(f"{GF}/audit/*.py"):
+    for f in glob.glob(f"{GF}/*.py") + glob.glob(f"{GF}/audit/*.py") + glob.glob(f"{GF}/legacy/*.py"):
         src = open(f).read()
         if "Pool(" in src and "OMP_NUM_THREADS" not in src:
             offenders.append(os.path.basename(f))
@@ -28,7 +29,7 @@ def test_every_multiprocessing_driver_pins_blas_threads():
 def test_driver_import_sets_thread_env_in_a_clean_process():
     env = {k: v for k, v in os.environ.items() if not k.endswith("_NUM_THREADS")}
     env["RANCH_ROOT"] = os.environ.get("RANCH_ROOT", "/Users/mcfrank/Projects/ranch")
-    code = ("import os, sys; sys.path.insert(0, %r); import granch_fast.phase1_selfconsistent; "
+    code = ("import os, sys; sys.path.insert(0, %r); import granch_fast.legacy.phase1_selfconsistent; "
             "print(os.environ['OMP_NUM_THREADS'])" % ROOT)
     out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, env=env)
     assert out.returncode == 0, out.stderr
@@ -86,45 +87,41 @@ def test_sync_block_applies_to_a_clone_one_commit_behind(tmp_path):
     assert spaced and all((clone / p).exists() for p in spaced)
 
 
-def test_cluster_invoked_scripts_start_up():
-    """Every script a sbatch file runs must import and build its argument parser
-    (`--help`) in a clean process: py_compile does not catch NameErrors at argparse
-    construction (the 2026-09-15 resume died that way at its last-but-three step)."""
+def test_cluster_jobs_use_only_the_package_entry_points():
+    """Every command a sbatch file runs is a `python -m ranch ...` stage or `python -m ranch.gate`
+    (the legacy drivers are frozen under granch_fast/legacy and must not be scheduled), and every
+    stage a job uses starts up (`--help`) in a clean process -- py_compile does not catch
+    NameErrors at argparse construction (a 2026-09-15 job died that way at its last-but-three step)."""
     import re
-    scripts = set()
-    for sb in glob.glob(f"{ROOT}/sherlock/*.sbatch"):
-        scripts |= set(re.findall(r"granch_fast/[a-z0-9_]+\.py", open(sb).read()))
     env = dict(os.environ, RANCH_ROOT=os.environ.get("RANCH_ROOT", "/Users/mcfrank/Projects/ranch"))
+    stages = set()
+    for sb in glob.glob(f"{ROOT}/sherlock/*.sbatch") + glob.glob(f"{ROOT}/sherlock/*.sh"):
+        src = open(sb).read()
+        assert not re.findall(r"granch_fast/[a-z0-9_]+\.py", src), sb
+        stages |= set(re.findall(r"\bR (grid|score|adults|score-adults|winners|phase2|reevaluate|figures)\b", src))
+    assert stages, "no pipeline stages found in the cluster scripts"
     failures = []
-    for s in sorted(scripts):
-        src = open(f"{ROOT}/{s}").read()
-        if "argparse" not in src:
-            continue                                   # positional-arg scripts are exercised elsewhere
-        r = subprocess.run([sys.executable, f"{ROOT}/{s}", "--help"], capture_output=True, text=True, env=env, timeout=300)
-        if r.returncode != 0:
-            failures.append((s, r.stderr.strip().splitlines()[-1] if r.stderr.strip() else "?"))
-    for mod in ("ranch", "ranch.gate"):                # the gate job's `python -m ...` entry points
+    for mod in ("ranch", "ranch.gate"):
         r = subprocess.run([sys.executable, "-m", mod, "--help"], capture_output=True, text=True, env=env, cwd=ROOT, timeout=300)
         if r.returncode != 0:
             failures.append((mod, r.stderr.strip().splitlines()[-1] if r.stderr.strip() else "?"))
+    r = subprocess.run([sys.executable, "-m", "ranch", "--help"], capture_output=True, text=True, env=env, cwd=ROOT, timeout=300)
+    for st in sorted(stages):
+        if st not in r.stdout:
+            failures.append((st, "stage missing from the CLI"))
     assert not failures, failures
 
 
-def test_cluster_invoked_scripts_have_no_hardcoded_laptop_paths():
-    """Every python script a sbatch file runs must resolve its paths through RANCH_ROOT
-    (the 2026-09-14 regeneration died at its first scoring step because four scorers
-    still hardcoded the laptop path). A literal '/Users/mcfrank' is allowed only as the
-    RANCH_ROOT default inside an os.environ.get(...) expression."""
-    import re
-    scripts = set()
-    for sb in glob.glob(f"{ROOT}/sherlock/*.sbatch"):
-        scripts |= set(re.findall(r"granch_fast/[a-z0-9_]+\.py", open(sb).read()))
-    assert scripts
+def test_package_has_no_hardcoded_laptop_paths():
+    """Every path resolves through RANCH_ROOT (the 2026-09-14 regeneration died at its first
+    scoring step because four scorers still hardcoded the laptop path). A literal
+    '/Users/mcfrank' is allowed only as the RANCH_ROOT default inside os.environ.get(...)."""
     offenders = []
-    for s in sorted(scripts):
-        for line in open(f"{ROOT}/{s}"):
+    for f in glob.glob(f"{ROOT}/ranch/*.py") + [f"{GF}/metrics.py", f"{GF}/eig.py", f"{GF}/analytic_core.py", f"{GF}/run_fast.py",
+                                                f"{GF}/linking_mixed.py", f"{GF}/fit_infants.py"]:
+        for line in open(f):
             if "/Users/mcfrank" in line and "os.environ.get(" not in line:
-                offenders.append((s, line.strip()))
+                offenders.append((os.path.relpath(f, ROOT), line.strip()))
     assert not offenders, offenders
 
 
@@ -141,3 +138,12 @@ def test_time_budgets(ref_inferred, stim_pair):
     t0 = time.perf_counter()
     M.infant_trajectories(cfg, grid, fam, dev, 8, 40, rng=rng, sigma_true=0.1, want=("eig_code", "mi", "kl", "surprisal"))
     assert time.perf_counter() - t0 < 0.4
+
+
+def test_package_never_imports_the_frozen_drivers():
+    """granch_fast/legacy holds the retired Phase-1/2 drivers for the identity tests only; the
+    package must not depend on them (they will not be maintained)."""
+    offenders = [os.path.relpath(f, ROOT) for f in glob.glob(f"{ROOT}/ranch/*.py")
+                 if any(("granch_fast.legacy" in line or "from granch_fast import" in line) and not line.strip().startswith("#")
+                        and "import" in line and "legacy" in line for line in open(f))]
+    assert not offenders, offenders

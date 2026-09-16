@@ -5,9 +5,9 @@ import sys, numpy as np, pandas as pd
 ROOT = "/Users/mcfrank/Projects/ranch/RANCH_model"; sys.path.insert(0, ROOT)
 from granch_fast.run_fast import make_grid
 from granch_fast import metrics as M
-from granch_fast.phase1_infants import make_cfg, OUT
-from granch_fast.run_phase2 import infant_condition_preds
-from granch_fast.phase2_exp2 import infant_exp2_predictions, adult_exp2_predictions, VT
+from granch_fast.legacy.phase1_infants import make_cfg, OUT
+from granch_fast.legacy.run_phase2 import infant_condition_preds
+from granch_fast.legacy.phase2_exp2 import infant_exp2_predictions, adult_exp2_predictions, VT
 
 GF = f"{ROOT}/granch_fast"
 S = pd.read_csv(f"{OUT}/infant_settings_main.csv")

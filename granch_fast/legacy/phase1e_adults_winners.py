@@ -21,9 +21,9 @@ from granch_fast.run_fast import make_grid
 from granch_fast import fit_infants as F
 from granch_fast import metrics as M
 from granch_fast.linking_mixed import adult_long, condition_mean_fit
-from granch_fast.phase1_selfconsistent import make_cfg
-from granch_fast.phase1b_adults_selfcons import rollout, T_CAP, MAX_D, W_GRID
-from granch_fast.phase1_infants import OUT
+from granch_fast.legacy.phase1_selfconsistent import make_cfg
+from granch_fast.legacy.phase1b_adults_selfcons import rollout, T_CAP, MAX_D, W_GRID
+from granch_fast.legacy.phase1_infants import OUT
 
 R64 = 64
 METRICS = ["eig_code", "mi", "kl", "surprisal_b", "mi_concept"]
@@ -83,7 +83,7 @@ def main():
     ap.add_argument("--rollouts", type=int, default=R64, help="fresh rollouts per (winner, pair); smoke tests: 1")
     args = ap.parse_args()
     R = args.rollouts
-    from granch_fast.phase1_adults import adult_pairs
+    from granch_fast.legacy.phase1_adults import adult_pairs
     preds = pd.read_csv(f"{OUT}/adult_preds_selfcons_ext.csv")
     human = adult_long()
     sc = score21(preds, human)

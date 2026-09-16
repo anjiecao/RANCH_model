@@ -29,7 +29,9 @@ W_INFANT = {
                  "mi_concept": np.logspace(-5, 0, 19)},
 }
 W_INFANT["infeps"] = W_INFANT["main"]
+W_INFANT["lesion_infants"] = W_INFANT["selfcons"]
 W_ADULT = {
+    "lesion_adults": {"mi": list(np.logspace(-4.5, 0.5, 11)), "mi_concept": list(np.logspace(-4.5, 0.5, 11))},
     "mean_field": {"eig_code": list(np.logspace(-5.5, -1.5, 9)), "eig_within": list(np.logspace(-5.5, -1.5, 9)),
                    "kl": list(np.logspace(-5.5, -1.5, 9)), "mi": list(np.logspace(-4.5, -0.5, 9)),
                    "surprisal": list(np.logspace(-2, 1.5, 9)), "surprisal_b": list(np.logspace(-2, 1.5, 9))},
@@ -70,8 +72,8 @@ def infant_grid(kind, rollouts=None, T_max=None, window="exemplar_mean", procs=8
     row (x rollout). Returns dict(traj, metrics, settings, meta); traj is (S, rows, M, T) for
     deterministic kinds and (S, rows, R, M, T) for noisy ones (the legacy npz layouts)."""
     S = settings_table(kind) if settings is None else settings.reset_index(drop=True)
-    noisy = kind.startswith("selfcons")
-    rollouts = rollouts or (8 if noisy else 1)
+    noisy = kind.startswith(("selfcons", "lesion"))
+    rollouts = rollouts or ({"selfcons_base": 8, "selfcons_ext": 8, "lesion_infants": 16}.get(kind, 1))
     T_max = T_max or (40 if noisy else 60)
     seed0 = 1000 if kind == "selfcons_base" else 20000
     trials = data.load_trials()
@@ -127,6 +129,7 @@ def score_infant(g, procs=8):
     kind = g["kind"]
     traj = g["traj"] if traj_is_5d(g) else g["traj"][:, :, None]
     w_grid = W_INFANT["selfcons" if kind.startswith("selfcons") else kind]
+    w_grid = {m: w for m, w in w_grid.items() if ("surprisal" if m == "surprisal_b" else m) in g["metrics"]}
     ctx = (g["meta"], data.infant_condition_means(), data.load_infant_exp1(), list(g["metrics"]), w_grid)
     jobs = ((si, g["settings"].iloc[si], kind, traj[si]) for si in range(traj.shape[0]))
     with Pool(procs, initializer=_score_init, initargs=(ctx,)) as pool:
@@ -215,7 +218,7 @@ def score_adult(preds, human=None):
     human = data.load_adult_exp1() if human is None else human
     conds = human[["trial_type", "trial_number", "exposure_duration"]].drop_duplicates()
     hb = human.groupby(["trial_type", "trial_number"]).LT.mean()
-    keep = [c for c in ("V_prior", "alpha_prior", "beta_prior", "eps_fixed", "sd_epsilon", "sigma_true", "window") if c in preds.columns]
+    keep = [c for c in ("V_prior", "alpha_prior", "beta_prior", "eps_fixed", "sd_epsilon", "infer_eps", "sigma_true", "window") if c in preds.columns]
     r75, r21 = [], []
     for _, row in preds.iterrows():
         base = dict(setting=row.setting, metric=row.metric, world_EIGs=row.world_EIGs, **{k: row[k] for k in keep})
@@ -278,3 +281,120 @@ def exp2_adults(sp, metric, w, mode, rollouts=1, seed=13, n_per_type=6, emb=None
                 dev[(vt, pos)] = float(np.mean([d[j] for d in devs]))
     fam = np.mean(fams, axis=0)
     return {("fam", tn): float(fam[tn - 1]) for tn in range(1, 7)}, dev
+
+
+# ---------------------------------------------------------------- Phase 2: Exp-1 -> Exp-2 with carried parameters
+def _infant_cond_means(g, si, metric, w, window="exemplar_mean"):
+    """Exp-1 condition means (native E[samples]) of one cell of a deterministic infant grid."""
+    from .settings import variable_for as _vf
+    sp = spec(g["settings"].iloc[si], g["kind"], window)
+    var, off = _vf(metric, sp)
+    tr = g["traj"][si][:, g["metrics"].index(var.key), :].astype(float) + off
+    es = np.array([expected_samples(tr[r], w) for r in range(tr.shape[0])])
+    return g["meta"].assign(es=es).groupby(["trial_type", "trial_number"]).es.mean().reset_index().rename(columns={"es": "mean_sample"})
+
+
+def joint_selection(metric, inf_scores, adu_scores21, g, adu_preds, K=40):
+    """The paper's joint-scaling selection (run_phase2.joint_selection): one affine map for
+    infants (looking, s) and adults (dwell, s); the (infant cell, adult cell) pair with the
+    smallest joint RMSE over each population's top-K cells by CV RMSE. Deterministic grids only."""
+    human_cm = data.infant_condition_means(); human_adult = data.load_adult_exp1()
+    conds = human_adult[["trial_type", "trial_number", "exposure_duration"]].drop_duplicates()
+    hc = human_adult.groupby(["trial_type", "trial_number", "exposure_duration"]).LT.mean().reset_index()
+    inf_top = inf_scores[inf_scores.metric == metric].dropna(subset=["pooled_rmse"]).sort_values("pooled_rmse").head(K)
+    adu_top = adu_scores21[adu_scores21.metric == metric].dropna(subset=["rmse21_cv"]).sort_values("rmse21_cv").head(K)
+    y_inf = 0.5 * (human_cm.LT_odd + human_cm.LT_even).values
+    inf_x = {(int(r.setting), r.world_EIGs): human_cm.merge(_infant_cond_means(g, int(r.setting), metric, r.world_EIGs),
+                                                            on=["trial_type", "trial_number"]).mean_sample.values
+             for r in inf_top.itertuples(index=False)}
+    adu_x = {}
+    for r in adu_top.itertuples(index=False):
+        row = adu_preds[(adu_preds.setting == r.setting) & (adu_preds.metric == metric) & np.isclose(adu_preds.world_EIGs, r.world_EIGs)].iloc[0]
+        j = hc.merge(_pred75(row, conds), on=["trial_type", "trial_number", "exposure_duration"])
+        adu_x[(int(r.setting), r.world_EIGs)] = (j.mean_sample.values, j.LT.values / 1000.0)
+    best = None
+    for ki, xi in inf_x.items():
+        for ka, (xa, ya) in adu_x.items():
+            X = np.concatenate([xi, xa]); Y = np.concatenate([y_inf, ya])
+            b, a = np.polyfit(X, Y, 1)                       # the paper's joint scaling is unconstrained
+            rmse = float(np.sqrt(np.mean((Y - (a + b * X)) ** 2)))
+            if best is None or rmse < best[0]:
+                best = (rmse, ki, ka)
+    return best
+
+
+def _setting_label(row, stochastic):
+    if stochastic:
+        return f"V{row.V_prior:g} a{row.alpha_prior:g} b{row.beta_prior:g} sd{row.sd_epsilon:g} st{row.sigma_true:g} w{row.world_EIGs:.1e}"
+    return f"V{row.V_prior:g} a{row.alpha_prior:g} b{row.beta_prior:g} eps{row.eps_fixed:g} w{row.world_EIGs:.1e}"
+
+
+def _phase2_job(args):
+    metric, rule, inf_row, inf_kind, adu_row, adu_kind, window, stochastic, r_inf, r_adu, carry = args
+    from .linking import scaled_fit
+    h_inf, h_adu = data.load_exp2_human_infants(), data.load_exp2_human_adults()
+    VT = data.VIOLATION_TYPES
+    adu_keys = [("fam", tn) for tn in range(1, 7)] + [(vt, pos) for vt in VT[1:] for pos in (2, 4, 6)]
+    out = dict(metric=metric, rule=rule)
+    if inf_row is not None:
+        sp = spec(inf_row, inf_kind, window)
+        pred = exp2_infants(sp, metric, float(inf_row.world_EIGs), rollouts=(r_inf if stochastic else 1), seed=11, emb=_EMB)
+        fi = scaled_fit(pred, h_inf, VT, carry=carry)
+        order = sorted(VT, key=lambda k: -pred[k])
+        out.update(inf_setting=_setting_label(inf_row, stochastic), inf_exp1_rmse=float(inf_row.pooled_rmse),
+                   inf_exp1_r2=float(inf_row.pooled_r2), inf_exp1_within_r2=float(inf_row.get("within_r2", np.nan)),
+                   inf_exp2_r2=fi["r2"], inf_exp2_rmse=fi["rmse"], inf_exp2_rmse_carry=fi.get("rmse_carry", np.nan),
+                   inf_order=">".join(o[:4] for o in order), **{f"inf_{k}": pred[k] for k in VT})
+    if adu_row is not None:
+        sp = spec(adu_row, adu_kind, window)
+        fam, dev = exp2_adults(sp, metric, float(adu_row.world_EIGs), "stochastic" if stochastic else "mean_field",
+                               rollouts=(r_adu if stochastic else 1), seed=13, emb=_EMB)
+        fa = scaled_fit({**fam, **dev}, h_adu, adu_keys)
+        devmag = {vt: float(np.mean([dev[(vt, p)] for p in (2, 4, 6)])) for vt in VT[1:]}
+        out.update(adu_setting=_setting_label(adu_row, stochastic), adu_exp1_r2=float(adu_row.r2_21), adu_exp1_rmse=float(adu_row.rmse21_cv),
+                   adu_exp2_r2=fa["r2"], adu_exp2_rmse_s=fa["rmse"] / 1000.0,
+                   adu_order=">".join(o[:4] for o in sorted(devmag, key=lambda k: -devmag[k])),
+                   adu_fam1=fam[("fam", 1)], adu_fam6=fam[("fam", 6)], **{f"adu_{k}": devmag[k] for k in VT[1:]})
+    return out
+
+
+def phase2(inf_scores, adu_scores21, inf_kind, adu_kind, metrics, rules=("paper",), rollouts_inf=8, rollouts_adu=12,
+           window="exemplar_mean", procs=8, inf_grid=None, adu_preds=None):
+    """Exp-1 -> Exp-2 out-of-sample prediction: per (metric, rule) select an infant cell and an
+    adult cell from the Phase-1 score tables (sign-consistent, non-saturated), carry every
+    parameter untouched to the Exp-2 stimulus sets, score with the paper's statistic (linking
+    refit on Exp-2, slope >= 0). Rules: 'paper' (best CV RMSE), 'r2' (best R2), 'within'
+    (infants: best within-subject r2; adults: best R2), 'joint' (the paper's joint-scaling
+    selection; needs inf_grid + adu_preds, deterministic kinds). Reproduces run_phase2 and
+    run_phase2_selfcons (their seeds; stochastic kinds use rollouts_inf / rollouts_adu)."""
+    from .selection import select_infant, select_adult, Selection
+    stochastic = inf_kind.startswith(("selfcons", "lesion"))
+    jobs = []
+    for m in metrics:
+        for rule in rules:
+            carry = None
+            if rule in ("paper", "r2"):
+                r = "rmse" if rule == "paper" else "r2"
+                si, sa = select_infant(inf_scores, m, r, kind=inf_kind, stochastic=stochastic), select_adult(adu_scores21, m, r, kind=adu_kind, stochastic=stochastic)
+            elif rule == "within":
+                g = inf_scores[(inf_scores.metric == m) & (inf_scores.pooled_r > 0) & (inf_scores.pred_bg1 < 450) & (inf_scores.pred_bg10 > 1.02)].dropna(subset=["within_r2"])
+                si = Selection("infants", inf_kind, m, "within", g.sort_values("within_r2", ascending=False).iloc[0], stochastic) if len(g) else None
+                sa = select_adult(adu_scores21, m, "r2", kind=adu_kind, stochastic=stochastic)
+            elif rule == "joint":
+                if inf_grid is None or adu_preds is None:
+                    raise ValueError("rule 'joint' needs the infant grid and the adult predictions")
+                _, ki, ka = joint_selection(m, inf_scores, adu_scores21, inf_grid, adu_preds)
+                si = Selection("infants", inf_kind, m, "joint", inf_scores[(inf_scores.metric == m) & (inf_scores.setting == ki[0]) & np.isclose(inf_scores.world_EIGs, ki[1])].iloc[0], stochastic)
+                sa = Selection("adults", adu_kind, m, "joint", adu_scores21[(adu_scores21.metric == m) & (adu_scores21.setting == ka[0]) & np.isclose(adu_scores21.world_EIGs, ka[1])].iloc[0], stochastic)
+            else:
+                raise ValueError(rule)
+            if si is not None and inf_grid is not None and not stochastic:      # zero-free-parameter RMSE under the Exp-1 scaling
+                cond1 = _infant_cond_means(inf_grid, int(si.row.setting), m, float(si.row.world_EIGs), window)
+                j = data.infant_condition_means().merge(cond1, on=["trial_type", "trial_number"])
+                b1, a1 = np.polyfit(j.mean_sample, 0.5 * (j.LT_odd + j.LT_even), 1)
+                carry = (a1, b1)
+            jobs.append((m, rule, None if si is None else si.row, inf_kind, None if sa is None else sa.row, adu_kind,
+                         window, stochastic, rollouts_inf, rollouts_adu, carry))
+    with Pool(procs, initializer=_init, initargs=(data.load_embeddings(),)) as pool:
+        rows = list(pool.imap(_phase2_job, jobs))
+    return pd.DataFrame(rows)

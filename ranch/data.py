@@ -87,7 +87,7 @@ VIOLATION_TYPES = ["background", "pose", "number", "identity", "animacy"]
 
 def load_adult_exp1_pairs(n_pairs=6, seed=0):
     """(familiar, deviant) stimulus-name pairs used in the adult Exp-1 runs, sampled as in
-    granch_fast.phase1_adults.adult_pairs (same seed -> same pairs)."""
+    granch_fast.legacy.phase1_adults.adult_pairs (same seed -> same pairs)."""
     import re
     a = pd.read_csv(f"{PAPER}/data/adults/adult_exposure_duration.csv", low_memory=False)
     clean = lambda s: re.sub(r".*/", "", s) if isinstance(s, str) else s

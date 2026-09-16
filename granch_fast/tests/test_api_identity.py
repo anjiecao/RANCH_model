@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from granch_fast import metrics as M
-from granch_fast.phase1b_adults_selfcons import rollout as legacy_rollout
+from granch_fast.legacy.phase1b_adults_selfcons import rollout as legacy_rollout
 from granch_fast.run_fast import make_grid
 from conftest import cfg_fixed, cfg_inferred
 from ranch import (Prior, LearnerNoise, Quadrature, Model, World, Learner, EIG, KL, Surprisal, EIGWithin,

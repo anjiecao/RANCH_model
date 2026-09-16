@@ -23,7 +23,7 @@ sys.path.insert(0, ROOT)
 from granch_fast.run_fast import FastConfig, make_grid
 from granch_fast import metrics as M
 from granch_fast import fit_infants as F
-from granch_fast.phase1_infants import settings_table, make_cfg, OUT
+from granch_fast.legacy.phase1_infants import settings_table, make_cfg, OUT
 
 MAX_D = 10
 W_GRID = {

@@ -39,7 +39,13 @@ stats + every decision variable per step), `metrics.expected_samples` (survival-
 `make_grid`, `linking_mixed` + `reproduce_cv` (three linkings / CV protocols).
 
 **Drivers (≈3,500 lines):** Phase-1/2 sweeps, scorers, figure generators, Sherlock scripts. Most of
-the accumulated line count; largely disposable once the API exists.
+the accumulated line count; largely disposable once the API exists. *2026-09-16: retired. The
+fourteen Phase-1/2 drivers and scorers are frozen under `granch_fast/legacy/` (imported only by the
+identity tests); `python -m ranch <stage>` (grid, score, adults, score-adults, winners, phase2,
+reevaluate, figures) and `sherlock/pipeline.sbatch` are the pipeline; the figure data come from
+`ranch.figures`; the lesion is two settings kinds. The July/August exploration scripts
+(`harness_*`, `sim.py`, `adult_fast.py`, `fit_*`, `gen_figs_eigcode/variants`, `prep_*`) remain as
+history and are candidates for an `archive/` move.*
 
 **Audit (≈1,000 lines, 13 scripts):** exactness, EIG identity, predictive semantics, MI brute force,
 geometry, mean-field vs MC, ε-collapse mechanism, engine consistency. They print; they do not
@@ -280,6 +286,27 @@ reviewed diff: every change traced to the formula fix, the window, the concept E
 re-evaluations, or — for the deterministic adult table — a 5-pair pre-commit run (the current
 driver at `--pairs 6` reproduces the regenerated table to 1e-10). Lesson for §0 #8: a cached
 table must carry the arguments that produced it, not only the script name.
+
+*Step 3 status (2026-09-16, afternoon): (a)–(e) done and smoke-tested end to end; the identity
+tests (`tests/test_api_stage3.py`) prove the winners stages and the noisy Phase 2 bitwise against
+the frozen drivers on subsets with their seeds, and the deterministic Phase 2 at full size matches
+the pinned table (every selection and ordering identical; surprisal rows within 5e-4 in R² because
+the pipeline judges the deterministic plateau on all variables jointly). The deterministic score
+tables of record are now the pipeline's (same values, plus the signed-correlation column the
+selection filters need). (f) pending: the full chain on the cluster (`sherlock/pipeline.sbatch`),
+then the winners pins added to the goldens.*
+
+*Step 3 checklist (started 2026-09-16, MCF "go ahead").* (a) `ranch.selection`: re-evaluations
+keep their native curves; `infant_winners` / `adult_winners` reproduce phase1c / phase1e (same
+seed conventions: `777 + winner index`, `5_000_000 + winner index`) and write the winners tables
+the figures read. (b) `ranch.pipeline.phase2` with the rules paper / r2 / within / joint over
+`Selection` objects (`linking.scaled_fit` ported). (c) The lesion as settings kinds
+`lesion_infants` / `lesion_adults` (no special script). (d) `ranch.figures`: the figure data
+(B1–B5) from the pipeline's tables and on-the-fly runs, no npz caches. (e) The fourteen
+Phase-1/2 drivers and scorers move to `granch_fast/legacy/` (frozen; imported only by the
+identity tests); cluster chain = `sherlock/pipeline.sbatch` over `python -m ranch` stages,
+smoke-tested by `sherlock/smoke_pipeline.sh`. (f) Suite green; full chain re-run on the cluster
+as the reproduction command.
 
 *Finishing sequence (agreed 2026-09-15).* Phase B: (1) `EIGConcept` registered (engine
 `feature_eig_concept`, exact-quadrature reference test) and run through the noisy-world study

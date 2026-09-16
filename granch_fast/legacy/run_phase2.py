@@ -22,10 +22,10 @@ sys.path.insert(0, ROOT)
 sys.path.insert(0, f"{RANCH}/pkbb_paper_writing")
 from granch_fast.run_fast import make_grid
 from granch_fast import metrics as M
-from granch_fast.phase1_infants import OUT, make_cfg
-from granch_fast.phase2_exp2 import (infant_exp2_predictions, adult_exp2_predictions, human_infant_exp2,
+from granch_fast.legacy.phase1_infants import OUT, make_cfg
+from granch_fast.legacy.phase2_exp2 import (infant_exp2_predictions, adult_exp2_predictions, human_infant_exp2,
                                       human_adult_exp2, scaled_fit, VT)
-from granch_fast.score_phase1_adults import pred_table
+from granch_fast.legacy.score_phase1_adults import pred_table
 from granch_fast.linking_mixed import adult_long
 from reproduce_cv import human_condition_means
 

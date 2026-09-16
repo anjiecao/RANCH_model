@@ -18,7 +18,7 @@ sys.path.insert(0, f"{RANCH}/pkbb_paper_writing")
 from granch_fast.metrics import expected_samples
 from granch_fast.linking_mixed import infant_long, deconfounded_fit
 from reproduce_cv import human_condition_means, cv_rmse_r2
-from granch_fast.phase1_infants import OUT
+from granch_fast.legacy.phase1_infants import OUT
 
 W_GRID = {"eig_code": np.logspace(-7, -1, 19), "kl": np.logspace(-7, -1, 19), "mi": np.logspace(-5, 0, 19),
           "surprisal": np.logspace(-2.5, 2, 19), "surprisal_b": np.logspace(-2.5, 2, 19),

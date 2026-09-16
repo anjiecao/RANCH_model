@@ -50,7 +50,7 @@ def test_stimulus_tables(emb, trials):
 
 
 def test_exp2_stimulus_sets():
-    from granch_fast.phase2_exp2 import infant_pairs, adult_pairs, VT
+    from granch_fast.legacy.phase2_exp2 import infant_pairs, adult_pairs, VT
     ip = infant_pairs()
     assert all((ip.violation_type == vt).sum() == 6 for vt in VT)
     ap = adult_pairs(6)

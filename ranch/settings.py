@@ -5,6 +5,9 @@ byte-identical against them):
   infeps        -- paper prior grid, eps INFERRED with a noiseless world (the published spec)
   selfcons_*    -- noisy world, eps inferred (the canonical family), base pilot / promotion ext
   adult_*       -- the noisy-adult sweeps (settings only; the paradigm differs)
+  lesion_*      -- the no-noise-learner lesion of the canonical model: eps FIXED at the
+                   published 1e-4 inside the noisy world, everything else as the canonical
+                   priors (infants V3 a1 b0.1 at sigma_true .1/.2; adults V1 a1 b0.1 at .1)
 """
 import itertools
 from dataclasses import dataclass
@@ -15,8 +18,9 @@ import pandas as pd
 from .config import Prior, LearnerNoise, Quadrature, Model
 from .decision import EIG, EIGWithin, EIGConcept, KL, Surprisal, RealizedGain
 
-KINDS = ("main", "infeps", "selfcons_base", "selfcons_ext", "adult_base", "adult_ext")
+KINDS = ("main", "infeps", "selfcons_base", "selfcons_ext", "adult_base", "adult_ext", "lesion_infants", "lesion_adults")
 SIGMA_BOX = (0.001, 1.5)
+LESION_EPS = 1e-4                 # the published generative value: a learner that believes its glimpses are veridical
 
 
 def settings_table(kind):
@@ -44,6 +48,11 @@ def settings_table(kind):
     elif kind == "adult_ext":
         for V, a, b, sd, st in itertools.product([1.0, 3.0], [1.0, 10.0], [0.1, 1.0], [0.5, 1.0], [0.1, 0.2]):
             rows.append(dict(V_prior=V, alpha_prior=a, beta_prior=b, sigma_true=st, sd_epsilon=sd, infer_eps=True, eps_fixed=np.nan))
+    elif kind == "lesion_infants":
+        for st in (0.1, 0.2):
+            rows.append(dict(V_prior=3.0, alpha_prior=1.0, beta_prior=0.1, sigma_true=st, sd_epsilon=np.nan, infer_eps=False, eps_fixed=LESION_EPS))
+    elif kind == "lesion_adults":
+        rows.append(dict(V_prior=1.0, alpha_prior=1.0, beta_prior=0.1, sigma_true=0.1, sd_epsilon=np.nan, infer_eps=False, eps_fixed=LESION_EPS))
     else:
         raise ValueError(kind)
     return pd.DataFrame(rows)
@@ -66,7 +75,12 @@ class Spec:
 def spec(s, kind, window="exemplar_mean"):
     """Grid row -> Spec, matching the legacy make_cfg conventions per kind."""
     prior = Prior(0.0, float(s["V_prior"]), float(s["alpha_prior"]), float(s["beta_prior"]), SIGMA_BOX)
-    if kind == "main" or (kind.startswith("adult") and not bool(s["infer_eps"])):
+    if kind.startswith("lesion"):
+        st = float(s["sigma_true"])
+        model = Model(prior, LearnerNoise.fixed(float(s["eps_fixed"])), quadrature=Quadrature(160, 1))
+        rg = RealizedGain(window, st, 5)                # the EIG window unchanged from the canonical model
+        return Spec(model, st, rg, 3.0 * (-np.log(st)), (rg, EIG, KL, Surprisal, EIGConcept))
+    if kind == "main" or (kind.startswith("adult") and not bool(s.get("infer_eps", True))):   # score rows may lack the flag
         e = float(s["eps_fixed"])
         model = Model(prior, LearnerNoise.fixed(e), quadrature=Quadrature(160, 1))
         rg = RealizedGain(window, 1e-4, 1)

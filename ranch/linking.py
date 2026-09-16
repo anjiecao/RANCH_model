@@ -52,3 +52,20 @@ def within_subject(human_long, model_pred, cond_cols, subject_col="subject", lt_
     out = deconfounded_fit(human_long, model_pred, cond_cols, subject_col=subject_col, lt_col=lt_col, n_folds=n_folds)
     out["r"] = float(np.sign(out["b"]) * np.sqrt(out["r2"])) if np.isfinite(out.get("b", np.nan)) else np.nan
     return out
+
+
+def scaled_fit(model, human, keys, carry=None, link=Affine()):
+    """The paper's Exp-2 statistic: refit LT ~ a + b*samples on the Exp-2 condition means
+    (slope >= 0) -> R^2 (squared correlation) and RMSE; with carry=(a, b) also the
+    zero-free-parameter RMSE under that Exp-1 scaling. model/human: dicts keyed by `keys`.
+    Identical to the legacy phase2_exp2.scaled_fit."""
+    x = np.array([model[k] for k in keys], float); y = np.array([human[k] for k in keys], float)
+    if x.std() == 0:
+        return dict(r2=np.nan, rmse=np.nan, rmse_carry=np.nan, a=np.nan, b=np.nan)
+    a, b = link.fit(x, y)
+    pred = link.predict((a, b), x)
+    res = dict(r2=float(np.corrcoef(x, y)[0, 1] ** 2), rmse=float(np.sqrt(np.mean((y - pred) ** 2))), a=a, b=b)
+    if carry is not None:
+        ca, cb = carry
+        res["rmse_carry"] = float(np.sqrt(np.mean((y - (ca + cb * x)) ** 2)))
+    return res
