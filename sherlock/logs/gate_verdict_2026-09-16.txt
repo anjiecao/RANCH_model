@@ -1,0 +1,14 @@
+infant_traj_main.npz             OK shape (135, 480, 5, 60) metrics ['eig_code', 'eig_within', 'mi', 'kl', 'surprisal'] max|diff| 1.82e-12 at |value| 2.95e-05 (deterministic: rtol 1e-4, atol 1e-7)
+infant_traj_infeps.npz           OK shape (81, 480, 5, 60) metrics ['eig_code', 'eig_within', 'mi', 'kl', 'surprisal'] max|diff| 7.99e-08 at |value| 7.9e-08 (deterministic: rtol 1e-4, atol 1e-7)
+infant_traj_selfcons.npz         OK shape (16, 480, 8, 5, 40) metrics ['eig_code', 'mi', 'kl', 'surprisal', 'mi_concept'] max|diff| 0 (bitwise required)
+infant_traj_selfcons_ext.npz     OK shape (80, 480, 8, 5, 40) metrics ['eig_code', 'mi', 'kl', 'surprisal', 'mi_concept'] max|diff| 0 (bitwise required)
+infant_scores_main.csv           OK rows 20250/20250 matched 20250 cols 15
+infant_scores_infeps.csv         OK rows 12150/12150 matched 12150 cols 15
+infant_scores_selfcons.csv       OK rows 10944/10944 matched 10944 cols 13
+adult_preds_main.csv             OK rows 7290/7290 matched 7290 cols 27
+adult_scores_main.csv            OK rows 7290/7290 matched 7290 cols 13
+adult_scores21_main.csv          OK rows 7290/7290 matched 7290 cols 12
+adult_preds_selfcons.csv         OK rows 360/360 matched 360 cols 29
+adult_scores_selfcons.csv        OK rows 360/360 matched 360 cols 13
+adult_scores21_selfcons.csv      OK rows 360/360 matched 360 cols 12
+GATE PASSED (0 mismatches)

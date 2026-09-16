@@ -266,9 +266,16 @@ of both chains (`sherlock/smoke_concept.sh`); sync now goes through GitHub branc
 (§5.6 and the report): the concept EIG reproduces the phenomena and the retracted numbers
 honestly — infants R² .747 ± .025 on 32 fresh rollouts, adults .64–.73 on 64, Exp-2 .51/.61 with
 the correct orderings — and it is the paper's own definition of EIG (information about (μ, σ);
-ε not named). `ranch.canonical.CANONICAL` now pins it (pending MCF). The gate is running
-(grids main/infeps/selfcons base+ext, scores, adults main + base into `phase1_ranch/`, then the
-diff); its verdict decides step (3) of the finishing sequence. Golden tables regenerated with a
+ε not named). MCF confirmed (2026-09-16) the concept EIG as the canonical variable and that
+world noise may differ between populations; `ranch.canonical.CANONICAL` pins each population at
+its grid-best cell. **Gate PASSED** (`sherlock/logs/gate_verdict_2026-09-16.txt`): the seeded
+grids bit for bit, the deterministic grids to rounding (≤ 2e-12 in the main grid: the legacy
+`phase1_infants.py` uses the metrics default `window="oracle"`, the pipeline `exemplar_mean`;
+identical in a noiseless world up to rounding — the gate now states this tolerance explicitly and
+prints the largest difference), every table row for row. The first run's seven "mismatches" were
+artifacts: Sherlock's deterministic tables were still the stale committed versions left by the
+2026-09-15 clobber (restored from the laptop's fresh copies, checksums verified). Step (3) of the
+finishing sequence — retiring the legacy drivers — is now unblocked. Golden tables regenerated with a
 reviewed diff: every change traced to the formula fix, the window, the concept EIG, the R32/R64
 re-evaluations, or — for the deterministic adult table — a 5-pair pre-commit run (the current
 driver at `--pairs 6` reproduces the regenerated table to 1e-10). Lesson for §0 #8: a cached

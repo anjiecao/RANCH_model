@@ -1,0 +1,132 @@
+20db340 Cluster sync via GitHub with a tested code-only block; end-to-end smoke of the concept chain
+=== 2026-09-16 03:02:55  grid main
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1_ranch/infant_traj_main.npz (135, 480, 5, 60)
+=== 2026-09-16 03:06:51  grid infeps
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1_ranch/infant_traj_infeps.npz (81, 480, 5, 60)
+=== 2026-09-16 03:16:47  grid selfcons base
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1_ranch/infant_traj_selfcons.npz (16, 480, 8, 5, 40)
+=== 2026-09-16 03:59:04  grid selfcons ext
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1_ranch/infant_traj_selfcons_ext.npz (80, 480, 8, 5, 40)
+=== 2026-09-16 06:45:15  score main
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1_ranch/infant_scores_main.csv (20250 rows)
+=== 2026-09-16 06:45:53  score infeps
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1_ranch/infant_scores_infeps.csv (12150 rows)
+=== 2026-09-16 06:46:19  score selfcons base
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1_ranch/infant_scores_selfcons_base.csv (1824 rows)
+=== 2026-09-16 06:46:30  score selfcons ext
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1_ranch/infant_scores_selfcons_ext.csv (9120 rows)
+=== 2026-09-16 06:47:13  adults main
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1_ranch/adult_preds_main.csv (7290 rows)
+=== 2026-09-16 07:05:44  score adults main
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+/home/users/mcfrank/ranch/RANCH_model/granch_fast/linking_mixed.py:85: RankWarning: Polyfit may be poorly conditioned
+  b = np.polyfit(x[tr], y[tr], 1)
+saved adult_scores_main.csv / adult_scores21_main.csv
+=== 2026-09-16 07:07:42  adults base
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1_ranch/adult_preds_selfcons.csv (360 rows)
+=== 2026-09-16 10:31:45  score adults base
+saved adult_scores_selfcons.csv / adult_scores21_selfcons.csv
+=== 2026-09-16 10:31:52  gate
+infant_traj_main.npz             MISMATCH shape (135, 480, 5, 60) metrics ['eig_code', 'eig_within', 'mi', 'kl', 'surprisal'] max|diff| 1.8189894035458565e-12
+infant_traj_infeps.npz           MISMATCH shape (81, 480, 5, 60) metrics ['eig_code', 'eig_within', 'mi', 'kl', 'surprisal'] max|diff| 7.992483119778626e-08
+infant_traj_selfcons.npz         OK shape (16, 480, 8, 5, 40) metrics ['eig_code', 'mi', 'kl', 'surprisal', 'mi_concept']
+infant_traj_selfcons_ext.npz     OK shape (80, 480, 8, 5, 40) metrics ['eig_code', 'mi', 'kl', 'surprisal', 'mi_concept']
+infant_scores_main.csv           MISMATCH rows 20250/20250 matched 18900 cols 15 bad [('pooled_rmse', 0.40463548224789836), ('pooled_r2', 0.38532252924583954), ('within_r2', 0.0186714688400405), ('within_rmse', 0.13653540186030355)]
+infant_scores_infeps.csv         MISMATCH rows 12150/12150 matched 11340 cols 15 bad [('pooled_rmse', 0.004013177598322315), ('pooled_r2', 0.0046542072833494), ('within_r2', 0.0002635228479634), ('within_rmse', 0.0014044959711796423)]
+infant_scores_selfcons.csv       OK rows 10944/10944 matched 10944 cols 13
+adult_preds_main.csv             MISMATCH rows 7290/7290 matched 6885 cols 27 bad [('bg_1', 9.832154991035011), ('bg_2', 10.533333333333328), ('bg_3', 10.533333333333328), ('bg_4', 10.533333333333328)]
+adult_scores_main.csv            MISMATCH rows 7290/7290 matched 6885 cols 13 bad [('cond_r2', 0.5214468911911371), ('cond_rmse', 169.66584077857715), ('bg1', 9.832154991035011), ('bg2', 10.533333333333328)]
+adult_scores21_main.csv          MISMATCH rows 7290/7290 matched 6885 cols 12 bad [('r2_21', 0.4403640317105503), ('rmse21_full', 109.05748892530266), ('rmse21_cv', 111.97154965426179), ('b21', 2718256.2468088716)]
+adult_preds_selfcons.csv         OK rows 360/360 matched 360 cols 29
+adult_scores_selfcons.csv        OK rows 360/360 matched 360 cols 13
+adult_scores21_selfcons.csv      OK rows 360/360 matched 360 cols 12
+GATE FAILED (7 mismatches)
