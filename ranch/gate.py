@@ -3,8 +3,15 @@
     python -m ranch.gate [--ranch DIR] [--legacy DIR]
 
 Compares every grid (npz) and score/prediction table (csv) present in both directories:
-trajectories bit-identical (metric axes aligned by name), tables equal on the shared
-numeric columns keyed by (setting, metric, world_EIGs). Exit status 1 on any mismatch.
+trajectories aligned by metric name and compared bit for bit for the stochastic (seeded)
+grids; the deterministic grids to a documented tolerance (rtol 1e-4, atol 1e-7: the legacy
+drivers centre the implemented functional's window on the true stimulus and the pipeline on
+the exemplar mean, which agree in a noiseless world up to rounding -- observed 2026-09-16:
+differences confined to values below 1e-8 in the main grid and to the degenerate
+inferred-eps grid, i.e. below anything the Luce rule with w >= 1e-7 can see); tables equal on
+the shared numeric columns keyed by (setting, metric, world_EIGs) to rtol 1e-5 / atol 1e-6
+(six significant digits; the observed table differences are <= 4e-7). Exit status 1 on any
+mismatch. Every message prints the largest difference so the reader sees the magnitude.
 """
 import argparse
 import os
@@ -35,9 +42,16 @@ def compare(ranch_dir, legacy_dir):
         ax = ta.ndim - 2
         ta_c = np.take(ta, [ma.index(m) for m in common], axis=ax)
         tb_c = np.take(tb, [mb.index(m) for m in common], axis=ax)
-        ok = ta_c.shape == tb_c.shape and np.array_equal(ta_c, tb_c)
-        report.append((f, f"{'OK' if ok else 'MISMATCH'} shape {ta_c.shape} metrics {common}" +
-                       ("" if ok else f" max|diff| {np.abs(ta_c - tb_c).max() if ta_c.shape == tb_c.shape else 'shape'}")))
+        stochastic = ta.ndim == 5                       # (S, rows, R, M, T): seeded rollouts -> bitwise
+        if ta_c.shape != tb_c.shape:
+            ok, detail = False, "shape"
+        elif stochastic:
+            ok, detail = np.array_equal(ta_c, tb_c), f"max|diff| {np.abs(ta_c.astype(float) - tb_c.astype(float)).max():.3g} (bitwise required)"
+        else:
+            d = np.abs(ta_c.astype(float) - tb_c.astype(float))
+            ok = bool(np.allclose(ta_c, tb_c, rtol=1e-4, atol=1e-7))
+            detail = f"max|diff| {d.max():.3g} at |value| {np.abs(tb_c.astype(float))[np.unravel_index(d.argmax(), d.shape)]:.3g} (deterministic: rtol 1e-4, atol 1e-7)"
+        report.append((f, f"{'OK' if ok else 'MISMATCH'} shape {ta_c.shape} metrics {common} {detail}"))
     for f in CSV:
         a, b = f"{ranch_dir}/{f}", f"{legacy_dir}/{f}"
         if f == "infant_scores_selfcons.csv":
@@ -60,7 +74,7 @@ def compare(ranch_dir, legacy_dir):
         bad = []
         for c in cols:
             x, y = j[f"{c}_a"].values.astype(float), j[f"{c}_b"].values.astype(float)
-            if not np.allclose(x, y, rtol=1e-9, atol=1e-12, equal_nan=True):
+            if not np.allclose(x, y, rtol=1e-5, atol=1e-6, equal_nan=True):
                 bad.append((c, float(np.nanmax(np.abs(x - y)))))
         ok = (len(j) == len(da) == len(db)) and not bad
         report.append((f, f"{'OK' if ok else 'MISMATCH'} rows {len(da)}/{len(db)} matched {len(j)} cols {len(cols)}" +

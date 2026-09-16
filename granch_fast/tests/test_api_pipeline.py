@@ -134,6 +134,13 @@ def test_gate_compare_aligns_metrics_stacks_selfcons_scores_and_flags_mismatches
     traj = rng.normal(size=(2, 3, 1, 2, 4)).astype(np.float32)
     np.savez(b / "infant_traj_selfcons.npz", traj=traj, metrics=np.array(["mi", "kl"]))
     np.savez(a / "infant_traj_selfcons.npz", traj=traj[:, :, :, ::-1], metrics=np.array(["kl", "mi"]))   # permuted axis, same data
+    det = rng.normal(size=(2, 3, 2, 4)).astype(np.float32)                       # deterministic layout (S, rows, M, T)
+    np.savez(b / "infant_traj_main.npz", traj=det, metrics=np.array(["mi", "kl"]))
+    np.savez(a / "infant_traj_main.npz", traj=det * np.float32(1 + 1e-6), metrics=np.array(["mi", "kl"]))   # rounding-level: OK
+    np.savez(b / "infant_traj_infeps.npz", traj=det, metrics=np.array(["mi", "kl"]))
+    np.savez(a / "infant_traj_infeps.npz", traj=det * np.float32(1.01), metrics=np.array(["mi", "kl"]))   # 1%: MISMATCH
+    np.savez(b / "infant_traj_selfcons_ext.npz", traj=traj, metrics=np.array(["mi", "kl"]))
+    np.savez(a / "infant_traj_selfcons_ext.npz", traj=traj * np.float32(1 + 1e-6), metrics=np.array(["mi", "kl"]))  # stochastic: bitwise required
     rows = lambda offset, n: pd.DataFrame(dict(setting=[offset + i // 2 for i in range(2 * n)], metric=["mi", "kl"] * n,
                                                world_EIGs=[0.1] * (2 * n), pooled_r2=np.arange(2 * n, dtype=float),
                                                window=["exemplar_mean"] * (2 * n)))
@@ -144,5 +151,7 @@ def test_gate_compare_aligns_metrics_stacks_selfcons_scores_and_flags_mismatches
     preds.assign(pooled_r2=preds.pooled_r2 + 1e-3).to_csv(a / "adult_preds_selfcons.csv", index=False)
     rep = dict(gate.compare(str(a), str(b)))
     assert rep["infant_traj_selfcons.npz"].startswith("OK")
+    assert rep["infant_traj_main.npz"].startswith("OK") and rep["infant_traj_infeps.npz"].startswith("MISMATCH")
+    assert rep["infant_traj_selfcons_ext.npz"].startswith("MISMATCH")
     assert rep["infant_scores_selfcons.csv"].startswith("OK rows 10/10")
     assert rep["adult_preds_selfcons.csv"].startswith("MISMATCH") and "pooled_r2" in rep["adult_preds_selfcons.csv"]
