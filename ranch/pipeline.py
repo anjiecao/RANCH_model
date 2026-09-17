@@ -42,6 +42,9 @@ W_ADULT = {
                   "mi": list(np.logspace(-4.5, 0.5, 11)), "surprisal_b": list(np.logspace(-2, 2, 11)),
                   "mi_concept": list(np.logspace(-4.5, 0.5, 11))},
 }
+# A variable's random stream in the noisy adult sweeps (the legacy drivers' indices). Append only: a stream must
+# not depend on how a w-grid dictionary happens to be ordered, nor on which other variables a sweep includes.
+ADULT_SEED = {"eig_code": 0, "mi": 1, "kl": 2, "surprisal_b": 3, "mi_concept": 4}
 T_CAP = 80
 MAX_D = 10
 
@@ -155,7 +158,7 @@ def _adult_job(args):
                              variables=(var,))
             bgs.append(res.trajectories["bg"][0]); dvs.append(res.trajectories["dev"][0])
             continue
-        mseed = list(W_ADULT[kind]).index(metric)
+        mseed = ADULT_SEED[metric]
         for rr in range(rollouts):
             # only the policy's variable is computed: a self-paced rollout keeps sample counts, nothing else
             # (the implemented EIG's 5-point window alone costs 13 ms/glimpse; all five variables 36 ms vs 6 ms)

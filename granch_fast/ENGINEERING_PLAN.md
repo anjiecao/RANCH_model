@@ -21,6 +21,8 @@ it. This table is the specification for the rest of the document.
 | 9 | "Effectively deterministic" assumption in a docstring | assumptions as comments, not code | assumptions are validated config (e.g. the mean-field runner *refuses* a noisy world) | runner precondition tests |
 | 10 | Implemented EIG's window is centered on the **true** stimulus | ground truth passed into the learner's computation (`z_star`) | window centering is a declared option (`observed` / `exemplar_mean` / `oracle`) and `oracle` is disallowed under noise | no-oracle test (same as #3) |
 | 11 | Cluster jobs ran stale code without any error (2026-09-15: `reset --hard` clobbered regenerated tables; then the code-only sync silently checked out nothing because four tracked paths contain spaces) | sync as an unchecked `&&` one-liner; no test of the operational path; long chains with never-exercised steps | one sync block shared by every job, line-by-line under `set -e` with a post-sync guard; every chain smoke-run end to end at reduced size before submission | `test_ops`: the block applied to a clone one commit behind must reach HEAD with the tables untouched; `sherlock/smoke_concept.sh` |
+| 12 | A random stream depended on a dictionary's ordering (2026-09-16: the pipeline seeded a noisy adult rollout by the variable's position in that sweep's w-grid dictionary; the extended sweep's dictionary lists KL before total EIG, so those two streams were swapped relative to the drivers — valid draws, but 702 of 1,760 cells did not reproduce) | seed derived from a container position; the gate skipped the extended adult sweep "because the base sweep proves the path" | seeds come from an explicit append-only index (`pipeline.ADULT_SEED`); a stream never depends on which other variables a sweep includes | `test_adult_grid_stochastic_matches_legacy_driver`: every variable × every noisy kind against the frozen driver; full-size comparison of every regenerated table with the table of record before adoption |
+| 13 | An 8-hour job died in its last stage on an input file never copied to the cluster (2026-09-16) | the hashed data manifest existed, but no job verified it, and the figure code read one file outside the loaders | `python -m ranch check` is the first step of every cluster script | `test_ops`: `R check` precedes the first compute stage in every script; every data path the package reads is pinned in the manifest |
 
 Item 10 is new: `State.step(k, z_obs, z_star)` takes the true stimulus vector as the EIG window
 center. In the noiseless world `z_obs == z_star` so it is harmless; under a noisy world it is an
@@ -58,6 +60,12 @@ settings much less (plateau early-stop). Adequate for research sweeps (laptop fo
 node for a grid). *Not* adequate for interactive/web use at scale without a batched runner: the
 per-sample Python loop over features and stimuli is the cost, and vectorizing across trajectories
 (same posterior algebra, stacked arrays) should give 10–50×. Measure before optimizing.
+*Measured 2026-09-16 (laptop, one core, the canonical 80×30 learner): per glimpse KL 2.0 ms, true EIG
+2.2, concept EIG 2.6, implemented EIG 13 (its 5-point window = five hypothetical posterior updates per
+feature), all five 18.5; a noisy infant trajectory 1.65 s with all five variables vs 0.25 s with one; a
+noisy adult rollout (~420 glimpses) 15 s with all five vs 2.4 s with the policy's variable only. The
+pipeline now computes only what a stage keeps (identical outputs); the implemented EIG's window is the
+next target.*
 
 **The config smell.** `FastConfig` has 17 keyword arguments spanning prior (`mu_prior, V_prior,
 alpha_prior, beta_prior`), learner noise belief (`infer_eps, mu_epsilon, sd_epsilon, eps_box`),
@@ -295,6 +303,21 @@ the pipeline judges the deterministic plateau on all variables jointly). The det
 tables of record are now the pipeline's (same values, plus the signed-correlation column the
 selection filters need). (f) pending: the full chain on the cluster (`sherlock/pipeline.sbatch`),
 then the winners pins added to the goldens.*
+
+*Step 3 (f), first full run (jobs 43814856 + 43856112, 2026-09-16; compared 2026-09-17 table by
+table, keyed, before adopting anything).* Identical to the tables of record: both deterministic
+infant score tables (20,250 + 12,150 rows), the stacked self-consistent infant scores (10,944 rows;
+RMSE to 3e-12), the mean-field adult sweep (7,290 cells), the noisy base adult sweep (360 cells,
+all five variables), the infant winners at R = 32 (.076 / .231 / .229 / .579 / .747), the
+deterministic Phase 2 (15 rows), and — in the extended adult sweep, its winners and the noisy
+Phase 2 — every row of the implemented EIG, the surprisal and the concept EIG (so the canonical
+results reproduce bit for bit: adults .639 / .728, Exp 2 .510 / .613–.640). Not reproduced: the
+total-EIG and KL rows of the extended adult sweep and what is selected from them (§0 #12; fresh
+draws gave adults .21–.24 and .28 where the record has .23 and .26 — the same conclusion, not the
+same numbers). The lesion has no bitwise counterpart (the frozen lesion driver had private seeds);
+as a fresh-seed replication it agrees: concept EIG has no sign-consistent infant fit at σ_true = .2
+and a flat adult curve. The job then died in `figures` on a missing input (§0 #13). Fixes committed
+with their tests; `STAGES="adults-ext winners phase2 lesion figures"` resubmitted.*
 
 *Step 3 checklist (started 2026-09-16, MCF "go ahead").* (a) `ranch.selection`: re-evaluations
 keep their native curves; `infant_winners` / `adult_winners` reproduce phase1c / phase1e (same

@@ -73,14 +73,17 @@ def test_adult_grid_mean_field_matches_legacy(emb):
         assert np.allclose([row[f"dev_{D}"] for D in range(1, 11)], np.mean(dvs, 0), rtol=1e-12)
 
 
-def test_adult_grid_stochastic_matches_legacy_driver(emb):
-    S = settings_table("adult_base").iloc[[0]]
+@pytest.mark.parametrize("kind", ["adult_base", "adult_ext"])
+def test_adult_grid_stochastic_matches_legacy_driver(emb, kind):
+    # every variable in both sweeps: the ext w-grid dictionary lists kl before mi, and a seed taken from a
+    # variable's position in it swapped those two streams (2026-09-17; the base sweep alone did not show it)
+    S = settings_table(kind).iloc[[0]]
     pairs = data.load_adult_exp1_pairs(1)
     P1B._init(pairs)
-    for metric, w in (("mi", 1e-3), ("surprisal_b", 1.0)):
-        wg = pipeline.W_ADULT["adult_base"][metric]
+    for metric, w in (("eig_code", 3e-2), ("mi", 3e-1), ("kl", 3e-2), ("surprisal_b", 30.0), ("mi_concept", 3e-1)):
+        wg = pipeline.W_ADULT[kind][metric]
         wi = int(np.argmin(np.abs(np.log(np.array(wg)) - np.log(w))))
-        ours = pipeline.adult_grid("adult_base", "stochastic", pairs=1, rollouts=2, metrics=[metric], procs=1, settings=S,
+        ours = pipeline.adult_grid(kind, "stochastic", pairs=1, rollouts=2, metrics=[metric], procs=1, settings=S,
                                    w_values=[wg[wi]]).iloc[0]
         theirs = P1B._one((0, S.iloc[0], metric, wi, wg[wi], 2, "exemplar_mean"))
         for k in [f"bg_{i}" for i in range(1, 12)] + [f"dev_{D}" for D in range(1, 11)] + ["n_capped"]:

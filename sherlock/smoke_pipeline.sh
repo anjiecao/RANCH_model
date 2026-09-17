@@ -14,6 +14,7 @@ cd $RANCH_ROOT/RANCH_model
 R() { $PY -m ranch "$@" --procs $P; }
 step() { echo "=== $(date '+%F %T')  $*"; }
 
+step check inputs;            R check
 step grid selfcons base;      R grid --kind selfcons_base --rollouts 1 --every 24
 step grid selfcons ext;       R grid --kind selfcons_ext --rollouts 1 --every 24
 step score selfcons;          R score --kind selfcons_base

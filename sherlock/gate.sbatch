@@ -30,6 +30,7 @@ mkdir -p $OUTR
 R() { python -m ranch "$@" --out $OUTR --procs 24; }
 step() { echo "=== $(date '+%F %T')  $*"; }
 
+step check inputs;          R check
 step grid main;             R grid --kind main
 step grid infeps;           R grid --kind infeps
 step grid selfcons base;    R grid --kind selfcons_base

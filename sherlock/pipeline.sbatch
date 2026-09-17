@@ -12,7 +12,8 @@
 # Rough timings on the 24-core owner node: infant grids main 4 min, infeps 10 min, selfcons
 # base 42 min, ext 2.7 h, lesion 5 min; adults main 20 min, base 1.7 h, ext 5 h, lesion 15 min;
 # winners 35 min + 5 min; phase 2 20 min; figures 10 min -- about 12 h in all.
-# Set STAGES to a subset (space-separated) to rerun part of the chain.
+# Set STAGES to a subset (space-separated) to rerun part of the chain; `adults` is all three adult
+# sweeps, adults-main / adults-base / adults-ext one of them.
 set -euo pipefail
 module load python/3.12.1
 export RANCH_ROOT=$HOME/ranch
@@ -33,6 +34,8 @@ step() { echo "=== $(date '+%F %T')  $*"; }
 STAGES=${STAGES:-"infants adults winners phase2 lesion figures"}
 has() { [[ " $STAGES " == *" $1 "* ]]; }
 
+step check inputs;            R check      # a missing or changed data file stops the job here, not at the stage that reads it
+
 if has infants; then
   step grid main;             R grid --kind main
   step grid infeps;           R grid --kind infeps
@@ -43,11 +46,15 @@ if has infants; then
                               R score --kind selfcons_base
                               R score --kind selfcons_ext
 fi
-if has adults; then
+if has adults || has adults-main; then
   step adults main;           R adults --kind main --mode mean_field --pairs 6
                               R score-adults --which main
+fi
+if has adults || has adults-base; then
   step adults base;           R adults --kind adult_base --mode stochastic --pairs 6 --rollouts 16
                               R score-adults --which selfcons
+fi
+if has adults || has adults-ext; then
   step adults ext;            R adults --kind adult_ext --mode stochastic --pairs 6 --rollouts 16
                               R score-adults --which selfcons_ext
 fi

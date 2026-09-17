@@ -112,6 +112,21 @@ def test_cluster_jobs_use_only_the_package_entry_points():
     assert not failures, failures
 
 
+def test_cluster_jobs_verify_their_inputs_before_computing():
+    """`R check` (the data manifest: every input file present, hashes as pinned) runs before the first
+    compute stage of every cluster script, and the figure code reads no input the manifest does not
+    pin -- job 43856112 (2026-09-16) ran 8 h and died in its last stage on a file never copied to the cluster."""
+    import json
+    import re
+    for sb in glob.glob(f"{ROOT}/sherlock/*.sbatch") + glob.glob(f"{ROOT}/sherlock/*.sh"):
+        ran = re.findall(r"\bR (check|grid|score|adults|score-adults|winners|phase2|reevaluate|figures)\b", open(sb).read())
+        assert ran and ran[0] == "check", (sb, ran[:2])
+    pinned = set(json.load(open(f"{GF}/tests/data_manifest.json")))
+    for f in glob.glob(f"{ROOT}/ranch/*.py"):
+        for rel in re.findall(r'\{(?:data\.)?PAPER\}/([^"]+\.csv)', open(f).read()):
+            assert f"pkbb_paper_writing/{rel}" in pinned, (os.path.basename(f), rel)
+
+
 def test_package_has_no_hardcoded_laptop_paths():
     """Every path resolves through RANCH_ROOT (the 2026-09-14 regeneration died at its first
     scoring step because four scorers still hardcoded the laptop path). A literal

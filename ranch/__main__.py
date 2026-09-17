@@ -1,4 +1,5 @@
 """Command line for the pipeline:  python -m ranch <stage> [options]
+  check         every input file of the data manifest exists and hashes as pinned (run first: seconds, not hours)
   grid          --kind main|infeps|selfcons_base|selfcons_ext|lesion_infants [--rollouts R --window W --every k --procs P]
   score         --kind ...                                   (reads the grid npz it wrote)
   adults        --kind main|adult_base|adult_ext|lesion_adults --mode mean_field|stochastic [--pairs --rollouts --metrics --window --limit]
@@ -51,7 +52,7 @@ def load_infant_scores(out, kind):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="ranch")
-    ap.add_argument("stage", choices=["grid", "score", "adults", "score-adults", "winners", "phase2", "reevaluate", "figures"])
+    ap.add_argument("stage", choices=["check", "grid", "score", "adults", "score-adults", "winners", "phase2", "reevaluate", "figures"])
     ap.add_argument("--kind", default="selfcons_base")
     ap.add_argument("--mode", default="stochastic")
     ap.add_argument("--which", default="main")
@@ -72,6 +73,9 @@ def main(argv=None):
     OUT = a.out or globals()["OUT"]
     os.makedirs(OUT, exist_ok=True)
     mets = a.metrics.split(",") if a.metrics else None
+    if a.stage == "check":
+        print(f"inputs verified: {len(data.verify_manifest())} files match the data manifest")
+        return
     rows = data.load_trials().iloc[:: a.every].to_dict("records") if a.every > 1 else None
     if a.stage == "grid":
         g = pipeline.infant_grid(a.kind, rollouts=a.rollouts, window=a.window, procs=a.procs, rows=rows)
