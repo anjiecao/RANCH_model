@@ -183,13 +183,15 @@ def channels(rollouts=16, T_show=15, fam_dur=8, emb=None):
 
 # ---------------------------------------------------------------- driver
 # ---------------------------------------------------------------- figC1-C4: the paper's Figs. 4-7 for one decision variable
-def paper_panels(out, metric="mi_concept", rollouts_inf=8, rollouts_adu=12, window="exemplar_mean"):
+def paper_panels(out, metric="mi_concept", rollouts_inf=None, rollouts_adu=None, window="exemplar_mean", procs=8):
     """Native-unit predictions for the paper's four model figures at the cells the paper's rule selects
     (best CV RMSE on Exp 1). Exp 1 = the re-evaluated winners' curves; Exp 2 = every parameter carried,
     run with the Phase-2 stage's seeds and rollouts, so its fits reproduce phase2_selfcons_results.csv
-    (rule 'paper'). Returns (curves [figure, trial_type, x, mean_sample, scaled (s), scored], fits per figure:
-    the affine linking LT = a + b*samples on the scored condition means, its R2 and RMSE)."""
+    (rule 'paper'). Returns (curves [figure, trial_type, x, mean_sample, se_sample, scaled (s), se_scaled, scored], fits
+    per figure: the affine linking LT = a + b*samples on the scored condition means, its R2 with the Monte-Carlo
+    interval over rollouts, and RMSE). Standard errors are Monte-Carlo (over rollouts), where the tables carry them."""
     from . import pipeline
+    rollouts_inf = rollouts_inf or pipeline.ROLLOUTS["exp2_infants"]; rollouts_adu = rollouts_adu or pipeline.ROLLOUTS["exp2_adults"]
     from .linking import scaled_fit
     from .selection import select_infant, select_adult
     emb = data.load_embeddings()
@@ -207,8 +209,10 @@ def paper_panels(out, metric="mi_concept", rollouts_inf=8, rollouts_adu=12, wind
         raise ValueError(f"{metric}: the paper-rule cell has no re-evaluated winner in infant_winners.csv / adult_winners.csv")
     wi, wa = wi[0], wa[0]
     VT = data.VIOLATION_TYPES
-    pi = pipeline.exp2_infants(spec(si, "selfcons_ext", window), metric, float(si.world_EIGs), rollouts=rollouts_inf, seed=11, emb=emb)
-    fam, dev = pipeline.exp2_adults(spec(sa, "adult_ext", window), metric, float(sa.world_EIGs), "stochastic", rollouts=rollouts_adu, seed=13, emb=emb)
+    pi, di = pipeline.exp2_infants(spec(si, "selfcons_ext", window), metric, float(si.world_EIGs), rollouts=rollouts_inf, seed=11, emb=emb,
+                                   procs=procs, mc=True)
+    fam, dev, da = pipeline.exp2_adults(spec(sa, "adult_ext", window), metric, float(sa.world_EIGs), "stochastic", rollouts=rollouts_adu,
+                                        seed=13, emb=emb, procs=procs, mc=True)
     hi = data.infant_condition_means()
     hi1 = {(r.trial_type, int(r.trial_number)): 0.5 * (r.LT_odd + r.LT_even) for r in hi.itertuples(index=False)}
     ha1 = (data.load_adult_exp1().groupby(["trial_type", "trial_number"]).LT.mean() / 1000).to_dict()
@@ -221,12 +225,22 @@ def paper_panels(out, metric="mi_concept", rollouts_inf=8, rollouts_adu=12, wind
              "exp2_adults": {**{("fam", tn): (fam[("fam", tn)], "familiar", tn) for tn in range(1, 7)},
                              **{(vt, pos): (dev[(vt, pos)], vt, pos) for vt in VT[1:] for pos in (2, 4, 6)}}}
     human = {"exp1_infants": hi1, "exp1_adults": {(tt, int(tn)): v for (tt, tn), v in ha1.items()}, "exp2_infants": hi2, "exp2_adults": ha2}
+    adu_keys = [("fam", tn) for tn in range(1, 7)] + [(vt, pos) for vt in VT[1:] for pos in (2, 4, 6)]
+    mc = {"exp2_infants": pipeline.mc_fit([{vt: u} for vt in VT for u in di[vt]], hi2, VT) if rollouts_inf > 1 else None,
+          "exp2_adults": pipeline.mc_fit(pipeline.exp2_adult_units(da), ha2, adu_keys) if rollouts_adu > 1 else None}
+    se = {fig: (m["se"] if m else {}) for fig, m in mc.items()}
+    se["exp1_adults"] = {**{("background", tn): wa.get(f"bg_se_{tn}", np.nan) for tn in range(1, 12)},
+                         **{("deviant", D + 1): wa.get(f"dev_se_{D}", np.nan) for D in range(1, 11)}}
     rows, fits = [], []
     for fig, m in model.items():
         keys = [k for k in m if k in human[fig]]
         f = scaled_fit({k: m[k][0] for k in keys}, human[fig], keys)             # LT = a + b * samples, b >= 0, on the scored conditions
-        rows += [dict(figure=fig, trial_type=lab_tt, x=x, mean_sample=v, scaled=f["a"] + f["b"] * v, scored=k in human[fig]) for k, (v, lab_tt, x) in m.items()]
-        fits.append(dict(figure=fig, r2=f["r2"], rmse_insample=f["rmse"], a=f["a"], b=f["b"], n=len(keys)))
+        sek = lambda k: float(se.get(fig, {}).get(k, np.nan))
+        rows += [dict(figure=fig, trial_type=lab_tt, x=x, mean_sample=v, se_sample=sek(k), scaled=f["a"] + f["b"] * v, se_scaled=f["b"] * sek(k),
+                      scored=k in human[fig]) for k, (v, lab_tt, x) in m.items()]
+        lo, hi = ((wa.get("r2_mc_lo", np.nan), wa.get("r2_mc_hi", np.nan)) if fig == "exp1_adults" else
+                  (mc[fig]["r2_mc_lo"], mc[fig]["r2_mc_hi"]) if mc.get(fig) else (np.nan, np.nan))
+        fits.append(dict(figure=fig, r2=f["r2"], r2_mc_lo=float(lo), r2_mc_hi=float(hi), rmse_insample=f["rmse"], a=f["a"], b=f["b"], n=len(keys)))
     lab = lambda r: f"V{r.V_prior:g} a{r.alpha_prior:g} b{r.beta_prior:g} sd{r.sd_epsilon:g} st{r.sigma_true:g} w{r.world_EIGs:.1e}"
     fits = pd.DataFrame(fits)
     fits["setting"] = [lab(si) if f.endswith("infants") else lab(sa) for f in fits.figure]
@@ -295,7 +309,7 @@ def write_all(out, procs=8, smoke=False, gf=GF):
     print("figB4:", "; ".join(f"{r.metric} R2={r.r2_21:.2f} hab={r.hab:.2f} dis={r.dis:.2f}" for r in am.itertuples(index=False)))
     published_rescored().to_csv(f"{gf}/published_rescored.csv", index=False)
     print("report v3, Table 2: published model rescored -> published_rescored.csv")
-    pc, pf = paper_panels(out, rollouts_inf=1 if smoke else 8, rollouts_adu=1 if smoke else 12)
+    pc, pf = paper_panels(out, rollouts_inf=1 if smoke else None, rollouts_adu=1 if smoke else None, procs=procs)
     pc.to_csv(f"{gf}/paper_panels_concept.csv", index=False); pf.to_csv(f"{gf}/paper_panels_concept_fits.csv", index=False)
     print("figC1-4 (concept EIG at the paper-rule cells):", "; ".join(f"{r.figure} R2={r.r2:.3f}" for r in pf.itertuples(index=False)))
     ch = channels(rollouts=1 if smoke else 16)

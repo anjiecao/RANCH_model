@@ -100,12 +100,13 @@ def main(argv=None):
         if a.population == "infants":
             kind = "selfcons_ext" if a.kind == "selfcons" else a.kind
             w = selection.infant_winners(load_infant_scores(OUT, a.kind), kind, metrics=mets, rule=(a.rules or "r2").split(",")[0],
-                                         rollouts=a.rollouts or (8 if a.smoke else 32), window=a.window, procs=a.procs, rows=rows)
+                                         rollouts=a.rollouts or (8 if a.smoke else pipeline.ROLLOUTS["infant_winners"]), window=a.window,
+                                         procs=a.procs, rows=rows)
             fn = f"{OUT}/infant_winners{'' if a.kind in ('selfcons', 'selfcons_ext') else '_' + a.kind}.csv"
         else:
             sc = pd.read_csv(f"{OUT}/adult_scores21_{a.which}.csv")
             w = selection.adult_winners(sc, ADULT_KIND[a.which], metrics=mets, rules=tuple((a.rules or "r2,rmse").split(",")),
-                                        rollouts=a.rollouts or (1 if a.smoke else 64), pairs=a.pairs, window=a.window, procs=a.procs)
+                                        rollouts=a.rollouts or (1 if a.smoke else None), pairs=a.pairs, window=a.window, procs=a.procs)
             fn = f"{OUT}/adult_winners{'' if a.which == 'selfcons_ext' else '_' + a.which}.csv"
         w.to_csv(fn, index=False)
         print(f"saved {fn} ({len(w)} rows)")
@@ -121,7 +122,7 @@ def main(argv=None):
         metrics = mets or (selection.INFANT_METRICS["main"] if a.kind == "main" else selection.ADULT_METRICS)
         inf_grid = load_grid(OUT, a.kind) if a.kind == "main" else None
         adu_preds = pd.read_csv(f"{OUT}/adult_preds_{which}.csv") if a.kind == "main" else None
-        r_inf, r_adu = (1, 1) if a.smoke else (a.rollouts or 8, a.rollouts or 12)
+        r_inf, r_adu = (1, 1) if a.smoke else (a.rollouts or pipeline.ROLLOUTS["exp2_infants"], a.rollouts or pipeline.ROLLOUTS["exp2_adults"])
         res = pipeline.phase2(inf_scores, adu21, inf_kind, ADULT_KIND[which], metrics, rules=rules, rollouts_inf=r_inf,
                               rollouts_adu=r_adu, window=a.window, procs=a.procs, inf_grid=inf_grid, adu_preds=adu_preds)
         fn = f"{OUT}/phase2_results.csv" if a.kind == "main" else f"{OUT}/phase2_selfcons_results.csv"
@@ -138,7 +139,7 @@ def main(argv=None):
         else:
             sc = pd.read_csv(f"{OUT}/adult_scores21_{a.which}.csv")
             sel = selection.select_adult(sc, a.metric, a.rule, kind=ADULT_KIND[a.which])
-            selection.reevaluate_adult(sel, rollouts=a.rollouts or 64, pairs=a.pairs, window=a.window, procs=a.procs)
+            selection.reevaluate_adult(sel, rollouts=a.rollouts, pairs=a.pairs, window=a.window, procs=a.procs)
         print(sel.describe())
         print(sel.quote())
     elif a.stage == "figures":

@@ -11,7 +11,8 @@
 # ranch/pipeline.py; the chain is smoke-tested end to end by sherlock/smoke_pipeline.sh.
 # Rough timings on the 24-core owner node: infant grids main 4 min, infeps 10 min, selfcons
 # base 42 min, ext 2.7 h, lesion 5 min; adults main 20 min, base 1.7 h, ext 5 h, lesion 15 min;
-# winners 35 min + 5 min; phase 2 20 min; figures 10 min -- about 12 h in all.
+# winners 35 min + 25 min (adults at 512 rollouts per pair); phase 2 about 1.5 h (Exp-2 adults at 512 rollouts per
+# pair: ranch.pipeline.ROLLOUTS); figures 15 min -- about 14 h in all.
 # Set STAGES to a subset (space-separated) to rerun part of the chain; `adults` is all three adult
 # sweeps, adults-main / adults-base / adults-ext one of them.
 set -euo pipefail
@@ -60,7 +61,7 @@ if has adults || has adults-ext; then
 fi
 if has winners; then
   step winners infants R32;   R winners --population infants --kind selfcons --rollouts 32
-  step winners adults R64;    R winners --population adults --which selfcons_ext --rollouts 64 --pairs 6
+  step winners adults;        R winners --population adults --which selfcons_ext --pairs 6
 fi
 if has phase2; then
   step phase2 main;           R phase2 --kind main --rules paper,within,joint

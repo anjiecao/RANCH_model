@@ -76,6 +76,25 @@ def test_adult_winners_reproduce_phase1e(emb):
     wid, pi, bgs, dvs = P1E._one_pair((0, s.to_dict(), "mi_concept", 3.2e-5, 0, "exemplar_mean", 2))
     assert np.allclose([w.iloc[0][f"bg_{i}"] for i in range(1, 12)], bgs.mean(0), rtol=1e-12)
     assert np.allclose([w.iloc[0][f"dev_{D}"] for D in range(1, 11)], dvs.mean(0), rtol=1e-12)
+    # every reported stochastic fit carries its Monte-Carlo error (plan §0 #14): SE of each condition mean, interval of R2
+    r = w.iloc[0]
+    assert np.isclose(r.bg_se_1, bgs[:, 0].std(ddof=1) / np.sqrt(2)) and np.isfinite(r.dev_se_10)
+    assert {"r2_mc_sd", "r2_mc_lo", "r2_mc_hi"} <= set(w.columns) and r.r2_mc_lo <= r.r2_mc_hi
+
+
+def test_mc_fit_standard_errors_and_attenuation():
+    """pipeline.mc_fit on synthetic draws: the SE of a condition mean is that of the mean over units of rollout means,
+    rollouts are resampled jointly within a unit, and noisier draws give a lower R2 with a wider interval -- the
+    attenuation that made the 12-rollout adult Exp-2 fit read .61 where 512 rollouts give .79."""
+    rng = np.random.default_rng(1)
+    keys = list("abcdefgh"); truth = dict(zip(keys, np.linspace(18, 23, 8))); human = {k: 2 + 0.2 * v for k, v in truth.items()}
+    draws = lambda n: [{k: truth[k] + rng.normal(0, 7.8, n) for k in keys} for _ in range(6)]
+    few, many = pipeline.mc_fit(draws(12), human, keys, n_boot=300), pipeline.mc_fit(draws(2048), human, keys, n_boot=300)
+    u = draws(50); f = pipeline.mc_fit(u, human, keys, n_boot=50)
+    assert np.isclose(f["se"]["a"], np.sqrt(sum(np.var(x["a"], ddof=1) / 50 for x in u)) / 6)
+    assert np.isclose(f["mean"]["a"], np.mean([x["a"].mean() for x in u]))
+    assert many["r2"] > 0.97 and few["r2"] < many["r2"] - 0.1 and few["r2_mc_sd"] > 5 * many["r2_mc_sd"]
+    assert many["r2_mc_lo"] <= many["r2"] <= many["r2_mc_hi"] + 1e-9
 
 
 def test_phase2_reproduces_run_phase2_selfcons(emb):

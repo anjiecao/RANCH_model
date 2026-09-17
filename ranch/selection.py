@@ -155,21 +155,32 @@ def _adult_pair(args):
     return pi, np.array(bgs), np.array(dvs)
 
 
-def reevaluate_adult(sel, rollouts=64, seed=5_000_000, pairs=6, max_D=10, T_cap=80, window="exemplar_mean", procs=8):
+def reevaluate_adult(sel, rollouts=None, seed=5_000_000, pairs=6, max_D=10, T_cap=80, window="exemplar_mean", procs=8):
     """Re-run the selected adult (setting, w) on fresh seeds (rollouts x pairs) and score at
-    the 21-condition aggregation. Fills sel.reevaluated."""
+    the 21-condition aggregation, with each condition's Monte-Carlo standard error and the
+    bootstrap interval of R2 over rollouts (pipeline.mc_fit). Fills sel.reevaluated."""
+    from .pipeline import ROLLOUTS, mc_fit
+    rollouts = rollouts or ROLLOUTS["adult_winners"]
     prs = data.load_adult_exp1_pairs(pairs)
     human = data.load_adult_exp1()
     jobs = [(sel.row, sel.kind, window, sel.metric, p, pi, rollouts, seed, max_D, T_cap) for pi, p in enumerate(prs)]
-    bgs, dvs = [], []
+    bgs, dvs, by_pair = [], [], {}
     with Pool(procs, initializer=_init, initargs=(data.load_embeddings(),)) as pool:
         for pi, bg, dv in pool.imap_unordered(_adult_pair, jobs):
-            bgs.append(bg); dvs.append(dv)
+            bgs.append(bg); dvs.append(dv); by_pair[pi] = (bg, dv)
     bg = np.concatenate(bgs).mean(0); dv = np.concatenate(dvs).mean(0)
     pred = pd.DataFrame([("background", i + 1, bg[i]) for i in range(max_D + 1)] +
                         [("deviant", D + 1, dv[D - 1]) for D in range(1, max_D + 1)],
                         columns=["trial_type", "trial_number", "mean_sample"])
     out = condition_mean_cv(human, pred, ["trial_type", "trial_number"], n_folds=7)
+    keys = [("background", i + 1) for i in range(max_D + 1)] + [("deviant", D + 1) for D in range(1, max_D + 1)]
+    units = [{**{("background", i + 1): b[:, i] for i in range(max_D + 1)}, **{("deviant", D + 1): d[:, D - 1] for D in range(1, max_D + 1)}}
+             for _, (b, d) in sorted(by_pair.items())]
+    mcf = mc_fit(units, human.groupby(["trial_type", "trial_number"]).LT.mean().to_dict(), keys, seed=seed) if rollouts > 1 else None
+    if mcf is not None:
+        out.update(r2_mc_sd=mcf["r2_mc_sd"], r2_mc_lo=mcf["r2_mc_lo"], r2_mc_hi=mcf["r2_mc_hi"],
+                   curve_se={**{f"bg_se_{i + 1}": mcf["se"][("background", i + 1)] for i in range(max_D + 1)},
+                             **{f"dev_se_{D}": mcf["se"][("deviant", D + 1)] for D in range(1, max_D + 1)}})
     out.update(hab=float(bg[-1] / bg[0]), dis=float(dv.mean() / bg[-1]), rollouts=rollouts, seed=seed, window=window,
                grid_r2=float(sel.row.r2_21), grid_rmse=float(sel.row.rmse21_cv),
                curve={**{f"bg_{i + 1}": float(bg[i]) for i in range(max_D + 1)},
@@ -215,7 +226,7 @@ def infant_winners(scores, kind, metrics=None, rule="r2", rollouts=32, seed=777,
     return pd.DataFrame(out)
 
 
-def adult_winners(scores21, kind, metrics=None, rules=("r2", "rmse"), rollouts=64, seed=5_000_000, pairs=6,
+def adult_winners(scores21, kind, metrics=None, rules=("r2", "rmse"), rollouts=None, seed=5_000_000, pairs=6,
                   window="exemplar_mean", procs=8):
     """Stage B for a stochastic adult sweep (phase1e_adults_winners over Selection objects):
     each metric's best sign-consistent, non-saturated row under each rule (a row selected by
@@ -241,5 +252,6 @@ def adult_winners(scores21, kind, metrics=None, rules=("r2", "rmse"), rollouts=6
                         **{c: float(r[c]) for c in SETTING_COLS if c in r.index}, **q["curve"],
                         r2_21_reeval=q["r2"], rmse21_cv_reeval=q["rmse"], b21_reeval=q["b"],
                         r2_21_grid=q["grid_r2"], rmse21_cv_grid=q["grid_rmse"], hab=q["hab"], dis=q["dis"],
-                        rollouts=rollouts, pairs=pairs, seed=seed + wid, window=window))
+                        r2_mc_sd=q.get("r2_mc_sd", np.nan), r2_mc_lo=q.get("r2_mc_lo", np.nan), r2_mc_hi=q.get("r2_mc_hi", np.nan),
+                        rollouts=q["rollouts"], pairs=pairs, seed=seed + wid, window=window, **q.get("curve_se", {})))
     return pd.DataFrame(out)

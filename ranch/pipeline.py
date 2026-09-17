@@ -47,6 +47,11 @@ W_ADULT = {
 ADULT_SEED = {"eig_code": 0, "mi": 1, "kl": 2, "surprisal_b": 3, "mi_concept": 4}
 T_CAP = 80
 MAX_D = 10
+# Rollouts behind each REPORTED stochastic number (infants: per stimulus row; adults: per stimulus pair). Noise in a model's
+# condition means attenuates its R2 -- adults at the fitted concept-EIG cell: .53 / .72 / .76 at 12 / 64 / 512 rollouts per
+# pair in Exp 1, .63 / .76 / .79 in Exp 2 (plan §0 #14) -- so the adult counts follow from a precision target (Monte-Carlo sd
+# of R2 <= .02) and every reported fit carries its Monte-Carlo interval. The grids (selection only) keep their 8 / 16.
+ROLLOUTS = {"infant_winners": 32, "adult_winners": 512, "exp2_infants": 8, "exp2_adults": 512}
 
 _EMB = None
 
@@ -241,51 +246,127 @@ def score_adult(preds, human=None):
 
 
 # ---------------------------------------------------------------- Exp-2 predictions
-def exp2_infants(sp, metric, w, rollouts=1, seed=11, T_max=60, durations=(8, 9), emb=None):
-    """E[test samples] by violation type, carried parameters (mean over 6 pairs x durations x
-    rollouts). Seeds [seed, vt, pair, D, rollout] as run_phase2_selfcons.infant_exp2_mc."""
-    emb = data.load_embeddings() if emb is None else emb
+# One unit of work = one stimulus pair (infants: x one exposure duration): all of its rollouts, per-rollout values kept, so a
+# prediction comes with its Monte-Carlo standard error and the fit with a bootstrap interval (plan §0 #14: noise in a model's
+# condition means attenuates its R2). Units run serially (bit-identical to the legacy loops) or, with procs > 1, in a Pool.
+def _exp2_infant_unit(args):
+    sp, metric, w, vi, pi, fam, test, D, rollouts, seed, T_max = args
     var, off = variable_for(metric, sp)
-    pairs = data.load_exp2_infant_pairs()
-    out = {}
-    for vi, vt in enumerate(data.VIOLATION_TYPES):
-        vals = []
-        for pi, r in enumerate(pairs[pairs.violation_type == vt].itertuples(index=False)):
-            for D in durations:
-                for rr in range(rollouts):
-                    world = World(sp.sigma_true, seed=[seed, vi, pi, D, rr] if sp.sigma_true > 0 else None)
-                    res = forced_exposure_then_test(sp.model, world, emb[r.fam], emb[r.test], D, T_max=T_max, variables=(var,))
-                    vals.append(res.expected_samples(var, w, offset=off))
-        out[vt] = float(np.mean(vals))
-    return out
+    vals = []
+    for rr in range(rollouts):
+        world = World(sp.sigma_true, seed=[seed, vi, pi, D, rr] if sp.sigma_true > 0 else None)
+        res = forced_exposure_then_test(sp.model, world, _EMB[fam], _EMB[test], D, T_max=T_max, variables=(var,))
+        vals.append(res.expected_samples(var, w, offset=off))
+    return np.array(vals, float)
 
 
-def exp2_adults(sp, metric, w, mode, rollouts=1, seed=13, n_per_type=6, emb=None):
-    """Blocks of length 2/4/6 with the violation last: fam[1..6] (mean over all pairs) and
-    dev[(vt, pos)] for pos in 2/4/6. Seeds [seed, 100+vt, pair, rollout] as adult_exp2_mc."""
-    emb = data.load_embeddings() if emb is None else emb
+def _exp2_adult_unit(args):
+    sp, metric, w, vi, pi, f, v, rollouts, seed = args
     var, off = variable_for(metric, sp)
     policy = LucePolicy(w, var, off)
-    pairs = data.load_exp2_adult_pairs(n_per_type)
-    fams, dev = [], {}
+    bgs, devs = [], []
+    for rr in range(rollouts):
+        res = self_paced(sp.model, World(sp.sigma_true, seed=[seed, 100 + vi, pi, rr]), _EMB[f], _EMB[v], policy, max_D=5,
+                         mode="stochastic", T_cap=T_CAP, variables=(var,), probe_at=(1, 3, 5))
+        bgs.append(res.trajectories["bg"][0]); devs.append(res.trajectories["dev"][0])
+    return np.array(bgs, float), np.array(devs, float)
+
+
+def _run_units(fn, units, emb, procs):
+    if procs > 1:
+        with Pool(procs, initializer=_init, initargs=(emb,)) as pool:
+            return pool.map(fn, units)
+    _init(emb)
+    return [fn(u) for u in units]
+
+
+def exp2_infants(sp, metric, w, rollouts=1, seed=11, T_max=60, durations=(8, 9), emb=None, procs=1, mc=False):
+    """E[test samples] by violation type, carried parameters (mean over 6 pairs x durations x
+    rollouts). Seeds [seed, vt, pair, D, rollout] as run_phase2_selfcons.infant_exp2_mc.
+    mc=True also returns {vt: [per-unit arrays of per-rollout values]} for standard errors and bootstraps."""
+    emb = data.load_embeddings() if emb is None else emb
+    pairs = data.load_exp2_infant_pairs()
+    units, owner = [], []
     for vi, vt in enumerate(data.VIOLATION_TYPES):
-        bgs, devs = [], []
-        for pi, (f, v) in enumerate(pairs[vt]):
-            if mode == "mean_field":
-                res = self_paced(sp.model, World(0.0), emb[f], emb[v], policy, max_D=5, mode="mean_field", T_cap=T_CAP,
-                                 variables=(var,), probe_at=(1, 3, 5))
-                bgs.append(res.trajectories["bg"][0][:6]); devs.append(res.trajectories["dev"][0])
-            else:
-                for rr in range(rollouts):
-                    res = self_paced(sp.model, World(sp.sigma_true, seed=[seed, 100 + vi, pi, rr]), emb[f], emb[v], policy, max_D=5,
-                                     mode="stochastic", T_cap=T_CAP, variables=(var,), probe_at=(1, 3, 5))
-                    bgs.append(res.trajectories["bg"][0]); devs.append(res.trajectories["dev"][0])
+        for pi, r in enumerate(pairs[pairs.violation_type == vt].itertuples(index=False)):
+            for D in durations:
+                units.append((sp, metric, w, vi, pi, r.fam, r.test, D, rollouts, seed, T_max)); owner.append(vt)
+    res = _run_units(_exp2_infant_unit, units, emb, procs)
+    by_vt = {vt: [v for v, o in zip(res, owner) if o == vt] for vt in data.VIOLATION_TYPES}
+    out = {vt: float(np.mean(np.concatenate(by_vt[vt]))) for vt in data.VIOLATION_TYPES}
+    return (out, by_vt) if mc else out
+
+
+def exp2_adults(sp, metric, w, mode, rollouts=1, seed=13, n_per_type=6, emb=None, procs=1, mc=False):
+    """Blocks of length 2/4/6 with the violation last: fam[1..6] (mean over all pairs) and
+    dev[(vt, pos)] for pos in 2/4/6. Seeds [seed, 100+vt, pair, rollout] as adult_exp2_mc.
+    mc=True (stochastic mode) also returns {vt: [(bg, dev) per pair]}, per-rollout sample counts."""
+    emb = data.load_embeddings() if emb is None else emb
+    pairs = data.load_exp2_adult_pairs(n_per_type)
+    VT = data.VIOLATION_TYPES
+    if mode == "mean_field":
+        var, off = variable_for(metric, sp)
+        policy = LucePolicy(w, var, off)
+        by_vt = {}
+        for vt in VT:
+            rs = [self_paced(sp.model, World(0.0), emb[f], emb[v], policy, max_D=5, mode="mean_field", T_cap=T_CAP,
+                             variables=(var,), probe_at=(1, 3, 5)) for f, v in pairs[vt]]
+            by_vt[vt] = [(r.trajectories["bg"][0][:6][None, :], r.trajectories["dev"][0][None, :]) for r in rs]
+    else:
+        units = [(sp, metric, w, vi, pi, f, v, rollouts, seed) for vi, vt in enumerate(VT) for pi, (f, v) in enumerate(pairs[vt])]
+        res = _run_units(_exp2_adult_unit, units, emb, procs)
+        by_vt, k = {}, 0
+        for vt in VT:
+            by_vt[vt] = res[k:k + len(pairs[vt])]; k += len(pairs[vt])
+    fams, dev = [], {}
+    for vt in VT:
+        bgs = [b for bg, _ in by_vt[vt] for b in bg]; devs = [d for _, dv in by_vt[vt] for d in dv]      # (pair, rollout) order, as the legacy loop
         fams.append(np.mean(bgs, axis=0))
         if vt != "background":
             for j, pos in enumerate((2, 4, 6)):
                 dev[(vt, pos)] = float(np.mean([d[j] for d in devs]))
     fam = np.mean(fams, axis=0)
-    return {("fam", tn): float(fam[tn - 1]) for tn in range(1, 7)}, dev
+    fam = {("fam", tn): float(fam[tn - 1]) for tn in range(1, 7)}
+    return (fam, dev, by_vt) if mc else (fam, dev)
+
+
+def mc_fit(units, human, keys, n_boot=1000, seed=0):
+    """Monte-Carlo error of a condition-mean fit. units: one {key: per-rollout values} per stimulus pair, all of a
+    unit's arrays indexed by the same rollouts (a rollout yields several conditions, so they are resampled together).
+    A condition's mean is the mean over the units that carry it of their rollout means. Returns the per-key standard
+    error, R2 (squared correlation with the human condition means) and its bootstrap sd / 95% interval."""
+    rng = np.random.default_rng(seed)
+    y = np.array([human[k] for k in keys], float)
+
+    def cond_means(pick):
+        tot, cnt = dict.fromkeys(keys, 0.0), dict.fromkeys(keys, 0)
+        for u in units:
+            idx = pick(len(next(iter(u.values()))))
+            for k, v in u.items():
+                tot[k] += float(np.mean(v if idx is None else v[idx])); cnt[k] += 1
+        return np.array([tot[k] / cnt[k] for k in keys])
+
+    r2 = lambda x: float(np.corrcoef(x, y)[0, 1] ** 2)
+    x = cond_means(lambda n: None)
+    var = dict.fromkeys(keys, 0.0); cnt = dict.fromkeys(keys, 0)
+    for u in units:
+        for k, v in u.items():
+            var[k] += np.var(v, ddof=1) / len(v) if len(v) > 1 else np.nan; cnt[k] += 1
+    boots = [r2(cond_means(lambda n: rng.integers(n, size=n))) for _ in range(n_boot)]
+    return dict(mean=dict(zip(keys, x)), se={k: float(np.sqrt(var[k]) / cnt[k]) for k in keys}, r2=r2(x), r2_mc_sd=float(np.std(boots)),
+                r2_mc_lo=float(np.percentile(boots, 2.5)), r2_mc_hi=float(np.percentile(boots, 97.5)))
+
+
+def exp2_adult_units(by_vt):
+    """exp2_adults(..., mc=True)'s per-pair arrays as mc_fit units."""
+    units = []
+    for vt, prs in by_vt.items():
+        for bg, dv in prs:
+            u = {("fam", tn): bg[:, tn - 1] for tn in range(1, 7)}
+            if vt != "background":
+                u.update({(vt, pos): dv[:, j] for j, pos in enumerate((2, 4, 6))})
+            units.append(u)
+    return units
 
 
 # ---------------------------------------------------------------- Phase 2: Exp-1 -> Exp-2 with carried parameters
@@ -334,17 +415,22 @@ def _setting_label(row, stochastic):
     return f"V{row.V_prior:g} a{row.alpha_prior:g} b{row.beta_prior:g} eps{row.eps_fixed:g} w{row.world_EIGs:.1e}"
 
 
-def _phase2_job(args):
+def _phase2_job(args, procs=1):
     metric, rule, inf_row, inf_kind, adu_row, adu_kind, window, stochastic, r_inf, r_adu, carry = args
     from .linking import scaled_fit
+    emb = _EMB if _EMB is not None else data.load_embeddings()
     h_inf, h_adu = data.load_exp2_human_infants(), data.load_exp2_human_adults()
     VT = data.VIOLATION_TYPES
     adu_keys = [("fam", tn) for tn in range(1, 7)] + [(vt, pos) for vt in VT[1:] for pos in (2, 4, 6)]
     out = dict(metric=metric, rule=rule)
     if inf_row is not None:
         sp = spec(inf_row, inf_kind, window)
-        pred = exp2_infants(sp, metric, float(inf_row.world_EIGs), rollouts=(r_inf if stochastic else 1), seed=11, emb=_EMB)
+        pred, draws = exp2_infants(sp, metric, float(inf_row.world_EIGs), rollouts=(r_inf if stochastic else 1), seed=11, emb=emb,
+                                   procs=procs, mc=True)
         fi = scaled_fit(pred, h_inf, VT, carry=carry)
+        if stochastic and r_inf > 1:
+            mcf = mc_fit([{vt: u} for vt in VT for u in draws[vt]], h_inf, VT)
+            out.update(inf_exp2_r2_mc_sd=mcf["r2_mc_sd"], inf_exp2_r2_mc_lo=mcf["r2_mc_lo"], inf_exp2_r2_mc_hi=mcf["r2_mc_hi"])
         order = sorted(VT, key=lambda k: -pred[k])
         out.update(inf_setting=_setting_label(inf_row, stochastic), inf_exp1_rmse=float(inf_row.pooled_rmse),
                    inf_exp1_r2=float(inf_row.pooled_r2), inf_exp1_within_r2=float(inf_row.get("within_r2", np.nan)),
@@ -352,9 +438,12 @@ def _phase2_job(args):
                    inf_order=">".join(o[:4] for o in order), **{f"inf_{k}": pred[k] for k in VT})
     if adu_row is not None:
         sp = spec(adu_row, adu_kind, window)
-        fam, dev = exp2_adults(sp, metric, float(adu_row.world_EIGs), "stochastic" if stochastic else "mean_field",
-                               rollouts=(r_adu if stochastic else 1), seed=13, emb=_EMB)
+        fam, dev, draws = exp2_adults(sp, metric, float(adu_row.world_EIGs), "stochastic" if stochastic else "mean_field",
+                                      rollouts=(r_adu if stochastic else 1), seed=13, emb=emb, procs=procs, mc=True)
         fa = scaled_fit({**fam, **dev}, h_adu, adu_keys)
+        if stochastic and r_adu > 1:
+            mcf = mc_fit(exp2_adult_units(draws), h_adu, adu_keys)
+            out.update(adu_exp2_r2_mc_sd=mcf["r2_mc_sd"], adu_exp2_r2_mc_lo=mcf["r2_mc_lo"], adu_exp2_r2_mc_hi=mcf["r2_mc_hi"])
         devmag = {vt: float(np.mean([dev[(vt, p)] for p in (2, 4, 6)])) for vt in VT[1:]}
         out.update(adu_setting=_setting_label(adu_row, stochastic), adu_exp1_r2=float(adu_row.r2_21), adu_exp1_rmse=float(adu_row.rmse21_cv),
                    adu_exp2_r2=fa["r2"], adu_exp2_rmse_s=fa["rmse"] / 1000.0,
@@ -363,7 +452,8 @@ def _phase2_job(args):
     return out
 
 
-def phase2(inf_scores, adu_scores21, inf_kind, adu_kind, metrics, rules=("paper",), rollouts_inf=8, rollouts_adu=12,
+def phase2(inf_scores, adu_scores21, inf_kind, adu_kind, metrics, rules=("paper",), rollouts_inf=ROLLOUTS["exp2_infants"],
+           rollouts_adu=ROLLOUTS["exp2_adults"],
            window="exemplar_mean", procs=8, inf_grid=None, adu_preds=None):
     """Exp-1 -> Exp-2 out-of-sample prediction: per (metric, rule) select an infant cell and an
     adult cell from the Phase-1 score tables (sign-consistent, non-saturated), carry every
@@ -400,6 +490,8 @@ def phase2(inf_scores, adu_scores21, inf_kind, adu_kind, metrics, rules=("paper"
                 carry = (a1, b1)
             jobs.append((m, rule, None if si is None else si.row, inf_kind, None if sa is None else sa.row, adu_kind,
                          window, stochastic, rollouts_inf, rollouts_adu, carry))
+    if stochastic:          # one (metric, rule) at a time, its stimulus pairs in parallel: the rollouts are the cost
+        return pd.DataFrame([_phase2_job(j, procs=procs) for j in jobs])
     with Pool(procs, initializer=_init, initargs=(data.load_embeddings(),)) as pool:
         rows = list(pool.imap(_phase2_job, jobs))
     return pd.DataFrame(rows)
