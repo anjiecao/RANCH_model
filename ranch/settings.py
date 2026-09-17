@@ -4,7 +4,9 @@ byte-identical against them):
   main          -- paper prior grid, eps FIXED (the corrected published implementation)
   infeps        -- paper prior grid, eps INFERRED with a noiseless world (the published spec)
   selfcons_*    -- noisy world, eps inferred (the canonical family), base pilot / promotion ext
-  adult_*       -- the noisy-adult sweeps (settings only; the paradigm differs)
+  adult_*       -- the noisy-adult sweeps (settings only; the paradigm differs); adult_nu extends adult_ext to
+                   weaker priors on the concept mean (nu < 1): the information a first exemplar carries about mu is
+                   1/2 log((nu+1)/nu) per dimension, so nu sets the size of the first-trial drop (2026-09-17)
   lesion_*      -- the no-noise-learner lesion of the canonical model: eps FIXED at the
                    published 1e-4 inside the noisy world, everything else as the canonical
                    priors (infants V3 a1 b0.1 at sigma_true .1/.2; adults V1 a1 b0.1 at .1)
@@ -18,7 +20,7 @@ import pandas as pd
 from .config import Prior, LearnerNoise, Quadrature, Model
 from .decision import EIG, EIGWithin, EIGConcept, KL, Surprisal, RealizedGain
 
-KINDS = ("main", "infeps", "selfcons_base", "selfcons_ext", "adult_base", "adult_ext", "lesion_infants", "lesion_adults")
+KINDS = ("main", "infeps", "selfcons_base", "selfcons_ext", "adult_base", "adult_ext", "adult_nu", "lesion_infants", "lesion_adults")
 SIGMA_BOX = (0.001, 1.5)
 LESION_EPS = 1e-4                 # the published generative value: a learner that believes its glimpses are veridical
 
@@ -47,6 +49,9 @@ def settings_table(kind):
             rows.append(dict(V_prior=1.0, alpha_prior=a, beta_prior=b, sigma_true=st, sd_epsilon=0.5, infer_eps=True, eps_fixed=np.nan))
     elif kind == "adult_ext":
         for V, a, b, sd, st in itertools.product([1.0, 3.0], [1.0, 10.0], [0.1, 1.0], [0.5, 1.0], [0.1, 0.2]):
+            rows.append(dict(V_prior=V, alpha_prior=a, beta_prior=b, sigma_true=st, sd_epsilon=sd, infer_eps=True, eps_fixed=np.nan))
+    elif kind == "adult_nu":
+        for V, a, b, sd, st in itertools.product([0.03, 0.1, 0.3], [1.0, 10.0], [0.1, 1.0], [0.5, 1.0], [0.1, 0.2]):
             rows.append(dict(V_prior=V, alpha_prior=a, beta_prior=b, sigma_true=st, sd_epsilon=sd, infer_eps=True, eps_fixed=np.nan))
     elif kind == "lesion_infants":
         for st in (0.1, 0.2):
@@ -89,7 +94,7 @@ def spec(s, kind, window="exemplar_mean"):
         model = Model(prior, LearnerNoise.inferred(1e-3, float(s["sd_epsilon"]), (1e-6, 1.0)), quadrature=Quadrature(120, 30))
         rg = RealizedGain(window, 1e-4, 1)
         return Spec(model, 0.0, rg, 3.0 * (-np.log(0.3)), (rg, EIGWithin, EIG, KL, Surprisal))
-    if kind in ("selfcons_base", "selfcons_ext", "adult_base", "adult_ext"):
+    if kind in ("selfcons_base", "selfcons_ext", "adult_base", "adult_ext", "adult_nu"):
         st = float(s["sigma_true"])
         model = Model(prior, LearnerNoise.inferred(1e-3, float(s["sd_epsilon"]), (1e-3, 1.2)), quadrature=Quadrature(80, 30))
         rg = RealizedGain(window, st, 5)

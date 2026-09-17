@@ -155,38 +155,88 @@ def _adult_pair(args):
     return pi, np.array(bgs), np.array(dvs)
 
 
-def reevaluate_adult(sel, rollouts=None, seed=5_000_000, pairs=6, max_D=10, T_cap=80, window="exemplar_mean", procs=8):
-    """Re-run the selected adult (setting, w) on fresh seeds (rollouts x pairs) and score at
-    the 21-condition aggregation, with each condition's Monte-Carlo standard error and the
-    bootstrap interval of R2 over rollouts (pipeline.mc_fit). Fills sel.reevaluated."""
-    from .pipeline import ROLLOUTS, mc_fit
-    rollouts = rollouts or ROLLOUTS["adult_winners"]
-    prs = data.load_adult_exp1_pairs(pairs)
-    human = data.load_adult_exp1()
-    jobs = [(sel.row, sel.kind, window, sel.metric, p, pi, rollouts, seed, max_D, T_cap) for pi, p in enumerate(prs)]
-    bgs, dvs, by_pair = [], [], {}
-    with Pool(procs, initializer=_init, initargs=(data.load_embeddings(),)) as pool:
-        for pi, bg, dv in pool.imap_unordered(_adult_pair, jobs):
-            bgs.append(bg); dvs.append(dv); by_pair[pi] = (bg, dv)
-    bg = np.concatenate(bgs).mean(0); dv = np.concatenate(dvs).mean(0)
+def _adult_cell_pair(args):
+    cid, rest = args[0], args[1:]
+    pi, bgs, dvs = _adult_pair(rest)
+    return cid, pi, bgs, dvs
+
+
+def _score_adult_cell(row, by_pair, human, rollouts, seed, window, max_D):
+    """One re-evaluated adult cell: condition means over pairs (in pair order) x rollouts, the 21-condition fit,
+    each condition's Monte-Carlo standard error and the bootstrap interval of R2 over rollouts (pipeline.mc_fit)."""
+    from .pipeline import mc_fit
+    prs = [by_pair[pi] for pi in sorted(by_pair)]
+    bg = np.concatenate([b for b, _ in prs]).mean(0); dv = np.concatenate([d for _, d in prs]).mean(0)
     pred = pd.DataFrame([("background", i + 1, bg[i]) for i in range(max_D + 1)] +
                         [("deviant", D + 1, dv[D - 1]) for D in range(1, max_D + 1)],
                         columns=["trial_type", "trial_number", "mean_sample"])
     out = condition_mean_cv(human, pred, ["trial_type", "trial_number"], n_folds=7)
-    keys = [("background", i + 1) for i in range(max_D + 1)] + [("deviant", D + 1) for D in range(1, max_D + 1)]
-    units = [{**{("background", i + 1): b[:, i] for i in range(max_D + 1)}, **{("deviant", D + 1): d[:, D - 1] for D in range(1, max_D + 1)}}
-             for _, (b, d) in sorted(by_pair.items())]
-    mcf = mc_fit(units, human.groupby(["trial_type", "trial_number"]).LT.mean().to_dict(), keys, seed=seed) if rollouts > 1 else None
-    if mcf is not None:
+    if rollouts > 1:
+        keys = [("background", i + 1) for i in range(max_D + 1)] + [("deviant", D + 1) for D in range(1, max_D + 1)]
+        units = [{**{("background", i + 1): b[:, i] for i in range(max_D + 1)}, **{("deviant", D + 1): d[:, D - 1] for D in range(1, max_D + 1)}}
+                 for b, d in prs]
+        mcf = mc_fit(units, human.groupby(["trial_type", "trial_number"]).LT.mean().to_dict(), keys, seed=seed)
         out.update(r2_mc_sd=mcf["r2_mc_sd"], r2_mc_lo=mcf["r2_mc_lo"], r2_mc_hi=mcf["r2_mc_hi"],
                    curve_se={**{f"bg_se_{i + 1}": mcf["se"][("background", i + 1)] for i in range(max_D + 1)},
                              **{f"dev_se_{D}": mcf["se"][("deviant", D + 1)] for D in range(1, max_D + 1)}})
     out.update(hab=float(bg[-1] / bg[0]), dis=float(dv.mean() / bg[-1]), rollouts=rollouts, seed=seed, window=window,
-               grid_r2=float(sel.row.r2_21), grid_rmse=float(sel.row.rmse21_cv),
+               grid_r2=float(row.r2_21), grid_rmse=float(row.rmse21_cv),
                curve={**{f"bg_{i + 1}": float(bg[i]) for i in range(max_D + 1)},
                       **{f"dev_{D}": float(dv[D - 1]) for D in range(1, max_D + 1)}})
-    sel.reevaluated = out
+    return out
+
+
+def reevaluate_adult(sel, rollouts=None, seed=5_000_000, pairs=6, max_D=10, T_cap=80, window="exemplar_mean", procs=8):
+    """Re-run the selected adult (setting, w) on fresh seeds (rollouts x pairs) and score at
+    the 21-condition aggregation, with each condition's Monte-Carlo standard error and the
+    bootstrap interval of R2 over rollouts. Fills sel.reevaluated."""
+    from .pipeline import ROLLOUTS
+    rollouts = rollouts or ROLLOUTS["adult_winners"]
+    prs = data.load_adult_exp1_pairs(pairs)
+    jobs = [(sel.row, sel.kind, window, sel.metric, p, pi, rollouts, seed, max_D, T_cap) for pi, p in enumerate(prs)]
+    by_pair = {}
+    with Pool(procs, initializer=_init, initargs=(data.load_embeddings(),)) as pool:
+        for pi, bg, dv in pool.imap_unordered(_adult_pair, jobs):
+            by_pair[pi] = (bg, dv)
+    sel.reevaluated = _score_adult_cell(sel.row, by_pair, data.load_adult_exp1(), rollouts, seed, window, max_D)
     return sel
+
+
+def _adult_candidates(scores21, metric):
+    g = scores21[(scores21.metric == metric) & (scores21.b21 > 0) & (scores21.bg1 < 76)].dropna(subset=["rmse21_cv", "r2_21"])
+    return g
+
+
+def adult_shortlist(scores21, kind, metrics=None, K=10, rollouts=None, seed=7_000_000, pairs=6, window="exemplar_mean",
+                    procs=8, max_D=10, T_cap=80):
+    """Stage A of the adult selection. A grid of 16 rollouts per pair cannot rank its own best cells (the Monte-Carlo
+    sd of a cell's R2 is about .1, and noise attenuates every cell's fit: plan §0 #14), so per metric the K best
+    sign-consistent, non-saturated cells under EACH rule (CV RMSE, R2) are re-evaluated at full precision on seeds
+    [seed + cell index, pair, rollout]. adult_winners(shortlist=...) selects among the re-evaluated cells and reports
+    the selected one on independent seeds. One row per (metric, cell), all cells x pairs in one pool."""
+    from .pipeline import ROLLOUTS
+    rollouts = rollouts or ROLLOUTS["adult_winners"]
+    metrics = metrics or ADULT_METRICS
+    cells = []
+    for m in metrics:
+        g = _adult_candidates(scores21, m)
+        top = pd.concat([g.sort_values("rmse21_cv").head(K), g.sort_values("r2_21", ascending=False).head(K)])
+        cells += [r for _, r in top.drop_duplicates(["setting", "world_EIGs"]).iterrows()]
+    prs = data.load_adult_exp1_pairs(pairs)
+    jobs = [(cid, r, kind, window, r.metric, p, pi, rollouts, seed + cid, max_D, T_cap) for cid, r in enumerate(cells) for pi, p in enumerate(prs)]
+    by_cell = {cid: {} for cid in range(len(cells))}
+    with Pool(procs, initializer=_init, initargs=(data.load_embeddings(),)) as pool:
+        for cid, pi, bg, dv in pool.imap_unordered(_adult_cell_pair, jobs, chunksize=1):
+            by_cell[cid][pi] = (bg, dv)
+    human = data.load_adult_exp1()
+    out = []
+    for cid, r in enumerate(cells):
+        q = _score_adult_cell(r, by_cell[cid], human, rollouts, seed + cid, window, max_D)
+        out.append(dict(metric=r.metric, setting=int(r.setting), world_EIGs=float(r.world_EIGs), **{c: float(r[c]) for c in SETTING_COLS if c in r.index},
+                        r2_21_reeval=q["r2"], rmse21_cv_reeval=q["rmse"], b21_reeval=q["b"], r2_21_grid=q["grid_r2"], rmse21_cv_grid=q["grid_rmse"],
+                        r2_mc_sd=q.get("r2_mc_sd", np.nan), r2_mc_lo=q.get("r2_mc_lo", np.nan), r2_mc_hi=q.get("r2_mc_hi", np.nan),
+                        hab=q["hab"], dis=q["dis"], rollouts=rollouts, pairs=pairs, seed=seed + cid, window=window, **q["curve"]))
+    return pd.DataFrame(out)
 
 
 # ---------------------------------------------------------------- winners tables (Stage B)
@@ -227,17 +277,27 @@ def infant_winners(scores, kind, metrics=None, rule="r2", rollouts=32, seed=777,
 
 
 def adult_winners(scores21, kind, metrics=None, rules=("r2", "rmse"), rollouts=None, seed=5_000_000, pairs=6,
-                  window="exemplar_mean", procs=8):
+                  window="exemplar_mean", procs=8, shortlist=None):
     """Stage B for a stochastic adult sweep (phase1e_adults_winners over Selection objects):
     each metric's best sign-consistent, non-saturated row under each rule (a row selected by
     both rules appears once), re-evaluated on fresh rollouts x pairs and scored at the
     21-condition aggregation. Seeds [seed + i, pair, rollout], i = the winner's index in
-    (metric, rule) order -- the legacy convention, so adult_winners_R64 reproduces exactly."""
+    (metric, rule) order -- the legacy convention, so adult_winners_R64 reproduces exactly.
+    With `shortlist` (adult_shortlist's table) the selection is made among its re-evaluated cells, by their
+    re-evaluated score, instead of by the grid's 16-rollout score; the reported numbers still come from this
+    function's own seeds, which the shortlist never used, so they carry no selection optimism."""
     metrics = metrics or ADULT_METRICS
     winners = []
     for m in metrics:
         for rule in rules:
             sel = select_adult(scores21, m, rule, kind=kind)
+            if shortlist is not None:
+                c = shortlist[(shortlist.metric == m) & (shortlist.b21_reeval > 0)] if len(shortlist) else shortlist
+                if c.empty:                      # no sign-consistent cell survives re-evaluation: nothing to report for this variable
+                    continue
+                c = c.sort_values("rmse21_cv_reeval").iloc[0] if rule == "rmse" else c.sort_values("r2_21_reeval", ascending=False).iloc[0]
+                row = scores21[(scores21.metric == m) & (scores21.setting == c.setting) & np.isclose(scores21.world_EIGs, c.world_EIGs)].iloc[0]
+                sel = Selection("adults", kind, m, rule, row, True)
             if sel is None:
                 continue
             key = (m, int(sel.row.setting), float(sel.row.world_EIGs))
@@ -253,5 +313,7 @@ def adult_winners(scores21, kind, metrics=None, rules=("r2", "rmse"), rollouts=N
                         r2_21_reeval=q["r2"], rmse21_cv_reeval=q["rmse"], b21_reeval=q["b"],
                         r2_21_grid=q["grid_r2"], rmse21_cv_grid=q["grid_rmse"], hab=q["hab"], dis=q["dis"],
                         r2_mc_sd=q.get("r2_mc_sd", np.nan), r2_mc_lo=q.get("r2_mc_lo", np.nan), r2_mc_hi=q.get("r2_mc_hi", np.nan),
-                        rollouts=q["rollouts"], pairs=pairs, seed=seed + wid, window=window, **q.get("curve_se", {})))
+                        rollouts=q["rollouts"], pairs=pairs, seed=seed + wid, window=window,
+                        selected_from="grid" if shortlist is None else f"shortlist of {int((shortlist.metric == sel.metric).sum())}",
+                        **q.get("curve_se", {})))
     return pd.DataFrame(out)

@@ -42,6 +42,7 @@ W_ADULT = {
                   "mi": list(np.logspace(-4.5, 0.5, 11)), "surprisal_b": list(np.logspace(-2, 2, 11)),
                   "mi_concept": list(np.logspace(-4.5, 0.5, 11))},
 }
+W_ADULT["adult_nu"] = W_ADULT["adult_ext"]
 # A variable's random stream in the noisy adult sweeps (the legacy drivers' indices). Append only: a stream must
 # not depend on how a w-grid dictionary happens to be ordered, nor on which other variables a sweep includes.
 ADULT_SEED = {"eig_code": 0, "mi": 1, "kl": 2, "surprisal_b": 3, "mi_concept": 4}
@@ -453,7 +454,7 @@ def _phase2_job(args, procs=1):
 
 
 def phase2(inf_scores, adu_scores21, inf_kind, adu_kind, metrics, rules=("paper",), rollouts_inf=ROLLOUTS["exp2_infants"],
-           rollouts_adu=ROLLOUTS["exp2_adults"],
+           rollouts_adu=ROLLOUTS["exp2_adults"], adu_cells=None,
            window="exemplar_mean", procs=8, inf_grid=None, adu_preds=None):
     """Exp-1 -> Exp-2 out-of-sample prediction: per (metric, rule) select an infant cell and an
     adult cell from the Phase-1 score tables (sign-consistent, non-saturated), carry every
@@ -461,7 +462,9 @@ def phase2(inf_scores, adu_scores21, inf_kind, adu_kind, metrics, rules=("paper"
     refit on Exp-2, slope >= 0). Rules: 'paper' (best CV RMSE), 'r2' (best R2), 'within'
     (infants: best within-subject r2; adults: best R2), 'joint' (the paper's joint-scaling
     selection; needs inf_grid + adu_preds, deterministic kinds). Reproduces run_phase2 and
-    run_phase2_selfcons (their seeds; stochastic kinds use rollouts_inf / rollouts_adu)."""
+    run_phase2_selfcons (their seeds; stochastic kinds use rollouts_inf / rollouts_adu).
+    adu_cells = {(metric, 'rmse'|'r2'): row} overrides the adult selection for the rules 'paper' / 'r2' -- the
+    shortlisted, re-evaluated winners (selection.adult_winners), whose choice does not rest on 16-rollout grid scores."""
     from .selection import select_infant, select_adult, Selection
     stochastic = inf_kind.startswith(("selfcons", "lesion"))
     jobs = []
@@ -471,6 +474,8 @@ def phase2(inf_scores, adu_scores21, inf_kind, adu_kind, metrics, rules=("paper"
             if rule in ("paper", "r2"):
                 r = "rmse" if rule == "paper" else "r2"
                 si, sa = select_infant(inf_scores, m, r, kind=inf_kind, stochastic=stochastic), select_adult(adu_scores21, m, r, kind=adu_kind, stochastic=stochastic)
+                if adu_cells is not None:
+                    sa = Selection("adults", adu_kind, m, r, adu_cells[(m, r)], stochastic) if (m, r) in adu_cells else None
             elif rule == "within":
                 g = inf_scores[(inf_scores.metric == m) & (inf_scores.pooled_r > 0) & (inf_scores.pred_bg1 < 450) & (inf_scores.pred_bg10 > 1.02)].dropna(subset=["within_r2"])
                 si = Selection("infants", inf_kind, m, "within", g.sort_values("within_r2", ascending=False).iloc[0], stochastic) if len(g) else None

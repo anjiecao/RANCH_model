@@ -164,3 +164,24 @@ def test_published_model_rescored_reproduces_the_printed_exp2_fits():
     assert t[("exp1_infants", "r2_best")] == pytest.approx(0.739, abs=2e-3)
     assert t[("exp1_adults", "r2_best")] == pytest.approx(0.871, abs=2e-3)
     assert t[("exp1_infants", "hab_plotted")] == pytest.approx(0.596, abs=2e-3) and t[("exp1_adults", "dis_plotted")] == pytest.approx(5.82, abs=2e-2)
+
+
+def test_adult_shortlist_selects_on_reevaluated_scores_and_reports_on_independent_seeds():
+    """Stage A re-evaluates the union of the K best grid cells under each rule on its own seed family; adult_winners
+    then selects among THOSE scores (not the grid's) and reports the winner on seeds the shortlist never used."""
+    S = settings_table("adult_nu")
+    s = S[(S.V_prior == 0.1) & (S.alpha_prior == 1) & (S.beta_prior == 0.1) & (S.sd_epsilon == 0.5) & np.isclose(S.sigma_true, 0.1)].iloc[0]
+    grid = [(3.2e-5, 0.60, 200.0), (1e-4, 0.70, 210.0), (3.2e-4, 0.65, 190.0), (1e-3, 0.10, 400.0)]     # (w, grid R2, grid CV RMSE)
+    sc = pd.DataFrame([dict(setting=0, metric="mi_concept", world_EIGs=w, r2_21=r2, rmse21_cv=rm, b21=200.0, bg1=24.0, bg11=17.5, dev=20.7, **s.to_dict())
+                       for w, r2, rm in grid])
+    short = selection.adult_shortlist(sc, "adult_nu", metrics=("mi_concept",), K=2, rollouts=2, pairs=1, procs=1)
+    assert sorted(short.world_EIGs) == [3.2e-5, 1e-4, 3.2e-4]                  # top-2 by RMSE (190, 200) U top-2 by R2 (.70, .65); the .10 cell is out
+    assert list(short.seed) == [7_000_000, 7_000_001, 7_000_002] and {"r2_21_reeval", "rmse21_cv_reeval", "r2_mc_sd", "bg_1", "dev_10"} <= set(short.columns)
+    w = selection.adult_winners(sc, "adult_nu", metrics=("mi_concept",), rules=("rmse",), rollouts=2, pairs=1, procs=1, shortlist=short)
+    ok = short[short.b21_reeval > 0]
+    if ok.empty:
+        assert w.empty
+    else:
+        best = ok.sort_values("rmse21_cv_reeval").iloc[0]
+        assert len(w) == 1 and np.isclose(w.world_EIGs.iloc[0], best.world_EIGs) and w.seed.iloc[0] == 5_000_000
+        assert w.selected_from.iloc[0] == "shortlist of 3" and w.r2_21_grid.iloc[0] == sc[np.isclose(sc.world_EIGs, best.world_EIGs)].r2_21.iloc[0]

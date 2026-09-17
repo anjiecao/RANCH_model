@@ -193,21 +193,21 @@ def paper_panels(out, metric="mi_concept", rollouts_inf=None, rollouts_adu=None,
     from . import pipeline
     rollouts_inf = rollouts_inf or pipeline.ROLLOUTS["exp2_infants"]; rollouts_adu = rollouts_adu or pipeline.ROLLOUTS["exp2_adults"]
     from .linking import scaled_fit
-    from .selection import select_infant, select_adult
+    from .selection import select_infant
     emb = data.load_embeddings()
     base, ext = pd.read_csv(f"{out}/infant_scores_selfcons_base.csv"), pd.read_csv(f"{out}/infant_scores_selfcons_ext.csv")
     inf_scores = pd.concat([base, ext.assign(setting=ext.setting + base.setting.max() + 1)], ignore_index=True)
     si = select_infant(inf_scores, metric, "rmse", kind="selfcons_ext").row
-    sa = select_adult(pd.read_csv(f"{out}/adult_scores21_selfcons_ext.csv"), metric, "rmse", kind="adult_ext").row
     same = lambda a, b, cols: all(np.isclose(float(a[c]), float(b[c])) for c in cols)
     cell = ["V_prior", "alpha_prior", "beta_prior", "sd_epsilon", "sigma_true", "world_EIGs"]
     wi = pd.read_csv(f"{out}/infant_winners.csv"); wi = wi[wi.metric == metric]
     wi = [r for _, r in wi.iterrows() if same(r, si, cell)]
     wa = pd.read_csv(f"{out}/adult_winners.csv"); wa = wa[wa.metric == metric]
-    wa = [r for _, r in wa.iterrows() if same(r, sa, cell)]
-    if not wi or not wa:
+    wa = wa[wa.rule == "rmse"] if (wa.rule == "rmse").any() else wa[wa.rule == "r2"]     # the paper's rule; a cell both rules pick is listed under r2
+    if not wi or wa.empty:
         raise ValueError(f"{metric}: the paper-rule cell has no re-evaluated winner in infant_winners.csv / adult_winners.csv")
-    wi, wa = wi[0], wa[0]
+    wi, wa = wi[0], wa.iloc[0]
+    sa = wa                                                                              # the adult cell of record is the winners table's
     VT = data.VIOLATION_TYPES
     pi, di = pipeline.exp2_infants(spec(si, "selfcons_ext", window), metric, float(si.world_EIGs), rollouts=rollouts_inf, seed=11, emb=emb,
                                    procs=procs, mc=True)

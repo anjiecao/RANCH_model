@@ -14,7 +14,11 @@
 # winners 35 min + 25 min (adults at 512 rollouts per pair); phase 2 about 1.5 h (Exp-2 adults at 512 rollouts per
 # pair: ranch.pipeline.ROLLOUTS); figures 15 min -- about 14 h in all.
 # Set STAGES to a subset (space-separated) to rerun part of the chain; `adults` is all three adult
-# sweeps, adults-main / adults-base / adults-ext one of them.
+# sweeps, adults-main / adults-base / adults-ext one of them; likewise winners(-infants|-adults) and
+# phase2(-main|-selfcons). Not part of the default chain: `snapshot` (copy every table aside first) and
+# `adults-nu` (the nu < 1 extension of the noisy adult grid). ADULT_WHICH chooses the adult sweep that the
+# adult winners and the noisy Phase 2 work from (selfcons_ext = the record; selfcons_nu = the extension),
+# ADULT_METRICS restricts those adult stages to some decision variables (e.g. mi_concept).
 set -euo pipefail
 module load python/3.12.1
 export RANCH_ROOT=$HOME/ranch
@@ -33,10 +37,16 @@ git log --oneline -1
 R() { python -m ranch "$@" --procs 24; }
 step() { echo "=== $(date '+%F %T')  $*"; }
 STAGES=${STAGES:-"infants adults winners phase2 lesion figures"}
+ADULT_WHICH=${ADULT_WHICH:-selfcons_ext}
+MET=${ADULT_METRICS:+--metrics $ADULT_METRICS}
 has() { [[ " $STAGES " == *" $1 "* ]]; }
 
 step check inputs;            R check      # a missing or changed data file stops the job here, not at the stage that reads it
 
+if has snapshot; then
+  SNAP=$RANCH_ROOT/snapshots/${SLURM_JOB_ID:-manual}_before
+  step snapshot to $SNAP;     mkdir -p $SNAP/phase1 && cp -p granch_fast/phase1/*.csv $SNAP/phase1/ && cp -p granch_fast/*.csv $SNAP/
+fi
 if has infants; then
   step grid main;             R grid --kind main
   step grid infeps;           R grid --kind infeps
@@ -59,13 +69,21 @@ if has adults || has adults-ext; then
   step adults ext;            R adults --kind adult_ext --mode stochastic --pairs 6 --rollouts 16
                               R score-adults --which selfcons_ext
 fi
-if has winners; then
-  step winners infants R32;   R winners --population infants --kind selfcons --rollouts 32
-  step winners adults;        R winners --population adults --which selfcons_ext --pairs 6
+if has adults-nu; then
+  step adults nu;             R adults --kind adult_nu --mode stochastic --pairs 6 --rollouts 16 $MET
+                              R score-adults --which selfcons_nu
 fi
-if has phase2; then
+if has winners || has winners-infants; then
+  step winners infants R32;   R winners --population infants --kind selfcons --rollouts 32
+fi
+if has winners || has winners-adults; then      # the 10 best grid cells per variable and rule re-evaluated, selected among, reported on fresh seeds
+  step winners adults;        R winners --population adults --which $ADULT_WHICH --pairs 6 --shortlist 10 $MET
+fi
+if has phase2 || has phase2-main; then
   step phase2 main;           R phase2 --kind main --rules paper,within,joint
-  step phase2 selfcons;       R phase2 --kind selfcons --rules paper,r2
+fi
+if has phase2 || has phase2-selfcons; then
+  step phase2 selfcons;       R phase2 --kind selfcons --which $ADULT_WHICH --rules paper,r2 --adult-cells winners $MET
 fi
 if has lesion; then
   step lesion infants;        R grid --kind lesion_infants --rollouts 16
