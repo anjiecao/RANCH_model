@@ -21,10 +21,10 @@
 # ADULT_METRICS restricts those adult stages to some decision variables (e.g. mi_concept).
 set -euo pipefail
 module load python/3.12.1
-export RANCH_ROOT=$HOME/ranch
+export RANCH_ROOT=${RANCH_ROOT:-$HOME/ranch}      # another root = a separate clone: own tree, own outputs (side runs never touch the record)
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
 export PYTHONPATH=$RANCH_ROOT/pkbb_paper_writing
-source $RANCH_ROOT/venv/bin/activate
+source ${RANCH_VENV:-$HOME/ranch/venv}/bin/activate
 cd $RANCH_ROOT/RANCH_model
 # code-only sync from GitHub (never touch the output tables in granch_fast/phase1/); every line aborts the job on failure
 git fetch -q origin exact-inference-reboot
@@ -34,7 +34,7 @@ STALE=$(git diff --cached --name-only --diff-filter=A HEAD | grep -v "^granch_fa
 if [ -n "$STALE" ]; then printf '%s\n' "$STALE" | tr '\n' '\0' | xargs -0 git rm -q --cached --; printf '%s\n' "$STALE" | tr '\n' '\0' | xargs -0 rm -f; fi
 if git status --short | grep -v "^?? " | grep -v "granch_fast/phase1/" | grep -q .; then echo "SYNC FAILED: tracked code differs from HEAD"; git status --short | grep -v "^?? " | head; exit 1; fi
 git log --oneline -1
-R() { python -m ranch "$@" --procs 24; }
+R() { python -m ranch "$@" --procs ${SLURM_CPUS_PER_TASK:-24}; }
 step() { echo "=== $(date '+%F %T')  $*"; }
 STAGES=${STAGES:-"infants adults winners phase2 lesion figures"}
 ADULT_WHICH=${ADULT_WHICH:-selfcons_ext}

@@ -246,29 +246,34 @@ ADULT_METRICS = ("eig_code", "mi", "kl", "surprisal_b", "mi_concept")
 SETTING_COLS = ("V_prior", "alpha_prior", "beta_prior", "sd_epsilon", "sigma_true", "eps_fixed")
 
 
-def infant_winners(scores, kind, metrics=None, rule="r2", rollouts=32, seed=777, window="exemplar_mean", procs=8,
+def infant_winners(scores, kind, metrics=None, rules=("r2", "rmse"), rollouts=32, seed=777, window="exemplar_mean", procs=8,
                    n_groups=4, rows=None, T_max=40):
     """Stage B for a stochastic infant grid: each decision variable's best sign-consistent,
     non-saturated row (by `rule`) re-evaluated on fresh rollouts. One row per metric with the
     grid numbers, the honest numbers, the R2 SD over disjoint rollout groups, and the native
     condition-mean curve (bg_1..bg_10, dev_1..dev_10). Seeds are [seed + i, row, rollout] with i
     the index of the winner's setting among the distinct winning settings in metric order --
-    the phase1c_selfcons_winners convention, so its Stage-B numbers reproduce exactly."""
+    the phase1c_selfcons_winners convention, so its Stage-B numbers reproduce exactly. Rules are
+    processed one after the other (r2 for every metric, then rmse), so adding the paper's rule
+    appends new settings without moving the r2 winners' indices; a cell both rules pick is listed
+    once, under the first."""
     metrics = metrics or INFANT_METRICS["selfcons" if kind.startswith(("selfcons", "lesion")) else "main"]
-    sels, keys = [], []
-    for m in metrics:
-        sel = select_infant(scores, m, rule, kind=kind)
-        if sel is None:
-            continue
-        key = tuple(float(sel.row[c]) if pd.notna(sel.row[c]) else -1.0 for c in SETTING_COLS[:5])
-        if key not in keys:
-            keys.append(key)
-        sels.append((sel, keys.index(key)))
+    sels, keys, cells = [], [], set()
+    for rule in ((rules,) if isinstance(rules, str) else rules):
+        for m in metrics:
+            sel = select_infant(scores, m, rule, kind=kind)
+            if sel is None or (m, int(sel.row.setting), float(sel.row.world_EIGs)) in cells:
+                continue
+            cells.add((m, int(sel.row.setting), float(sel.row.world_EIGs)))
+            key = tuple(float(sel.row[c]) if pd.notna(sel.row[c]) else -1.0 for c in SETTING_COLS[:5])
+            if key not in keys:
+                keys.append(key)
+            sels.append((sel, keys.index(key)))
     out = []
     for sel, ci in sels:
         reevaluate_infant(sel, rollouts=rollouts, seed=seed + ci, T_max=T_max, window=window, procs=procs, n_groups=n_groups, rows=rows)
         r, q = sel.row, sel.reevaluated
-        out.append(dict(metric=sel.metric, rule=rule, setting=int(r.setting), world_EIGs=float(r.world_EIGs),
+        out.append(dict(metric=sel.metric, rule=sel.rule, setting=int(r.setting), world_EIGs=float(r.world_EIGs),
                         **{c: float(r[c]) for c in SETTING_COLS if c in r.index},
                         grid_r2=q["grid_r2"], grid_rmse=q["grid_rmse"], r2=q["r2"], r=q["r"], rmse=q["rmse"],
                         hab=q["hab"], dis=q["dis"], r2_group_sd=q["r2_group_sd"], rollouts=rollouts, seed=seed + ci,

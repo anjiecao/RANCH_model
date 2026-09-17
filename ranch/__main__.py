@@ -104,7 +104,7 @@ def main(argv=None):
     elif a.stage == "winners":
         if a.population == "infants":
             kind = "selfcons_ext" if a.kind == "selfcons" else a.kind
-            w = selection.infant_winners(load_infant_scores(OUT, a.kind), kind, metrics=mets, rule=(a.rules or "r2").split(",")[0],
+            w = selection.infant_winners(load_infant_scores(OUT, a.kind), kind, metrics=mets, rules=tuple((a.rules or "r2,rmse").split(",")),
                                          rollouts=a.rollouts or (8 if a.smoke else pipeline.ROLLOUTS["infant_winners"]), window=a.window,
                                          procs=a.procs, rows=rows)
             fn = f"{OUT}/infant_winners{'' if a.kind in ('selfcons', 'selfcons_ext') else '_' + a.kind}.csv"

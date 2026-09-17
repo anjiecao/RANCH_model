@@ -21,10 +21,10 @@ step score selfcons;          R score --kind selfcons_base
                               R score --kind selfcons_ext
 step winners infants;         R winners --population infants --kind selfcons --smoke --every 24
 step adults base;             R adults --kind adult_base --mode stochastic --pairs 1 --rollouts 1 --limit 4
-step adults ext;              R adults --kind adult_ext --mode stochastic --pairs 1 --rollouts 1 --limit 4
+step adults ext;              R adults --kind adult_ext --mode stochastic --pairs 2 --rollouts 4 --limit 11 --metrics mi_concept   # setting 0 = the fitted adult cell's
 step score adults;            R score-adults --which selfcons
                               R score-adults --which selfcons_ext
-step winners adults;          R winners --population adults --which selfcons_ext --smoke --pairs 1 --shortlist 2
+step winners adults;          R winners --population adults --which selfcons_ext --pairs 2 --rollouts 8 --shortlist 2 --metrics mi_concept
 step phase2 selfcons;         R phase2 --kind selfcons --smoke --adult-cells winners
 step adults nu;               R adults --kind adult_nu --mode stochastic --pairs 1 --rollouts 1 --limit 4
                               R score-adults --which selfcons_nu

@@ -29,7 +29,7 @@ TT = {"background": "Familiar", "deviant": "Novel"}
 # ---------------------------------------------------------------- figB1: infant curves from the winners
 def infant_curves(winners):
     rows, meta = [], []
-    for r in winners.itertuples(index=False):
+    for r in winners[winners.rule == "r2"].itertuples(index=False):        # one curve per variable: the R2-rule winners
         for tn in range(1, 11):
             rows.append(dict(metric=LABEL[r.metric], test_type="Familiar", fam_duration=tn - 1, mean_sample=getattr(r, f"bg_{tn}")))
             rows.append(dict(metric=LABEL[r.metric], test_type="Novel", fam_duration=tn - 1, mean_sample=getattr(r, f"dev_{tn}")))

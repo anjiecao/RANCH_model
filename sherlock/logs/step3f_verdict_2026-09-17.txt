@@ -1,0 +1,20 @@
+Step 3 (f) verdict, 2026-09-17: every table written by the reproduction command under the drivers' protocol
+(jobs 43814856 infants + 43856112 adults main/base + 43986215 adults-ext winners phase2 lesion figures, commit 30aa752;
+snapshot ~/ranch/snapshots/44027063_before) compared KEYED with the tables of record (scratch compare_tables.py, tol 1e-9):
+
+infant_scores_main.csv               vs same name              rows  20250  unmatched   0  IDENTICAL
+infant_scores_infeps.csv             vs same name              rows  12150  unmatched   0  IDENTICAL
+adult_preds_main.csv                 vs same name              rows   7290  unmatched   0  IDENTICAL
+adult_scores_main.csv                vs same name              rows   7290  unmatched   0  IDENTICAL
+adult_scores21_main.csv              vs same name              rows   7290  unmatched   0  IDENTICAL
+adult_preds_selfcons.csv             vs same name              rows    360  unmatched   0  IDENTICAL
+adult_scores_selfcons.csv            vs same name              rows    360  unmatched   0  IDENTICAL
+adult_scores21_selfcons.csv          vs same name              rows    360  unmatched   0  IDENTICAL
+adult_preds_selfcons_ext.csv         vs same name              rows   1760  unmatched   0  IDENTICAL
+adult_scores21_selfcons_ext.csv      vs same name              rows   1760  unmatched   0  IDENTICAL
+adult_winners.csv                    vs adult_winners_R64.csv  rows      7  unmatched   0  IDENTICAL
+phase2_results.csv                   vs same name              rows     15  unmatched   0  IDENTICAL
+phase2_selfcons_results.csv          vs same name              rows     10  unmatched   0  IDENTICAL
+infant_scores_selfcons base+ext      vs infant_scores_selfcons rows  10944  unmatched   0  IDENTICAL
+
+ALL IDENTICAL
