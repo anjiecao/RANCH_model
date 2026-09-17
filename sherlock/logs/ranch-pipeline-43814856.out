@@ -1,0 +1,16 @@
+386220a Sync block: drop paths that HEAD no longer tracks (deleted or moved upstream) before the guard
+=== 2026-09-16 11:38:17  grid main
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1/infant_traj_main.npz (135, 480, 5, 60)
+=== 2026-09-16 11:42:18  grid infeps
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1/infant_traj_infeps.npz (81, 480, 5, 60)
+=== 2026-09-16 11:51:56  grid selfcons base
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1/infant_traj_selfcons.npz (16, 480, 8, 5, 40)
+=== 2026-09-16 12:33:22  grid selfcons ext
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1/infant_traj_selfcons_ext.npz (80, 480, 8, 5, 40)
+=== 2026-09-16 15:20:01  score infants
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1/infant_scores_main.csv (20250 rows)
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1/infant_scores_infeps.csv (12150 rows)
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1/infant_scores_selfcons_base.csv (1824 rows)
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1/infant_scores_selfcons_ext.csv (9120 rows)
+=== 2026-09-16 15:21:59  adults main
+[2026-09-16T15:22:17.353] error: *** JOB 43814856 ON sh04-17n29 CANCELLED AT 2026-09-16T15:22:17 DUE to SIGNAL Terminated ***

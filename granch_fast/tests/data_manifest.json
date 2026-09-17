@@ -12,5 +12,6 @@
  "pkbb_paper_writing/data/results_plots/exp2_adult_plot.csv": "8a3d652d7e705c2c23166c705f60704588189f58d70a2b937d1ed3d8cedf0c80",
  "pkbb_paper_writing/data/results_plots/exp1_adult_sim_plot.csv": "e4d752eb5885f4c228c153846ae10e585ef03935a35dbee57afd3529fee2a21b",
  "RANCH_cluster/sim_info/trial_info/stimulus_type/infants/stimuli_pair_info.csv": "60d5e58d17eb81ea37ac9a05938ba69920873bc8812390c817533f034c80763e",
- "RANCH_cluster/sim_info/trial_info/stimulus_type/adults/stimuli_pair_info.csv": "cbfc708d930671b88cf89bdd8cbcc753f18fec888fa839e3ed0dcb59a1ca0e33"
+ "RANCH_cluster/sim_info/trial_info/stimulus_type/adults/stimuli_pair_info.csv": "cbfc708d930671b88cf89bdd8cbcc753f18fec888fa839e3ed0dcb59a1ca0e33",
+ "pkbb_paper_writing/data/results_plots/exp1_infant_sim_plot.csv": "6c702203a0e033cb9b762c41972b39538e9e0bfd6e948de41a8e531073a0758a"
 }

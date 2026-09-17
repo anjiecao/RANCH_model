@@ -131,3 +131,17 @@ def test_figure_data_from_winners_tables(tmp_path, emb):
         assert np.allclose(g["I_mu (concept mean)"] + g["I_sigma (spread & noise)"], g["total (true EIG)"], rtol=1e-9)
         if "fixed" in name:                                        # a single eps node: concept EIG == total
             assert np.allclose(g["concept EIG (eps nuisance)"], g["total (true EIG)"], rtol=1e-9)
+
+
+def test_published_model_rescored_reproduces_the_printed_exp2_fits():
+    """Report v3, Table 2: the package's statistics applied to the published model's own plot data give the
+    paper's printed Experiment-2 values (.66 / 1.26 s and .72 / .16 s), which is what licenses using them to
+    rescore its Experiment-1 curves; the Experiment-1 rescoring is pinned."""
+    from ranch import figures
+    t = figures.published_rescored().set_index(["experiment", "quantity"]).value
+    assert round(t[("exp2_infants", "r2")], 2) == 0.66 and round(t[("exp2_infants", "rmse")], 2) == 1.26
+    assert round(t[("exp2_adults", "r2")], 2) == 0.72 and round(t[("exp2_adults", "rmse")], 2) == 0.16
+    assert (t[("exp1_infants", "n_conditions")], t[("exp1_adults", "n_conditions")]) == (15, 21)
+    assert t[("exp1_infants", "r2_best")] == pytest.approx(0.739, abs=2e-3)
+    assert t[("exp1_adults", "r2_best")] == pytest.approx(0.871, abs=2e-3)
+    assert t[("exp1_infants", "hab_plotted")] == pytest.approx(0.596, abs=2e-3) and t[("exp1_adults", "dis_plotted")] == pytest.approx(5.82, abs=2e-2)

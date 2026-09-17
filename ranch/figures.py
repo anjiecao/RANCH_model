@@ -6,6 +6,8 @@ on-the-fly runs -- no trajectory caches. Writes, under granch_fast/ (where the R
   config_map.csv                         figB3  habituation / dishabituation ratios per configuration
   adult_selfcons_curves.csv + _meta.csv  figB4  adult curves from the re-evaluated winners (adult_winners.csv)
   channels_decomp.csv                    figB5  channel decomposition of the forward-looking EIG
+  paper_panels_concept.csv (+ _fits)     figC1-4  the paper's Figs. 4-7 for the concept EIG (plot_paper_panels.R)
+  published_rescored.csv                 report v3, Table 2: the published model's own output under this package's statistics
 """
 import numpy as np
 import pandas as pd
@@ -180,6 +182,103 @@ def channels(rollouts=16, T_show=15, fam_dur=8, emb=None):
 
 
 # ---------------------------------------------------------------- driver
+# ---------------------------------------------------------------- figC1-C4: the paper's Figs. 4-7 for one decision variable
+def paper_panels(out, metric="mi_concept", rollouts_inf=8, rollouts_adu=12, window="exemplar_mean"):
+    """Native-unit predictions for the paper's four model figures at the cells the paper's rule selects
+    (best CV RMSE on Exp 1). Exp 1 = the re-evaluated winners' curves; Exp 2 = every parameter carried,
+    run with the Phase-2 stage's seeds and rollouts, so its fits reproduce phase2_selfcons_results.csv
+    (rule 'paper'). Returns (curves [figure, trial_type, x, mean_sample, scaled (s), scored], fits per figure:
+    the affine linking LT = a + b*samples on the scored condition means, its R2 and RMSE)."""
+    from . import pipeline
+    from .linking import scaled_fit
+    from .selection import select_infant, select_adult
+    emb = data.load_embeddings()
+    base, ext = pd.read_csv(f"{out}/infant_scores_selfcons_base.csv"), pd.read_csv(f"{out}/infant_scores_selfcons_ext.csv")
+    inf_scores = pd.concat([base, ext.assign(setting=ext.setting + base.setting.max() + 1)], ignore_index=True)
+    si = select_infant(inf_scores, metric, "rmse", kind="selfcons_ext").row
+    sa = select_adult(pd.read_csv(f"{out}/adult_scores21_selfcons_ext.csv"), metric, "rmse", kind="adult_ext").row
+    same = lambda a, b, cols: all(np.isclose(float(a[c]), float(b[c])) for c in cols)
+    cell = ["V_prior", "alpha_prior", "beta_prior", "sd_epsilon", "sigma_true", "world_EIGs"]
+    wi = pd.read_csv(f"{out}/infant_winners.csv"); wi = wi[wi.metric == metric]
+    wi = [r for _, r in wi.iterrows() if same(r, si, cell)]
+    wa = pd.read_csv(f"{out}/adult_winners.csv"); wa = wa[wa.metric == metric]
+    wa = [r for _, r in wa.iterrows() if same(r, sa, cell)]
+    if not wi or not wa:
+        raise ValueError(f"{metric}: the paper-rule cell has no re-evaluated winner in infant_winners.csv / adult_winners.csv")
+    wi, wa = wi[0], wa[0]
+    VT = data.VIOLATION_TYPES
+    pi = pipeline.exp2_infants(spec(si, "selfcons_ext", window), metric, float(si.world_EIGs), rollouts=rollouts_inf, seed=11, emb=emb)
+    fam, dev = pipeline.exp2_adults(spec(sa, "adult_ext", window), metric, float(sa.world_EIGs), "stochastic", rollouts=rollouts_adu, seed=13, emb=emb)
+    hi = data.infant_condition_means()
+    hi1 = {(r.trial_type, int(r.trial_number)): 0.5 * (r.LT_odd + r.LT_even) for r in hi.itertuples(index=False)}
+    ha1 = (data.load_adult_exp1().groupby(["trial_type", "trial_number"]).LT.mean() / 1000).to_dict()
+    hi2, ha2 = data.load_exp2_human_infants(), {k: v / 1000 for k, v in data.load_exp2_human_adults().items()}
+    # model and human condition means under the keys the statistics use; (label, x) is what the figure shows
+    model = {"exp1_infants": {(tt, tn): (float(wi[f"{k}_{tn}"]), lab_tt, tn - 1) for tt, k, lab_tt in (("background", "bg", "familiar"), ("deviant", "dev", "novel")) for tn in range(1, 11)},
+             "exp1_adults": {**{("background", tn): (float(wa[f"bg_{tn}"]), "familiar", tn) for tn in range(1, 12)},
+                             **{("deviant", D + 1): (float(wa[f"dev_{D}"]), "novel", D + 1) for D in range(1, 11)}},
+             "exp2_infants": {vt: (pi[vt], "familiar" if vt == "background" else vt, np.nan) for vt in VT},
+             "exp2_adults": {**{("fam", tn): (fam[("fam", tn)], "familiar", tn) for tn in range(1, 7)},
+                             **{(vt, pos): (dev[(vt, pos)], vt, pos) for vt in VT[1:] for pos in (2, 4, 6)}}}
+    human = {"exp1_infants": hi1, "exp1_adults": {(tt, int(tn)): v for (tt, tn), v in ha1.items()}, "exp2_infants": hi2, "exp2_adults": ha2}
+    rows, fits = [], []
+    for fig, m in model.items():
+        keys = [k for k in m if k in human[fig]]
+        f = scaled_fit({k: m[k][0] for k in keys}, human[fig], keys)             # LT = a + b * samples, b >= 0, on the scored conditions
+        rows += [dict(figure=fig, trial_type=lab_tt, x=x, mean_sample=v, scaled=f["a"] + f["b"] * v, scored=k in human[fig]) for k, (v, lab_tt, x) in m.items()]
+        fits.append(dict(figure=fig, r2=f["r2"], rmse_insample=f["rmse"], a=f["a"], b=f["b"], n=len(keys)))
+    lab = lambda r: f"V{r.V_prior:g} a{r.alpha_prior:g} b{r.beta_prior:g} sd{r.sd_epsilon:g} st{r.sigma_true:g} w{r.world_EIGs:.1e}"
+    fits = pd.DataFrame(fits)
+    fits["setting"] = [lab(si) if f.endswith("infants") else lab(sa) for f in fits.figure]
+    fits["rmse_cv"] = [float(wi.rmse), float(wa.rmse21_cv_reeval) / 1000, np.nan, np.nan]   # Exp 1: the re-evaluations' cross-validated RMSE (s)
+    fits["rollouts"] = [int(wi.rollouts), int(wa.rollouts), rollouts_inf, rollouts_adu]
+    return pd.DataFrame(rows), fits
+
+
+# ---------------------------------------------------------------- report v3, Table 2: the published model's output, rescored
+def published_rescored():
+    """The published RANCH (EIG) curves stored with the paper's figures -- one per parameter setting -- scored with
+    the statistics this package applies to its own models (infants: split_half_cv on the 15 condition means;
+    adults: condition_mean_cv at the 21-condition aggregation), per setting and for the parameter-averaged curve
+    that the paper's Figs. 4-5 display; that curve's habituation / dishabituation ratios in model units next to the
+    human ones; and the Exp-2 fits from the paper's plot data (they reproduce the printed .66 / 1.26 and .72 / .16).
+    Long format: experiment, quantity, value."""
+    from .linking import split_half_cv, condition_mean_cv
+    P = f"{data.PAPER}/data/results_plots"
+    out = []
+    add = lambda e, **kw: out.extend(dict(experiment=e, quantity=k, value=float(v)) for k, v in kw.items())
+    hi = data.infant_condition_means()
+    e = pd.read_csv(f"{P}/exp1_infant_sim_plot.csv"); e = e[e.type == "EIG"].copy()
+    e["trial_type"] = e.test_type.map({"Familiar": "background", "Novel": "deviant"}); e["trial_number"] = e.fam_duration + 1
+    cols = ["trial_type", "trial_number", "mean_sample"]
+    per = pd.DataFrame([split_half_cv(g.rename(columns={"scaled_samples": "mean_sample"})[cols], hi) for _, g in e.groupby("param_id")])
+    avg = e.groupby(["trial_type", "trial_number"]).scaled_samples.mean().reset_index().rename(columns={"scaled_samples": "mean_sample"})
+    pl = split_half_cv(avg, hi)
+    nat = e.assign(native=0.5 * (e.ub_sample + e.lb_sample)).groupby(["trial_type", "trial_number"]).native.mean()
+    hm = hi.assign(LT=0.5 * (hi.LT_odd + hi.LT_even)).set_index(["trial_type", "trial_number"]).LT
+    add("exp1_infants", n_settings=len(per), n_conditions=pl["n_cond"], r2_best=per.r2.max(), r2_mean=per.r2.mean(), r2_plotted=pl["r2"],
+        rmse_cv_best=per.rmse.min(), rmse_cv_mean=per.rmse.mean(), rmse_cv_plotted=pl["rmse"],
+        hab_plotted=nat[("background", 10)] / nat[("background", 1)], dis_plotted=nat[("deviant", 10)] / nat[("background", 10)],
+        hab_human=hm[("background", 10)] / hm[("background", 1)], dis_human=hm[("deviant", 10)] / hm[("background", 10)])
+    ha = data.load_adult_exp1(); hc = ha.groupby(["trial_type", "trial_number"]).LT.mean()
+    a = pd.read_csv(f"{P}/exp1_adult_sim_plot.csv"); a = a[a.type == "EIG"].copy()
+    a["trial_type"] = a.trial_type.map({"Familiar": "background", "Novel": "deviant"})
+    score = lambda g: condition_mean_cv(ha, g.groupby(["trial_type", "trial_number"]).mean_sample.mean().reset_index(), ["trial_type", "trial_number"], n_folds=7)
+    per = pd.DataFrame([{k: score(g)[k] for k in ("r2", "rmse")} for _, g in a.groupby("param_id")])
+    pl = score(a); xa = a.groupby(["trial_type", "trial_number"]).mean_sample.mean()
+    add("exp1_adults", n_settings=len(per), n_conditions=len(xa), r2_best=per.r2.max(), r2_mean=per.r2.mean(), r2_plotted=pl["r2"],
+        rmse_cv_best=per.rmse.min() / 1000, rmse_cv_mean=per.rmse.mean() / 1000, rmse_cv_plotted=pl["rmse"] / 1000,
+        hab_plotted=xa[("background", 11)] / xa[("background", 1)], dis_plotted=xa["deviant"].mean() / xa[("background", 11)],
+        hab_human=hc[("background", 11)] / hc[("background", 1)], dis_human=hc["deviant"].mean() / hc[("background", 11)])
+    i2 = pd.read_csv(f"{P}/exp2_infant_plot.csv").pivot(index="trial_type", columns="value_type", values="LT")
+    add("exp2_infants", n_conditions=len(i2), r2=np.corrcoef(i2["RANCH"], i2["Infant Behavior"])[0, 1] ** 2,
+        rmse=np.sqrt(np.mean((i2["RANCH"] - i2["Infant Behavior"]) ** 2)))
+    a2 = pd.read_csv(f"{P}/exp2_adult_plot.csv").pivot(index=["trial_type", "trial_number"], columns="value_type", values="LT")
+    add("exp2_adults", n_conditions=len(a2), r2=np.corrcoef(a2["RANCH"], a2["Adult Behavior"])[0, 1] ** 2,
+        rmse=np.sqrt(np.mean((a2["RANCH"] - a2["Adult Behavior"]) ** 2)) / 1000)
+    return pd.DataFrame(out)
+
+
 def write_all(out, procs=8, smoke=False, gf=GF):
     """All five figures' data from the tables in `out` (the pipeline's output directory)."""
     winners = pd.read_csv(f"{out}/infant_winners.csv")
@@ -194,6 +293,11 @@ def write_all(out, procs=8, smoke=False, gf=GF):
     ac, am = adult_curves(pd.read_csv(f"{out}/adult_winners.csv"))
     ac.to_csv(f"{gf}/adult_selfcons_curves.csv", index=False); am.to_csv(f"{gf}/adult_selfcons_curves_meta.csv", index=False)
     print("figB4:", "; ".join(f"{r.metric} R2={r.r2_21:.2f} hab={r.hab:.2f} dis={r.dis:.2f}" for r in am.itertuples(index=False)))
+    published_rescored().to_csv(f"{gf}/published_rescored.csv", index=False)
+    print("report v3, Table 2: published model rescored -> published_rescored.csv")
+    pc, pf = paper_panels(out, rollouts_inf=1 if smoke else 8, rollouts_adu=1 if smoke else 12)
+    pc.to_csv(f"{gf}/paper_panels_concept.csv", index=False); pf.to_csv(f"{gf}/paper_panels_concept_fits.csv", index=False)
+    print("figC1-4 (concept EIG at the paper-rule cells):", "; ".join(f"{r.figure} R2={r.r2:.3f}" for r in pf.itertuples(index=False)))
     ch = channels(rollouts=1 if smoke else 16)
     ch.to_csv(f"{gf}/channels_decomp.csv", index=False)
     print("figB5: novel/familiar at t1 and t5 by quantity:")

@@ -276,19 +276,16 @@ def test_concept_eig_equals_true_eig_when_eps_is_fixed(ref_fixed, stim_pair):
         assert o["mi_concept"] == pytest.approx(o["mi"], rel=1e-12)
 
 
-@pytest.fixture(scope="module")
-def concept_runs(ref_inferred, stim_pair):
-    """Canonical regime (eps inferred, sigma_true .1), dur-8 test: per-sample total EIG,
-    concept EIG (engine) and concept EIG (exact quadrature) for familiar and novel."""
-    cfg, grid = ref_inferred
-    fam, dev = stim_pair
+def _concept_runs(cfg, grid, fam, dev, sigma_true=0.1):
+    """Dur-8 test trial in a noisy world: per-sample total EIG, concept EIG (engine) and, for the
+    first three samples, concept EIG by exact quadrature -- for a familiar and a novel test stimulus."""
     out = {}
     for name, test in (("familiar", fam), ("novel", dev)):
         rng = np.random.default_rng(3)
         st = M.State(cfg, grid, 9)
         for k in range(8):
             for _ in range(5):
-                z = fam + rng.normal(0, 0.1, 3)
+                z = fam + rng.normal(0, sigma_true, 3)
                 for d in range(3):
                     st.add_sample(d, k, z[d])
         st.ensure_init()
@@ -296,7 +293,7 @@ def concept_runs(ref_inferred, stim_pair):
             st._refresh(d)
         rows = []
         for t in range(6):
-            z = test + rng.normal(0, 0.1, 3)
+            z = test + rng.normal(0, sigma_true, 3)
             o = st.step(8, z, z, want=("mi", "mi_concept"))
             exact = sum(_exact_concept_mi(st.fps[d], *st.stats[d][8][:2]) for d in range(3)) if t < 3 else np.nan
             rows.append((o["mi"], o["mi_concept"], exact))
@@ -304,13 +301,33 @@ def concept_runs(ref_inferred, stim_pair):
     return out
 
 
-def test_concept_eig_matches_exact_quadrature_under_noise(concept_runs):
+@pytest.fixture(scope="module")
+def concept_runs(ref_inferred, stim_pair):
+    """The reference inferred-eps regime (V3 a1 b0.1, sd_eps .5, sigma_true .1)."""
+    return _concept_runs(*ref_inferred, *stim_pair)
+
+
+def _assert_concept_accuracy(runs, tol_value=0.025, tol_ratio=0.02):
     for name in ("familiar", "novel"):
-        approx, exact = concept_runs[name][:3, 1], concept_runs[name][:3, 2]
-        assert np.all(np.abs(approx - exact) / exact < 0.25), (name, approx, exact)
-    ra = concept_runs["novel"][:3, 1] / concept_runs["familiar"][:3, 1]
-    re = concept_runs["novel"][:3, 2] / concept_runs["familiar"][:3, 2]
-    assert np.all(np.abs(ra - re) / re < 0.15), (ra, re)
+        approx, exact = runs[name][:3, 1], runs[name][:3, 2]
+        assert np.all(np.abs(approx - exact) / exact < tol_value), (name, approx, exact)
+    ra = runs["novel"][:3, 1] / runs["familiar"][:3, 1]
+    re = runs["novel"][:3, 2] / runs["familiar"][:3, 2]
+    assert np.all(np.abs(ra - re) / re < tol_ratio), (ra, re)
+
+
+def test_concept_eig_matches_exact_quadrature_under_noise(concept_runs):
+    """The moment-matched entropies are held to 2.5% in value and 2% in the novel/familiar ratio
+    (measured 2026-09-17: <= 0.7% and <= 1%; the 25% / 15% of the first version were never needed)."""
+    _assert_concept_accuracy(concept_runs)
+
+
+@pytest.mark.parametrize("kw", [dict(V=3.0, a=1.0, b=0.1, sd_eps=1.0, sigma_true=0.2),     # the fitted infant setting
+                                dict(V=1.0, a=1.0, b=0.1, sd_eps=0.5, sigma_true=0.1)])    # the fitted adult setting
+def test_concept_eig_accuracy_at_the_fitted_settings(kw, stim_pair):
+    """Report v3 states that the concept EIG is within 1.6% of brute-force quadrature at both fitted settings."""
+    cfg = cfg_inferred(**kw)
+    _assert_concept_accuracy(_concept_runs(cfg, make_grid(cfg), *stim_pair, sigma_true=kw["sigma_true"]))
 
 
 def test_concept_eig_discriminates_where_the_total_does_not(concept_runs):
