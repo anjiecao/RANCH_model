@@ -323,6 +323,18 @@ as a fresh-seed replication it agrees: concept EIG has no sign-consistent infant
 and a flat adult curve. The job then died in `figures` on a missing input (§0 #13). Fixes committed
 with their tests; `STAGES="adults-ext winners phase2 lesion figures"` resubmitted.*
 
+*Protocol for the stochastic adult numbers (2026-09-17, after §0 #14; MCF approved the shortlist and the ν
+extension).* (1) The grid (16 rollouts × 6 pairs per cell) only shortlists: per variable, the 10 best
+sign-consistent, non-saturated cells under each rule. (2) `selection.adult_shortlist` re-evaluates the
+shortlisted cells at `ROLLOUTS["adult_winners"]` = 512 rollouts per pair on its own seed family. (3)
+`adult_winners(shortlist=…)` selects on those re-evaluated scores and reports the selected cell on independent
+seeds, with Monte-Carlo standard errors and the bootstrap interval of R²; (4) the noisy Phase 2 and the figure
+data take their adult cells from that table and use 512 rollouts per pair. Infants are unchanged: their
+estimator integrates the stopping time analytically and shows no attenuation (R² .727 → .735 from 8 to 128
+rollouts). The settings kind `adult_nu` extends the adult grid to ν ∈ {.03, .1, .3}: a first exemplar carries
+½ log((ν+1)/ν) nats per dimension about the concept mean, so ν sets the first-trial drop, which the ν ∈ {1, 3}
+grid under-produces (10% against the adults' 30%).*
+
 *Step 3 checklist (started 2026-09-16, MCF "go ahead").* (a) `ranch.selection`: re-evaluations
 keep their native curves; `infant_winners` / `adult_winners` reproduce phase1c / phase1e (same
 seed conventions: `777 + winner index`, `5_000_000 + winner index`) and write the winners tables
