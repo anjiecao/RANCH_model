@@ -17,8 +17,9 @@ METRICS = ["eig_code", "eig_within", "kl", "mi", "surprisal_b"]
 
 
 def main():
-    g = {"_note": "pinned from outputs of 2026-09-16 (eq-15 fix; exemplar-mean window under noise; concept EIG; "
-                  "clamped linkings; selfcons R32 / adult R64 re-evaluations)"}
+    g = {"_note": "pinned from the reproduction command's outputs of 2026-09-17 (job 44027063): eq-15 fix; exemplar-mean "
+                  "window under noise; concept EIG; clamped linkings; infants re-evaluated at R32; adults selected from a "
+                  "re-evaluated shortlist and reported at 512 rollouts per pair on independent seeds (plan §0 #14)"}
     sc = pd.read_csv(f"{P1}/infant_scores_main.csv")
     g["infant_main_best"] = {m: dict(r2=float(sc[sc.metric == m].pooled_r2.max()),
                                      rmse=float(sc[sc.metric == m].pooled_rmse.min())) for m in METRICS}
@@ -37,10 +38,18 @@ def main():
                                        for r in ps[ps.rule == "paper"].itertuples()}
     cm = pd.read_csv(f"{GF}/config_map.csv")
     g["config_map"] = {r.config: [float(r.hab), float(r.dis)] for r in cm.itertuples()}
-    g["selfcons_winners_R32"] = {"eig_code": 0.076, "kl": 0.231, "mi": 0.229, "surprisal_b": 0.579, "mi_concept": 0.747,
-                                 "_source": "sherlock/logs/ranch-concept-43677438.out (Stage B at R=32), 2026-09-16"}
-    w64 = pd.read_csv(f"{P1}/adult_winners_R64.csv")
+    iw = pd.read_csv(f"{P1}/infant_winners.csv")
+    g["infant_winners_R32"] = {r.metric: dict(r2=float(r.r2), grid_r2=float(r.grid_r2), hab=float(r.hab), dis=float(r.dis))
+                               for r in iw[iw.rule == "r2"].itertuples()}
+    w64 = pd.read_csv(f"{P1}/adult_winners_R64.csv")                     # the drivers' Stage B (R = 64, grid argmax): legacy pin
     g["adult_winners_R64_r2rule"] = {r.metric: float(r.r2_21_R64) for r in w64[w64.rule == "r2"].itertuples()}
+    aw = pd.read_csv(f"{P1}/adult_winners.csv")
+    g["adult_winners"] = {f"{r.metric}|{r.rule}": dict(r2=float(r.r2_21_reeval), r2_mc_lo=float(r.r2_mc_lo), r2_mc_hi=float(r.r2_mc_hi),
+                                                     grid_r2=float(r.r2_21_grid), hab=float(r.hab), dis=float(r.dis), setting=int(r.setting),
+                                                     w=float(r.world_EIGs), rollouts=int(r.rollouts))
+                          for r in aw.itertuples()}
+    pf = pd.read_csv(f"{GF}/paper_panels_concept_fits.csv")
+    g["paper_panels_concept"] = {r.figure: dict(r2=float(r.r2), setting=r.setting) for r in pf.itertuples()}
     ch = pd.read_csv(f"{GF}/channels_decomp.csv")
     ratios = {}
     for w in ch.world.unique():

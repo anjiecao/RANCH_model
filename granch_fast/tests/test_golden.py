@@ -56,11 +56,36 @@ def test_phase2_generalization(golden, table, key):
 
 
 def test_adult_winners_R64(golden):
-    """The re-evaluated adult winners (the numbers the report quotes) match their pins."""
+    """The drivers' Stage B (grid argmax re-evaluated at R = 64): the legacy pin the reproduction was verified against."""
     w = pd.read_csv(f"{PHASE1}/adult_winners_R64.csv")
     w = w[w.rule == "r2"].set_index("metric")
     for m, v in golden["adult_winners_R64_r2rule"].items():
         assert w.loc[m, "r2_21_R64"] == pytest.approx(v, abs=1e-3)
+
+
+def test_infant_winners(golden):
+    """The infant winners re-evaluated at R = 32 (the numbers report v3 quotes) match their pins."""
+    w = pd.read_csv(f"{PHASE1}/infant_winners.csv")
+    w = w[w.rule == "r2"].set_index("metric")
+    for m, v in golden["infant_winners_R32"].items():
+        for k in ("r2", "grid_r2", "hab", "dis"):
+            assert w.loc[m, k] == pytest.approx(v[k], abs=1e-3), (m, k)
+
+
+def test_adult_winners_shortlist_protocol(golden):
+    """The adult winners of record: selected from the re-evaluated shortlist, reported at 512 rollouts per pair on
+    independent seeds, with their Monte-Carlo interval; and the figure data's fits agree with them."""
+    w = pd.read_csv(f"{PHASE1}/adult_winners.csv").set_index(["metric", "rule"])
+    for key, v in golden["adult_winners"].items():
+        m, rule = key.split("|")
+        r = w.loc[(m, rule)]
+        assert r.rollouts == v["rollouts"] and r.setting == v["setting"] and r.world_EIGs == pytest.approx(v["w"], rel=1e-9)
+        for k, col in (("r2", "r2_21_reeval"), ("r2_mc_lo", "r2_mc_lo"), ("r2_mc_hi", "r2_mc_hi"), ("grid_r2", "r2_21_grid"), ("hab", "hab"), ("dis", "dis")):
+            assert r[col] == pytest.approx(v[k], abs=1e-3), (key, k)
+    pf = pd.read_csv(f"{GF}/paper_panels_concept_fits.csv").set_index("figure")
+    for fig, v in golden["paper_panels_concept"].items():
+        assert pf.loc[fig, "r2"] == pytest.approx(v["r2"], abs=1e-3) and pf.loc[fig, "setting"] == v["setting"]
+    assert pf.loc["exp1_adults", "r2"] == pytest.approx(w.loc[("mi_concept", "r2"), "r2_21_reeval"], abs=1e-9)
 
 
 def test_configuration_map(golden):
