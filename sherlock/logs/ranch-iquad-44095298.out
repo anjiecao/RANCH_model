@@ -1,0 +1,14 @@
+a88c4d0 test_ops: skip the clone-one-commit-behind test in a shallow clone
+=== 2026-09-18 00:37:02  quadrature 80x30 linear
+80x30 linear, 32 rollouts, seed 780: R2 0.7474  rmse 4.081   (record table: R2 0.7474, rmse 4.081)
+  background by trial:  47.79  46.28  45.50  44.71  44.04  43.51  42.89  42.37  41.90  41.72
+  deviant    by trial:  47.42  46.92  46.71  46.75  46.60  46.85  46.80  46.68  46.68  46.63
+=== 2026-09-18 00:38:41  quadrature 80x120 log
+80x120 log, 32 rollouts, seed 780: R2 0.7424  rmse 4.084   (record table: R2 0.7474, rmse 4.081)
+  background by trial:  47.78  46.27  45.48  44.69  43.99  43.43  42.80  42.25  41.75  41.51
+  deviant    by trial:  47.41  46.91  46.70  46.73  46.57  46.79  46.71  46.55  46.51  46.40
+=== 2026-09-18 00:46:01  quadrature 80x120 linear
+80x120 linear, 32 rollouts, seed 780: R2 0.7424  rmse 4.084   (record table: R2 0.7474, rmse 4.081)
+  background by trial:  47.78  46.27  45.48  44.69  43.99  43.43  42.80  42.25  41.75  41.51
+  deviant    by trial:  47.42  46.91  46.70  46.73  46.57  46.79  46.71  46.55  46.51  46.40
+=== 2026-09-18 00:53:34  done
