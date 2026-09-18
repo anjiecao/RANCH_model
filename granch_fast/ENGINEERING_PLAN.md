@@ -335,6 +335,11 @@ rollouts). The settings kind `adult_nu` extends the adult grid to ν ∈ {.03, .
 ½ log((ν+1)/ν) nats per dimension about the concept mean, so ν sets the first-trial drop, which the ν ∈ {1, 3}
 grid under-produces (10% against the adults' 30%).*
 
+*ν extension, result (2026-09-17 evening, one job per variable on the owners partition, own clones; tables
+`*_selfcons_nu.csv`): the drop grows to 15–20% at ν ≤ .3, but the concept EIG's best adult fit falls to
+.65 (ν = .3; Exp 2 .70) against .85 at ν = 3, because the rest of the pattern worsens; surprisal .81,
+KL .34, total EIG .25 (against .77, .30, .26). The record stays on the ν ∈ {1, 3} grid.*
+
 *Step 3 checklist (started 2026-09-16, MCF "go ahead").* (a) `ranch.selection`: re-evaluations
 keep their native curves; `infant_winners` / `adult_winners` reproduce phase1c / phase1e (same
 seed conventions: `777 + winner index`, `5_000_000 + winner index`) and write the winners tables

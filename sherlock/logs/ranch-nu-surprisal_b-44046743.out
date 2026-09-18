@@ -1,0 +1,15 @@
+bda679c Step 3 (f) verdict: ALL IDENTICAL; relocatable job file; infant winners under both rules
+=== 2026-09-17 17:22:33  check inputs
+inputs verified: 15 files match the data manifest
+=== 2026-09-17 17:22:38  adults nu
+saved /home/users/mcfrank/ranch_nu/surprisal_b/RANCH_model/granch_fast/phase1/adult_preds_selfcons_nu.csv (528 rows)
+saved adult_scores_selfcons_nu.csv / adult_scores21_selfcons_nu.csv
+=== 2026-09-17 18:01:18  winners adults
+saved /home/users/mcfrank/ranch_nu/surprisal_b/RANCH_model/granch_fast/phase1/adult_shortlist_selfcons_nu.csv (12 cells re-evaluated)
+saved /home/users/mcfrank/ranch_nu/surprisal_b/RANCH_model/granch_fast/phase1/adult_winners_selfcons_nu.csv (1 rows)
+  surprisal_b  [r2] grid 0.471 -> re-evaluated 0.807 (hab 0.84 dis 1.10)
+=== 2026-09-17 18:18:41  phase2 selfcons
+saved /home/users/mcfrank/ranch_nu/surprisal_b/RANCH_model/granch_fast/phase1/phase2_selfcons_results_nu.csv (2 rows)
+  [surprisal_b | paper] infants Exp1 R2 0.719 -> Exp2 R2 0.494 (anim>iden>numb>pose>back); adults Exp1 0.807 -> Exp2 0.618 (anim>iden>numb>pose)
+  [surprisal_b | r2] infants Exp1 R2 0.719 -> Exp2 R2 0.494 (anim>iden>numb>pose>back); adults Exp1 0.807 -> Exp2 0.618 (anim>iden>numb>pose)
+=== 2026-09-17 18:22:36  done
