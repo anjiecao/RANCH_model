@@ -43,7 +43,7 @@ def test_named_configurations():
     assert CANONICAL.variable is EIGConcept and CANONICAL.sigma_true > 0 and CANONICAL.model.noise.inferred_
     assert CANONICAL.sigma_true == 0.2 and CANONICAL.adult_sigma_true == 0.1         # MCF 2026-09-16: may differ
     for cfg_a, cfg_b in [(CANONICAL.model.fast_config(window_half_width=0.2, n_z=5), cfg_inferred(sd_eps=1.0, sigma_true=0.2)),
-                         (CANONICAL.adult_model.fast_config(window_half_width=0.1, n_z=5), cfg_inferred(V=1.0))]:
+                         (CANONICAL.adult_model.fast_config(window_half_width=0.1, n_z=5), cfg_inferred(V=3.0))]:
         for k in ("V_prior", "alpha_prior", "beta_prior", "eps_box", "n_sigma", "n_eps", "infer_eps", "sd_epsilon"):
             assert getattr(cfg_a, k) == getattr(cfg_b, k), k
     a, b = PUBLISHED_SPEC.model.fast_config(), cfg_published_infeps()

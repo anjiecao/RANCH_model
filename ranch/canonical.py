@@ -12,8 +12,14 @@ the correct formula it does not reproduce the phenomena (infants R2 .23, dis 1.0
 concept EIG does (infants .75 +/- .03 on 32 fresh rollouts, adults .64-.73 on 64, Exp-2
 .51/.61 with the correct orderings; noisy-world study of 2026-09-16). Confirmed by MCF
 (2026-09-16): the canonical variable is the concept EIG, and world noise may differ between
-infants and adults, so each population is pinned at its own grid-best cell (infants
+infants and adults, so each population is pinned at its own best cell (infants
 sigma_true .2 / sd_eps 1, adults .1 / .5).
+
+2026-09-17: the adult cell is the one selected by the shortlist protocol (plan §0 #14: the 16-rollout
+grid cannot rank its own best cells; the 10 best per rule are re-evaluated at 512 rollouts per pair,
+the best of them reported on independent seeds): V3 a1 b0.1, sd_eps .5, sigma_true .1, w 1e-4 --
+the same prior as the infants' -- R2 .851 [.794, .878], Exp-2 .787 [.742, .815]. The grid-argmax
+cell of the morning (V1, w 3.2e-5) is fifth on the re-evaluated shortlist (.775).
 """
 from dataclasses import dataclass
 
@@ -38,14 +44,15 @@ CANONICAL = NamedConfiguration(
     name="canonical: noisy world + inferred eps + concept EIG (eps a nuisance)",
     model=Model(Prior(0.0, 3.0, 1.0, 0.1, (0.001, 1.5)), LearnerNoise.inferred(1e-3, 1.0, (1e-3, 1.2)),
                 quadrature=Quadrature(n_sigma=80, n_eps=30)),
-    sigma_true=0.2, variable=EIGConcept, w_infants=1e-5, w_adults=3.2e-5,
-    adult_model=Model(Prior(0.0, 1.0, 1.0, 0.1, (0.001, 1.5)), LearnerNoise.inferred(1e-3, 0.5, (1e-3, 1.2)),
+    sigma_true=0.2, variable=EIGConcept, w_infants=1e-5, w_adults=1e-4,
+    adult_model=Model(Prior(0.0, 3.0, 1.0, 0.1, (0.001, 1.5)), LearnerNoise.inferred(1e-3, 0.5, (1e-3, 1.2)),
                       quadrature=Quadrature(n_sigma=80, n_eps=30)),
     adult_sigma_true=0.1,
-    note="each population at its own grid-best cell (MCF, 2026-09-16: world noise may differ between populations): "
+    note="each population at its own best cell (MCF, 2026-09-16: world noise may differ between populations): "
          "infants sigma_true .2 / sd_eps 1 -> R2 .747 +/- .025 on 32 fresh rollouts (grid .755; hab .87 dis 1.12); "
-         "adults sigma_true .1 / sd_eps .5 -> 21-cond .73 on 64 fresh rollouts (hab .77 dis 1.15); Exp-2 carried "
-         ".51 / .61 with the correct violation orderings. The shared sigma_true .1 / sd_eps .5 infant cell gives .64")
+         "adults (shortlist protocol, 2026-09-17) sigma_true .1 / sd_eps .5 -> 21-cond .851 [.794, .878] at 512 "
+         "rollouts per pair on independent seeds (hab .82 dis 1.11); Exp-2 carried .51 / .79 with the correct "
+         "violation orderings. The shared sigma_true .1 / sd_eps .5 infant cell gives .64")
 
 TOTAL_EIG_REFERENCE = NamedConfiguration(
     name="reference: noisy world + inferred eps + total EIG (information about eps included)",
