@@ -43,16 +43,22 @@ W_ADULT = {
                   "mi_concept": list(np.logspace(-4.5, 0.5, 11))},
 }
 W_ADULT["adult_nu"] = W_ADULT["adult_ext"]
+W_ADULT["adult_beta"] = W_ADULT["adult_ext"]
 # A variable's random stream in the noisy adult sweeps (the legacy drivers' indices). Append only: a stream must
 # not depend on how a w-grid dictionary happens to be ordered, nor on which other variables a sweep includes.
 ADULT_SEED = {"eig_code": 0, "mi": 1, "kl": 2, "surprisal_b": 3, "mi_concept": 4}
 T_CAP = 80
 MAX_D = 10
-# Rollouts behind each REPORTED stochastic number (infants: per stimulus row; adults: per stimulus pair). Noise in a model's
-# condition means attenuates its R2 -- adults at the fitted concept-EIG cell: .53 / .72 / .76 at 12 / 64 / 512 rollouts per
-# pair in Exp 1, .63 / .76 / .79 in Exp 2 (plan §0 #14) -- so the adult counts follow from a precision target (Monte-Carlo sd
-# of R2 <= .02) and every reported fit carries its Monte-Carlo interval. The grids (selection only) keep their 8 / 16.
-ROLLOUTS = {"infant_winners": 32, "adult_winners": 512, "exp2_infants": 8, "exp2_adults": 512}
+# Stimulus pairs and rollouts behind each stochastic ADULT number (infants: 32 rollouts per stimulus row, all rows). Noise in
+# a model's condition means attenuates its R2 (adults at the fitted concept-EIG cell: .53 / .72 / .76 at 12 / 64 / 512
+# rollouts per pair in Exp 1; plan §0 #14), so the reported numbers rest on thousands of trajectories per condition and every
+# reported fit carries its Monte-Carlo interval. Since 2026-09-18 those trajectories are spread over EVERY stimulus pair of
+# the experiment (1180 in Exp 1, 84-305 per violation type in Exp 2; data.load_*_pairs(None)) with a few rollouts each,
+# instead of 512 rollouts of a 6-pair sample: the six pairs' dishabituation ranged from -.6 to +3 glimpses, a stimulus-
+# sampling error six times the Monte-Carlo one (sherlock/logs/quadrature_check_adults_2026-09-18.txt). The grids (shortlisting
+# only) keep 96 trajectories per cell, now 96 pairs x 1 rollout. None = every pair.
+PAIRS = {"adult_grid": 96, "adult_winners": None, "exp2_adults": None}
+ROLLOUTS = {"infant_winners": 32, "adult_grid": 1, "adult_winners": 4, "exp2_infants": 8, "exp2_adults": 12}
 
 _EMB = None
 
@@ -188,15 +194,17 @@ def _adult_row(si, s, metric, w, bg, dv, n_capped, window):
     return row
 
 
-def adult_grid(kind, mode, pairs=6, rollouts=16, window="exemplar_mean", metrics=None, procs=8, settings=None, limit=None,
+def adult_grid(kind, mode, pairs=None, rollouts=None, window="exemplar_mean", metrics=None, procs=8, settings=None, limit=None,
                w_values=None):
     """Self-paced familiar curves bg_1..bg_11 and deviant probes dev_1..dev_10, averaged over
-    stimulus pairs (and rollouts). mode='mean_field' (noiseless kinds: main) or 'stochastic'
-    (noisy kinds: adult_base / adult_ext). `w_values` restricts the sweep to those w's (seeds
+    stimulus pairs (and rollouts; defaults PAIRS / ROLLOUTS['adult_grid']). mode='mean_field' (noiseless kinds:
+    main) or 'stochastic' (noisy kinds: adult_base / adult_ext). `w_values` restricts the sweep to those w's (seeds
     keep their full-grid indices, so a cell recomputed alone equals the same cell in a full run)."""
     S = settings_table(kind) if settings is None else settings.reset_index(drop=True)
     wg = W_ADULT["mean_field" if mode == "mean_field" else kind]
     mets = list(wg) if metrics is None else [m for m in wg if m in metrics]
+    pairs = PAIRS["adult_grid"] if pairs is None else pairs
+    rollouts = ROLLOUTS["adult_grid"] if rollouts is None else rollouts
     prs = data.load_adult_exp1_pairs(pairs)
     keep = (lambda w: True) if w_values is None else (lambda w: bool(np.any(np.isclose(w, w_values))))
     jobs = [(si, S.iloc[si], kind, m, wi, w, prs, rollouts, window, mode)
@@ -298,12 +306,13 @@ def exp2_infants(sp, metric, w, rollouts=1, seed=11, T_max=60, durations=(8, 9),
     return (out, by_vt) if mc else out
 
 
-def exp2_adults(sp, metric, w, mode, rollouts=1, seed=13, n_per_type=6, emb=None, procs=1, mc=False):
+def exp2_adults(sp, metric, w, mode, rollouts=1, seed=13, n_per_type=None, emb=None, procs=1, mc=False):
     """Blocks of length 2/4/6 with the violation last: fam[1..6] (mean over all pairs) and
-    dev[(vt, pos)] for pos in 2/4/6. Seeds [seed, 100+vt, pair, rollout] as adult_exp2_mc.
+    dev[(vt, pos)] for pos in 2/4/6. Seeds [seed, 100+vt, pair, rollout] as adult_exp2_mc; n_per_type=None runs
+    every pair of the experiment (PAIRS['exp2_adults']; the legacy runs sampled 6 per type).
     mc=True (stochastic mode) also returns {vt: [(bg, dev) per pair]}, per-rollout sample counts."""
     emb = data.load_embeddings() if emb is None else emb
-    pairs = data.load_exp2_adult_pairs(n_per_type)
+    pairs = data.load_exp2_adult_pairs(PAIRS["exp2_adults"] if n_per_type is None else n_per_type)
     VT = data.VIOLATION_TYPES
     if mode == "mean_field":
         var, off = variable_for(metric, sp)
@@ -334,8 +343,10 @@ def exp2_adults(sp, metric, w, mode, rollouts=1, seed=13, n_per_type=6, emb=None
 def mc_fit(units, human, keys, n_boot=1000, seed=0):
     """Monte-Carlo error of a condition-mean fit. units: one {key: per-rollout values} per stimulus pair, all of a
     unit's arrays indexed by the same rollouts (a rollout yields several conditions, so they are resampled together).
-    A condition's mean is the mean over the units that carry it of their rollout means. Returns the per-key standard
-    error, R2 (squared correlation with the human condition means) and its bootstrap sd / 95% interval."""
+    A condition's mean is the mean over the units that carry it of their rollout means. Returns per key the Monte-Carlo
+    standard error `se` (rollout noise alone) and the standard error over stimulus units `se_stim` (the sd of the unit
+    means / sqrt(units): stimulus variation plus rollout noise, the figures' error bars since 2026-09-18), R2 (squared
+    correlation with the human condition means) and its bootstrap sd / 95% interval."""
     rng = np.random.default_rng(seed)
     y = np.array([human[k] for k in keys], float)
 
@@ -349,13 +360,14 @@ def mc_fit(units, human, keys, n_boot=1000, seed=0):
 
     r2 = lambda x: float(np.corrcoef(x, y)[0, 1] ** 2)
     x = cond_means(lambda n: None)
-    var = dict.fromkeys(keys, 0.0); cnt = dict.fromkeys(keys, 0)
+    var = dict.fromkeys(keys, 0.0); cnt = dict.fromkeys(keys, 0); um = {k: [] for k in keys}
     for u in units:
         for k, v in u.items():
-            var[k] += np.var(v, ddof=1) / len(v) if len(v) > 1 else np.nan; cnt[k] += 1
+            var[k] += np.var(v, ddof=1) / len(v) if len(v) > 1 else np.nan; cnt[k] += 1; um[k].append(float(np.mean(v)))
+    se_stim = {k: float(np.std(um[k], ddof=1) / np.sqrt(len(um[k]))) if len(um[k]) > 1 else np.nan for k in keys}
     boots = [r2(cond_means(lambda n: rng.integers(n, size=n))) for _ in range(n_boot)]
-    return dict(mean=dict(zip(keys, x)), se={k: float(np.sqrt(var[k]) / cnt[k]) for k in keys}, r2=r2(x), r2_mc_sd=float(np.std(boots)),
-                r2_mc_lo=float(np.percentile(boots, 2.5)), r2_mc_hi=float(np.percentile(boots, 97.5)))
+    return dict(mean=dict(zip(keys, x)), se={k: float(np.sqrt(var[k]) / cnt[k]) for k in keys}, se_stim=se_stim, r2=r2(x),
+                r2_mc_sd=float(np.std(boots)), r2_mc_lo=float(np.percentile(boots, 2.5)), r2_mc_hi=float(np.percentile(boots, 97.5)))
 
 
 def exp2_adult_units(by_vt):

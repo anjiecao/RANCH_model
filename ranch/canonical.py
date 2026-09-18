@@ -46,9 +46,11 @@ CANONICAL = NamedConfiguration(
                 quadrature=Quadrature(n_sigma=80, n_eps=30)),
     sigma_true=0.2, variable=EIGConcept, w_infants=1e-5, w_adults=1e-4,
     adult_model=Model(Prior(0.0, 3.0, 1.0, 0.1, (0.001, 1.5)), LearnerNoise.inferred(1e-3, 0.5, (1e-3, 1.2)),
-                      quadrature=Quadrature(n_sigma=80, n_eps=30)),
+                      quadrature=Quadrature(n_sigma=80, n_eps=120, spacing="log")),     # settings.QUADRATURE["adults"]
     adult_sigma_true=0.1,
-    note="each population at its own best cell (MCF, 2026-09-16: world noise may differ between populations): "
+    note="each population at its own best cell (MCF, 2026-09-16: world noise may differ between populations); the adult "
+         "numbers below are the 80x30-quadrature, 6-pair record's, superseded by the 2026-09-18 regeneration (120 log eps "
+         "nodes, every stimulus pair; settings.QUADRATURE, pipeline.PAIRS): "
          "infants sigma_true .2 / sd_eps 1 -> R2 .747 +/- .025 on 32 fresh rollouts (grid .755; hab .87 dis 1.12); "
          "adults (shortlist protocol, 2026-09-17) sigma_true .1 / sd_eps .5 -> 21-cond .851 [.794, .878] at 512 "
          "rollouts per pair on independent seeds (hab .82 dis 1.11); Exp-2 carried .51 / .79 with the correct "

@@ -2,8 +2,8 @@
   check         every input file of the data manifest exists and hashes as pinned (run first: seconds, not hours)
   grid          --kind main|infeps|selfcons_base|selfcons_ext|lesion_infants [--rollouts R --window W --every k --procs P]
   score         --kind ...                                   (reads the grid npz it wrote)
-  adults        --kind main|adult_base|adult_ext|adult_nu|lesion_adults --mode mean_field|stochastic [--pairs --rollouts --metrics --window --limit]
-  score-adults  --which main|selfcons|selfcons_ext|selfcons_nu|lesion    (the adult table suffix)
+  adults        --kind main|adult_base|adult_ext|adult_nu|adult_beta|lesion_adults --mode mean_field|stochastic [--pairs --rollouts --metrics --window --limit]
+  score-adults  --which main|selfcons|selfcons_ext|selfcons_nu|selfcons_beta|lesion    (the adult table suffix)
   winners       --population infants|adults --kind selfcons|selfcons_base|main|... [--rules --rollouts --pairs --metrics]
                 adults: --shortlist K re-evaluates the K best grid cells per metric and rule at full precision
                 (adult_shortlist*.csv), selects among THEM, and reports the selected cell on independent seeds
@@ -14,6 +14,8 @@
 Outputs go to granch_fast/phase1/ with the legacy file names (or --out DIR), so the two
 pipelines interoperate; 'selfcons' as a kind for the selection stages means the base and ext
 grids together (setting indices offset by the base count, as the legacy scorer wrote them).
+--pairs N|all (adult stages): the stimulus pairs to run; the default is the protocol's (pipeline.PAIRS: 96 for a
+grid, every pair of the experiment for the re-evaluations and Phase 2), --rollouts likewise (pipeline.ROLLOUTS).
 """
 import argparse
 import os
@@ -33,8 +35,9 @@ SCORES = {"main": "infant_scores_main.csv", "infeps": "infant_scores_infeps.csv"
           "selfcons_base": "infant_scores_selfcons_base.csv", "selfcons_ext": "infant_scores_selfcons_ext.csv",
           "lesion_infants": "infant_scores_lesion.csv"}
 PREDS = {"main": "adult_preds_main.csv", "adult_base": "adult_preds_selfcons.csv", "adult_ext": "adult_preds_selfcons_ext.csv",
-         "adult_nu": "adult_preds_selfcons_nu.csv", "lesion_adults": "adult_preds_lesion.csv"}
-ADULT_KIND = {"main": "main", "selfcons": "adult_base", "selfcons_ext": "adult_ext", "selfcons_nu": "adult_nu", "lesion": "lesion_adults"}
+         "adult_nu": "adult_preds_selfcons_nu.csv", "adult_beta": "adult_preds_selfcons_beta.csv", "lesion_adults": "adult_preds_lesion.csv"}
+ADULT_KIND = {"main": "main", "selfcons": "adult_base", "selfcons_ext": "adult_ext", "selfcons_nu": "adult_nu", "selfcons_beta": "adult_beta",
+              "lesion": "lesion_adults"}
 
 
 def load_grid(out, kind):
@@ -64,7 +67,7 @@ def main(argv=None):
     ap.add_argument("--rule", default="rmse")
     ap.add_argument("--rules", default=None, help="comma list for winners (default r2,rmse adults / r2 infants) and phase2 (default paper,r2)")
     ap.add_argument("--rollouts", type=int, default=None)
-    ap.add_argument("--pairs", type=int, default=6)
+    ap.add_argument("--pairs", default=None, help="adult stages: stimulus pairs to run, N or 'all' (default: pipeline.PAIRS)")
     ap.add_argument("--metrics", default=None)
     ap.add_argument("--window", default="exemplar_mean")
     ap.add_argument("--procs", type=int, default=8)
@@ -78,6 +81,7 @@ def main(argv=None):
     OUT = a.out or globals()["OUT"]
     os.makedirs(OUT, exist_ok=True)
     mets = a.metrics.split(",") if a.metrics else None
+    pairs = None if a.pairs in (None, "all") else int(a.pairs)
     if a.stage == "check":
         print(f"inputs verified: {len(data.verify_manifest())} files match the data manifest")
         return
@@ -91,7 +95,7 @@ def main(argv=None):
         sc.to_csv(f"{OUT}/{SCORES[a.kind]}", index=False)
         print(f"saved {OUT}/{SCORES[a.kind]} ({len(sc)} rows)")
     elif a.stage == "adults":
-        preds = pipeline.adult_grid(a.kind, a.mode, pairs=a.pairs, rollouts=a.rollouts or 16, window=a.window, metrics=mets,
+        preds = pipeline.adult_grid(a.kind, a.mode, pairs=pairs, rollouts=a.rollouts, window=a.window, metrics=mets,
                                     procs=a.procs, limit=a.limit)
         preds.to_csv(f"{OUT}/{PREDS[a.kind]}", index=False)
         print(f"saved {OUT}/{PREDS[a.kind]} ({len(preds)} rows)")
@@ -114,11 +118,11 @@ def main(argv=None):
             short = None
             if a.shortlist:
                 short = selection.adult_shortlist(sc, ADULT_KIND[a.which], metrics=mets, K=a.shortlist, rollouts=a.rollouts or (1 if a.smoke else None),
-                                                  pairs=a.pairs, window=a.window, procs=a.procs)
+                                                  pairs=pairs, window=a.window, procs=a.procs)
                 short.to_csv(f"{OUT}/adult_shortlist{suffix}.csv", index=False)
                 print(f"saved {OUT}/adult_shortlist{suffix}.csv ({len(short)} cells re-evaluated)")
             w = selection.adult_winners(sc, ADULT_KIND[a.which], metrics=mets, rules=tuple((a.rules or "r2,rmse").split(",")),
-                                        rollouts=a.rollouts or (1 if a.smoke else None), pairs=a.pairs, window=a.window, procs=a.procs,
+                                        rollouts=a.rollouts or (1 if a.smoke else None), pairs=pairs, window=a.window, procs=a.procs,
                                         shortlist=short)
             fn = f"{OUT}/adult_winners{suffix}.csv"
         w.to_csv(fn, index=False)
@@ -163,7 +167,7 @@ def main(argv=None):
         else:
             sc = pd.read_csv(f"{OUT}/adult_scores21_{a.which}.csv")
             sel = selection.select_adult(sc, a.metric, a.rule, kind=ADULT_KIND[a.which])
-            selection.reevaluate_adult(sel, rollouts=a.rollouts, pairs=a.pairs, window=a.window, procs=a.procs)
+            selection.reevaluate_adult(sel, rollouts=a.rollouts, pairs=pairs, window=a.window, procs=a.procs)
         print(sel.describe())
         print(sel.quote())
     elif a.stage == "figures":

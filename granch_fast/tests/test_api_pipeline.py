@@ -14,12 +14,36 @@ from granch_fast.legacy.phase1_adults import _adult_curves_offset
 from granch_fast.legacy.phase1_infants import make_cfg as legacy_make_cfg
 from granch_fast.run_fast import make_grid
 from ranch import data, pipeline
-from ranch.settings import settings_table, spec, variable_for
+from ranch.settings import QUADRATURE, settings_table, spec, variable_for
 
 
 @pytest.fixture(scope="module")
 def sub_rows(trials):
     return trials.groupby(["trial_type", "trial_number"]).head(1).head(8).to_dict("records")
+
+
+def adult_legacy_cfg(s):
+    """The legacy selfcons make_cfg at the production ADULT quadrature (settings.QUADRATURE; the drivers hard-code the
+    80x30 linear axes the record was produced with), so the identity checks compare numerics, not quadratures."""
+    cfg = P1S.make_cfg(s)
+    q = QUADRATURE["adults"]
+    cfg.n_sigma, cfg.n_eps, cfg.spacing = q.n_sigma, q.n_eps, q.spacing
+    return cfg
+
+
+def test_spec_quadrature_per_population():
+    """The adult learner's eps axis is 120 log nodes: 30 linear ones parked its posterior between two nodes at sigma_true .1
+    and inflated the adult Exp-1 fit (sherlock/logs/quadrature_check_adults_2026-09-18.txt); infants keep the legacy 80x30
+    (their record cell moves by .005), so the infant tables stand."""
+    for kind in ("adult_base", "adult_ext", "adult_nu", "adult_beta"):
+        q = spec(settings_table(kind).iloc[0], kind).model.quadrature
+        assert (q.n_sigma, q.n_eps, q.spacing) == (80, 120, "log"), kind
+    for kind in ("selfcons_base", "selfcons_ext"):
+        q = spec(settings_table(kind).iloc[0], kind).model.quadrature
+        assert (q.n_sigma, q.n_eps, q.spacing) == (80, 30, "linear"), kind
+    B = settings_table("adult_beta")
+    assert len(B) == 24 and set(B.beta_prior) == {0.003, 0.01, 0.03} and set(B.V_prior) == {3.0}
+    assert pipeline.PAIRS == {"adult_grid": 96, "adult_winners": None, "exp2_adults": None} and pipeline.ROLLOUTS["adult_grid"] == 1
 
 
 def test_infant_grid_main_matches_legacy_engine(emb, sub_rows):
@@ -74,12 +98,13 @@ def test_adult_grid_mean_field_matches_legacy(emb):
 
 
 @pytest.mark.parametrize("kind", ["adult_base", "adult_ext"])
-def test_adult_grid_stochastic_matches_legacy_driver(emb, kind):
+def test_adult_grid_stochastic_matches_legacy_driver(emb, kind, monkeypatch):
     # every variable in both sweeps: the ext w-grid dictionary lists kl before mi, and a seed taken from a
     # variable's position in it swapped those two streams (2026-09-17; the base sweep alone did not show it)
     S = settings_table(kind).iloc[[0]]
     pairs = data.load_adult_exp1_pairs(1)
     P1B._init(pairs)
+    monkeypatch.setattr(P1B, "make_cfg", adult_legacy_cfg)
     for metric, w in (("eig_code", 3e-2), ("mi", 3e-1), ("kl", 3e-2), ("surprisal_b", 30.0), ("mi_concept", 3e-1)):
         wg = pipeline.W_ADULT[kind][metric]
         wi = int(np.argmin(np.abs(np.log(np.array(wg)) - np.log(w))))

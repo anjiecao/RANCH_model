@@ -15,10 +15,12 @@
 # pair: ranch.pipeline.ROLLOUTS); figures 15 min -- about 14 h in all.
 # Set STAGES to a subset (space-separated) to rerun part of the chain; `adults` is all three adult
 # sweeps, adults-main / adults-base / adults-ext one of them; likewise winners(-infants|-adults) and
-# phase2(-main|-selfcons). Not part of the default chain: `snapshot` (copy every table aside first) and
-# `adults-nu` (the nu < 1 extension of the noisy adult grid). ADULT_WHICH chooses the adult sweep that the
-# adult winners and the noisy Phase 2 work from (selfcons_ext = the record; selfcons_nu = the extension),
-# ADULT_METRICS restricts those adult stages to some decision variables (e.g. mi_concept).
+# phase2(-main|-selfcons). Not part of the default chain: `snapshot` (copy every table aside first),
+# `adults-nu` (the nu < 1 extension of the noisy adult grid) and `adults-beta` (the beta < .1 extension). ADULT_WHICH
+# chooses the adult sweep that the adult winners and the noisy Phase 2 work from (selfcons_ext = the record;
+# selfcons_nu / selfcons_beta = the extensions), ADULT_METRICS restricts those adult stages to some decision variables
+# (e.g. mi_concept). Adult protocol since 2026-09-18: 120 log eps nodes (settings.QUADRATURE) and every stimulus pair of
+# the experiment behind each reported number (pipeline.PAIRS); the timings above predate it (about 3.3x per adult stage).
 set -euo pipefail
 module load python/3.12.1
 export RANCH_ROOT=${RANCH_ROOT:-$HOME/ranch}      # another root = a separate clone: own tree, own outputs (side runs never touch the record)
@@ -61,23 +63,27 @@ if has adults || has adults-main; then
   step adults main;           R adults --kind main --mode mean_field --pairs 6
                               R score-adults --which main
 fi
-if has adults || has adults-base; then
-  step adults base;           R adults --kind adult_base --mode stochastic --pairs 6 --rollouts 16
+if has adults || has adults-base; then       # noisy sweeps: 96 pairs x 1 rollout per cell (pipeline.PAIRS / ROLLOUTS)
+  step adults base;           R adults --kind adult_base --mode stochastic --pairs 96 --rollouts 1
                               R score-adults --which selfcons
 fi
 if has adults || has adults-ext; then
-  step adults ext;            R adults --kind adult_ext --mode stochastic --pairs 6 --rollouts 16
+  step adults ext;            R adults --kind adult_ext --mode stochastic --pairs 96 --rollouts 1
                               R score-adults --which selfcons_ext
 fi
 if has adults-nu; then
-  step adults nu;             R adults --kind adult_nu --mode stochastic --pairs 6 --rollouts 16 $MET
+  step adults nu;             R adults --kind adult_nu --mode stochastic --pairs 96 --rollouts 1 $MET
                               R score-adults --which selfcons_nu
+fi
+if has adults-beta; then
+  step adults beta;           R adults --kind adult_beta --mode stochastic --pairs 96 --rollouts 1 $MET
+                              R score-adults --which selfcons_beta
 fi
 if has winners || has winners-infants; then
   step winners infants R32;   R winners --population infants --kind selfcons --rollouts 32
 fi
-if has winners || has winners-adults; then      # the 10 best grid cells per variable and rule re-evaluated, selected among, reported on fresh seeds
-  step winners adults;        R winners --population adults --which $ADULT_WHICH --pairs 6 --shortlist 10 $MET
+if has winners || has winners-adults; then      # the 10 best grid cells per variable and rule re-evaluated (every pair, 4 rollouts), selected among, reported on fresh seeds
+  step winners adults;        R winners --population adults --which $ADULT_WHICH --pairs all --shortlist 10 $MET
 fi
 if has phase2 || has phase2-main; then
   step phase2 main;           R phase2 --kind main --rules paper,within,joint

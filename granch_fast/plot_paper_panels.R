@@ -2,7 +2,9 @@
 #   behaviour | RANCH as published (the paper's own plot data) | RANCH with the concept EIG.
 # The concept-EIG panel reads paper_panels_concept.csv (python -m ranch figures): native sample counts
 # already mapped to seconds by the affine linking that the reported statistics use (slope >= 0).
-# One y-axis per figure, so amplitudes are comparable across the three panels. Error bars: +/- 1 SE, as in the paper.
+# One y-axis per figure, so amplitudes are comparable across the three panels. Error bars: +/- 1 SE -- over participants
+# for behaviour, over stimulus units for the concept-EIG model (se_stim_scaled: stimulus pairs, or an infant condition's
+# stimulus rows; the Monte-Carlo SE over rollouts, se_scaled, is smaller and stays in the table).
 
 suppressMessages({library(dplyr); library(readr); library(tidyr); library(ggplot2); library(ggthemes); library(cowplot)})
 RANCH <- Sys.getenv("RANCH_ROOT", "/Users/mcfrank/Projects/ranch")
@@ -36,7 +38,7 @@ p1b <- ggplot(ib, aes(x, y, color = tt, group = tt)) + geom_line(data = filter(i
   theme_p() + labs(x = "Prior exposures", y = "Looking time (s)", title = "Infant behaviour")
 ip <- read_csv(file.path(PAPER, "exp1_infant_sim_plot.csv"), show_col_types = FALSE) %>% filter(type == "EIG") %>%
   mutate(tt = tolower(test_type)) %>% group_by(tt, x = fam_duration) %>% summarise(y = mean(scaled_samples), .groups = "drop")
-ic <- concept %>% filter(figure == "exp1_infants", !(trial_type == "novel" & x == 0), x %in% c(0, 1, 2, 3, 4, 6, 8, 9)) %>% transmute(tt = trial_type, x, y = scaled, se = se_scaled)
+ic <- concept %>% filter(figure == "exp1_infants", !(trial_type == "novel" & x == 0), x %in% c(0, 1, 2, 3, 4, 6, 8, 9)) %>% transmute(tt = trial_type, x, y = scaled, se = se_stim_scaled)
 ggsave(file.path(FIGS, "figC1_infant_exp1.png"), width = 10.5, height = 3.3, dpi = 160, bg = "white",
        plot_grid(p1b, lines_panel(ip, PUB, "Prior exposures", "Scaled samples (s)", ylim1, c(0, 1, 2, 3, 4, 6, 8, 9)),
                  lines_panel(ic, CON, "Prior exposures", "Scaled samples (s)", ylim1, c(0, 1, 2, 3, 4, 6, 8, 9), legend = TRUE), nrow = 1))
@@ -45,7 +47,7 @@ ggsave(file.path(FIGS, "figC1_infant_exp1.png"), width = 10.5, height = 3.3, dpi
 ab <- beh1 %>% filter(group == "Adults") %>% group_by(tt, x) %>% summarise(se = se(y), y = mean(y), .groups = "drop")
 ap <- read_csv(file.path(PAPER, "exp1_adult_sim_plot.csv"), show_col_types = FALSE) %>% filter(type == "EIG") %>%
   mutate(tt = tolower(trial_type)) %>% group_by(tt, x = trial_number) %>% summarise(y = mean(scaled_samples) / 1000, .groups = "drop")
-ac <- concept %>% filter(figure == "exp1_adults") %>% transmute(tt = trial_type, x, y = scaled, se = se_scaled)
+ac <- concept %>% filter(figure == "exp1_adults") %>% transmute(tt = trial_type, x, y = scaled, se = se_stim_scaled)
 ylim2 <- range(c(ab$y - ab$se, ab$y + ab$se, ap$y, ac$y))
 p2b <- ggplot(ab, aes(x, y, color = tt, group = tt)) + geom_line(linewidth = .6) + geom_pointrange(aes(ymin = y - se, ymax = y + se), size = .4) +
   scale_color_manual(values = COL) + scale_x_continuous(breaks = c(1, 3, 6, 9, 11)) + coord_cartesian(ylim = ylim2) +
@@ -58,7 +60,7 @@ ggsave(file.path(FIGS, "figC2_adult_exp1.png"), width = 10.5, height = 3.3, dpi 
 ORD <- c("familiar", "pose", "identity", "number", "animacy")
 i2 <- read_csv(file.path(PAPER, "exp2_infant_plot.csv"), show_col_types = FALSE) %>%
   transmute(panel = ifelse(value_type == "RANCH", PUB, "Infant behaviour"), tt = trial_type, y = LT, lo = lb_lt, hi = ub_lt)
-i2 <- bind_rows(i2, concept %>% filter(figure == "exp2_infants") %>% transmute(panel = CON, tt = trial_type, y = scaled, lo = scaled - se_scaled, hi = scaled + se_scaled)) %>%
+i2 <- bind_rows(i2, concept %>% filter(figure == "exp2_infants") %>% transmute(panel = CON, tt = trial_type, y = scaled, lo = scaled - se_stim_scaled, hi = scaled + se_stim_scaled)) %>%
   mutate(tt = factor(tt, ORD), panel = factor(panel, c("Infant behaviour", PUB, CON)))
 p3 <- ggplot(i2, aes(tt, y, color = tt)) + geom_pointrange(aes(ymin = ifelse(is.na(lo), y, lo), ymax = ifelse(is.na(hi), y, hi)), size = .55) +
   facet_wrap(~panel, nrow = 1) + scale_color_manual(values = VCOL) + theme_p() + theme(strip.text = element_text(size = 12.5, hjust = 0)) +
@@ -69,7 +71,7 @@ ggsave(file.path(FIGS, "figC3_infant_exp2.png"), p3, width = 10.5, height = 3.2,
 a2 <- read_csv(file.path(PAPER, "exp2_adult_plot.csv"), show_col_types = FALSE) %>%
   transmute(panel = ifelse(value_type == "RANCH", PUB, "Adult behaviour"), tt = ifelse(trial_type == "fam", "familiar", trial_type),
             x = trial_number, y = LT / 1000, lo = lb_lt / 1000, hi = ub_lt / 1000)
-a2 <- bind_rows(a2, concept %>% filter(figure == "exp2_adults") %>% transmute(panel = CON, tt = trial_type, x, y = scaled, lo = scaled - se_scaled, hi = scaled + se_scaled)) %>%
+a2 <- bind_rows(a2, concept %>% filter(figure == "exp2_adults") %>% transmute(panel = CON, tt = trial_type, x, y = scaled, lo = scaled - se_stim_scaled, hi = scaled + se_stim_scaled)) %>%
   mutate(tt = factor(tt, ORD), panel = factor(panel, c("Adult behaviour", PUB, CON)))
 p4 <- ggplot(a2, aes(x, y, color = tt, group = tt)) + geom_line(linewidth = .6, position = position_dodge(.25)) +
   geom_pointrange(aes(ymin = ifelse(is.na(lo), y, lo), ymax = ifelse(is.na(hi), y, hi)), size = .4, position = position_dodge(.25)) +

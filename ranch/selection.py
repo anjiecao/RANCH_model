@@ -123,13 +123,17 @@ def reevaluate_infant(sel, rollouts=32, seed=777, T_max=40, window="exemplar_mea
     def score(tr):
         from granch_fast.metrics import expected_samples
         es = np.array([[expected_samples(tr[r, k], w) for k in range(tr.shape[1])] for r in range(tr.shape[0])]).mean(1)
-        cond = meta.assign(es=es).groupby(["trial_type", "trial_number"]).es.mean().reset_index().rename(columns={"es": "mean_sample"})
+        by_row = meta.assign(es=es).groupby(["trial_type", "trial_number"]).es
+        cond = by_row.mean().reset_index().rename(columns={"es": "mean_sample"})
         out = split_half_cv(cond, human_cm)
         bg = cond[cond.trial_type == "background"].set_index("trial_number").mean_sample
         dv = cond[cond.trial_type == "deviant"].set_index("trial_number").mean_sample
         out.update(hab=float(bg.get(10, np.nan) / bg.get(1, np.nan)), dis=float(dv.get(10, np.nan) / bg.get(10, np.nan)))
         out["curve"] = {**{f"bg_{int(tn)}": float(v) for tn, v in bg.items()},       # native condition means, no linking
                         **{f"dev_{int(tn)}": float(v) for tn, v in dv.items()}}
+        cse = by_row.sem()                                                            # over a condition's stimulus rows (24 each)
+        out["curve_se"] = {**{f"bg_se_stim_{int(tn)}": float(v) for tn, v in cse.get("background", pd.Series(dtype=float)).items()},
+                           **{f"dev_se_stim_{int(tn)}": float(v) for tn, v in cse.get("deviant", pd.Series(dtype=float)).items()}}
         return out
 
     full = score(traj)
@@ -178,18 +182,20 @@ def _score_adult_cell(row, by_pair, human, rollouts, seed, window, max_D):
         mcf = mc_fit(units, human.groupby(["trial_type", "trial_number"]).LT.mean().to_dict(), keys, seed=seed)
         out.update(r2_mc_sd=mcf["r2_mc_sd"], r2_mc_lo=mcf["r2_mc_lo"], r2_mc_hi=mcf["r2_mc_hi"],
                    curve_se={**{f"bg_se_{i + 1}": mcf["se"][("background", i + 1)] for i in range(max_D + 1)},
-                             **{f"dev_se_{D}": mcf["se"][("deviant", D + 1)] for D in range(1, max_D + 1)}})
-    out.update(hab=float(bg[-1] / bg[0]), dis=float(dv.mean() / bg[-1]), rollouts=rollouts, seed=seed, window=window,
+                             **{f"dev_se_{D}": mcf["se"][("deviant", D + 1)] for D in range(1, max_D + 1)},
+                             **{f"bg_se_stim_{i + 1}": mcf["se_stim"][("background", i + 1)] for i in range(max_D + 1)},
+                             **{f"dev_se_stim_{D}": mcf["se_stim"][("deviant", D + 1)] for D in range(1, max_D + 1)}})
+    out.update(hab=float(bg[-1] / bg[0]), dis=float(dv.mean() / bg[-1]), rollouts=rollouts, pairs=len(prs), seed=seed, window=window,
                grid_r2=float(row.r2_21), grid_rmse=float(row.rmse21_cv),
                curve={**{f"bg_{i + 1}": float(bg[i]) for i in range(max_D + 1)},
                       **{f"dev_{D}": float(dv[D - 1]) for D in range(1, max_D + 1)}})
     return out
 
 
-def reevaluate_adult(sel, rollouts=None, seed=5_000_000, pairs=6, max_D=10, T_cap=80, window="exemplar_mean", procs=8):
-    """Re-run the selected adult (setting, w) on fresh seeds (rollouts x pairs) and score at
-    the 21-condition aggregation, with each condition's Monte-Carlo standard error and the
-    bootstrap interval of R2 over rollouts. Fills sel.reevaluated."""
+def reevaluate_adult(sel, rollouts=None, seed=5_000_000, pairs=None, max_D=10, T_cap=80, window="exemplar_mean", procs=8):
+    """Re-run the selected adult (setting, w) on fresh seeds (rollouts x pairs; pairs=None = every pair of the
+    experiment, pipeline.PAIRS) and score at the 21-condition aggregation, with each condition's Monte-Carlo and
+    between-stimulus standard errors and the bootstrap interval of R2 over rollouts. Fills sel.reevaluated."""
     from .pipeline import ROLLOUTS
     rollouts = rollouts or ROLLOUTS["adult_winners"]
     prs = data.load_adult_exp1_pairs(pairs)
@@ -207,9 +213,9 @@ def _adult_candidates(scores21, metric):
     return g
 
 
-def adult_shortlist(scores21, kind, metrics=None, K=10, rollouts=None, seed=7_000_000, pairs=6, window="exemplar_mean",
+def adult_shortlist(scores21, kind, metrics=None, K=10, rollouts=None, seed=7_000_000, pairs=None, window="exemplar_mean",
                     procs=8, max_D=10, T_cap=80):
-    """Stage A of the adult selection. A grid of 16 rollouts per pair cannot rank its own best cells (the Monte-Carlo
+    """Stage A of the adult selection. A grid of 96 trajectories per cell cannot rank its own best cells (the Monte-Carlo
     sd of a cell's R2 is about .1, and noise attenuates every cell's fit: plan §0 #14), so per metric the K best
     sign-consistent, non-saturated cells under EACH rule (CV RMSE, R2) are re-evaluated at full precision on seeds
     [seed + cell index, pair, rollout]. adult_winners(shortlist=...) selects among the re-evaluated cells and reports
@@ -235,7 +241,7 @@ def adult_shortlist(scores21, kind, metrics=None, K=10, rollouts=None, seed=7_00
         out.append(dict(metric=r.metric, setting=int(r.setting), world_EIGs=float(r.world_EIGs), **{c: float(r[c]) for c in SETTING_COLS if c in r.index},
                         r2_21_reeval=q["r2"], rmse21_cv_reeval=q["rmse"], b21_reeval=q["b"], r2_21_grid=q["grid_r2"], rmse21_cv_grid=q["grid_rmse"],
                         r2_mc_sd=q.get("r2_mc_sd", np.nan), r2_mc_lo=q.get("r2_mc_lo", np.nan), r2_mc_hi=q.get("r2_mc_hi", np.nan),
-                        hab=q["hab"], dis=q["dis"], rollouts=rollouts, pairs=pairs, seed=seed + cid, window=window, **q["curve"]))
+                        hab=q["hab"], dis=q["dis"], rollouts=rollouts, pairs=q["pairs"], seed=seed + cid, window=window, **q["curve"]))
     return pd.DataFrame(out)
 
 
@@ -277,15 +283,15 @@ def infant_winners(scores, kind, metrics=None, rules=("r2", "rmse"), rollouts=32
                         **{c: float(r[c]) for c in SETTING_COLS if c in r.index},
                         grid_r2=q["grid_r2"], grid_rmse=q["grid_rmse"], r2=q["r2"], r=q["r"], rmse=q["rmse"],
                         hab=q["hab"], dis=q["dis"], r2_group_sd=q["r2_group_sd"], rollouts=rollouts, seed=seed + ci,
-                        window=window, **q["curve"]))
+                        window=window, **q["curve"], **q.get("curve_se", {})))
     return pd.DataFrame(out)
 
 
-def adult_winners(scores21, kind, metrics=None, rules=("r2", "rmse"), rollouts=None, seed=5_000_000, pairs=6,
+def adult_winners(scores21, kind, metrics=None, rules=("r2", "rmse"), rollouts=None, seed=5_000_000, pairs=None,
                   window="exemplar_mean", procs=8, shortlist=None):
     """Stage B for a stochastic adult sweep (phase1e_adults_winners over Selection objects):
     each metric's best sign-consistent, non-saturated row under each rule (a row selected by
-    both rules appears once), re-evaluated on fresh rollouts x pairs and scored at the
+    both rules appears once), re-evaluated on fresh rollouts x pairs (pairs=None = every pair) and scored at the
     21-condition aggregation. Seeds [seed + i, pair, rollout], i = the winner's index in
     (metric, rule) order -- the legacy convention, so adult_winners_R64 reproduces exactly.
     With `shortlist` (adult_shortlist's table) the selection is made among its re-evaluated cells, by their
@@ -318,7 +324,7 @@ def adult_winners(scores21, kind, metrics=None, rules=("r2", "rmse"), rollouts=N
                         r2_21_reeval=q["r2"], rmse21_cv_reeval=q["rmse"], b21_reeval=q["b"],
                         r2_21_grid=q["grid_r2"], rmse21_cv_grid=q["grid_rmse"], hab=q["hab"], dis=q["dis"],
                         r2_mc_sd=q.get("r2_mc_sd", np.nan), r2_mc_lo=q.get("r2_mc_lo", np.nan), r2_mc_hi=q.get("r2_mc_hi", np.nan),
-                        rollouts=q["rollouts"], pairs=pairs, seed=seed + wid, window=window,
+                        rollouts=q["rollouts"], pairs=q["pairs"], seed=seed + wid, window=window,
                         selected_from="grid" if shortlist is None else f"shortlist of {int((shortlist.metric == sel.metric).sum())}",
                         **q.get("curve_se", {})))
     return pd.DataFrame(out)

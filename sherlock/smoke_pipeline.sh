@@ -30,6 +30,10 @@ step adults nu;               R adults --kind adult_nu --mode stochastic --pairs
                               R score-adults --which selfcons_nu
 step winners adults nu;       R winners --population adults --which selfcons_nu --smoke --pairs 1 --shortlist 2 --metrics eig_code
 step phase2 selfcons nu;      R phase2 --kind selfcons --which selfcons_nu --smoke --adult-cells winners --metrics eig_code
+step adults beta;             R adults --kind adult_beta --mode stochastic --pairs 1 --rollouts 1 --limit 4 --metrics mi_concept
+                              R score-adults --which selfcons_beta
+step winners adults beta;     R winners --population adults --which selfcons_beta --smoke --pairs 1 --shortlist 2 --metrics mi_concept
+step phase2 selfcons beta;    R phase2 --kind selfcons --which selfcons_beta --smoke --adult-cells winners --metrics mi_concept
 step phase2 main;             R phase2 --kind main --rules paper,within,joint --metrics eig_code,mi
 step lesion infants;          R grid --kind lesion_infants --rollouts 1 --every 24
                               R score --kind lesion_infants

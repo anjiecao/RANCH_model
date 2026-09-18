@@ -85,16 +85,17 @@ CL = f"{RANCH}/RANCH_cluster/sim_info"
 VIOLATION_TYPES = ["background", "pose", "number", "identity", "animacy"]
 
 
-def load_adult_exp1_pairs(n_pairs=6, seed=0):
-    """(familiar, deviant) stimulus-name pairs used in the adult Exp-1 runs, sampled as in
-    granch_fast.legacy.phase1_adults.adult_pairs (same seed -> same pairs)."""
+def load_adult_exp1_pairs(n_pairs=None, seed=0):
+    """(familiar, deviant) stimulus-name pairs of the adult Exp-1 data: every distinct pair the participants saw (1180),
+    in the seeded random order of granch_fast.legacy.phase1_adults.adult_pairs, so the first n are the n-pair sample of
+    the legacy runs (n_pairs=6 there); n_pairs=None takes them all (pipeline.PAIRS, 2026-09-18)."""
     import re
     a = pd.read_csv(f"{PAPER}/data/adults/adult_exposure_duration.csv", low_memory=False)
     clean = lambda s: re.sub(r".*/", "", s) if isinstance(s, str) else s
     pairs = (a.dropna(subset=["deviant_stimulus"])
              .assign(f=lambda d: d.background_stimulus.map(clean), v=lambda d: d.deviant_stimulus.map(clean))
              [["f", "v"]].drop_duplicates())
-    return pairs.sample(min(n_pairs, len(pairs)), random_state=seed).values.tolist()
+    return pairs.sample(len(pairs) if n_pairs is None else min(n_pairs, len(pairs)), random_state=seed).values.tolist()
 
 
 def load_exp2_infant_pairs():
@@ -104,9 +105,12 @@ def load_exp2_infant_pairs():
     return sp
 
 
-def load_exp2_adult_pairs(n_per_type=6, seed=0):
+def load_exp2_adult_pairs(n_per_type=None, seed=0):
+    """Exp-2 adult (fam, test) pairs by violation type: every pair of the experiment's stimulus set (84-305 per type) in
+    the seeded random order, the first n being the legacy runs' n-per-type sample; n_per_type=None takes them all."""
     sp = pd.read_csv(f"{CL}/trial_info/stimulus_type/adults/stimuli_pair_info.csv")
-    return {vt: sp[sp.violation_type == vt].sample(min(n_per_type, (sp.violation_type == vt).sum()), random_state=seed)
+    n = lambda vt: (sp.violation_type == vt).sum()
+    return {vt: sp[sp.violation_type == vt].sample(n(vt) if n_per_type is None else min(n_per_type, n(vt)), random_state=seed)
             [["fam", "test"]].values.tolist() for vt in VIOLATION_TYPES}
 
 

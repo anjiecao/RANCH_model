@@ -187,9 +187,11 @@ def paper_panels(out, metric="mi_concept", rollouts_inf=None, rollouts_adu=None,
     """Native-unit predictions for the paper's four model figures at the cells the paper's rule selects
     (best CV RMSE on Exp 1). Exp 1 = the re-evaluated winners' curves; Exp 2 = every parameter carried,
     run with the Phase-2 stage's seeds and rollouts, so its fits reproduce phase2_selfcons_results.csv
-    (rule 'paper'). Returns (curves [figure, trial_type, x, mean_sample, se_sample, scaled (s), se_scaled, scored], fits
-    per figure: the affine linking LT = a + b*samples on the scored condition means, its R2 with the Monte-Carlo
-    interval over rollouts, and RMSE). Standard errors are Monte-Carlo (over rollouts), where the tables carry them."""
+    (rule 'paper'). Returns (curves [figure, trial_type, x, mean_sample, se_sample, se_stim, scaled (s), se_scaled,
+    se_stim_scaled, scored], fits per figure: the affine linking LT = a + b*samples on the scored condition means, its R2
+    with the Monte-Carlo interval over rollouts, and RMSE). se_sample is the Monte-Carlo standard error (rollouts) and
+    se_stim the standard error over stimulus units (pairs, or an infant condition's 24 stimulus rows; pipeline.mc_fit),
+    the figures' error bars -- where the tables carry them."""
     from . import pipeline
     rollouts_inf = rollouts_inf or pipeline.ROLLOUTS["exp2_infants"]; rollouts_adu = rollouts_adu or pipeline.ROLLOUTS["exp2_adults"]
     from .linking import scaled_fit
@@ -231,13 +233,18 @@ def paper_panels(out, metric="mi_concept", rollouts_inf=None, rollouts_adu=None,
     se = {fig: (m["se"] if m else {}) for fig, m in mc.items()}
     se["exp1_adults"] = {**{("background", tn): wa.get(f"bg_se_{tn}", np.nan) for tn in range(1, 12)},
                          **{("deviant", D + 1): wa.get(f"dev_se_{D}", np.nan) for D in range(1, 11)}}
+    ses = {fig: (m["se_stim"] if m else {}) for fig, m in mc.items()}
+    ses["exp1_adults"] = {**{("background", tn): wa.get(f"bg_se_stim_{tn}", np.nan) for tn in range(1, 12)},
+                          **{("deviant", D + 1): wa.get(f"dev_se_stim_{D}", np.nan) for D in range(1, 11)}}
+    ses["exp1_infants"] = {(tt, tn): wi.get(f"{k}_se_stim_{tn}", np.nan) for tt, k in (("background", "bg"), ("deviant", "dev")) for tn in range(1, 11)}
     rows, fits = [], []
     for fig, m in model.items():
         keys = [k for k in m if k in human[fig]]
         f = scaled_fit({k: m[k][0] for k in keys}, human[fig], keys)             # LT = a + b * samples, b >= 0, on the scored conditions
         sek = lambda k: float(se.get(fig, {}).get(k, np.nan))
-        rows += [dict(figure=fig, trial_type=lab_tt, x=x, mean_sample=v, se_sample=sek(k), scaled=f["a"] + f["b"] * v, se_scaled=f["b"] * sek(k),
-                      scored=k in human[fig]) for k, (v, lab_tt, x) in m.items()]
+        sesk = lambda k: float(ses.get(fig, {}).get(k, np.nan))
+        rows += [dict(figure=fig, trial_type=lab_tt, x=x, mean_sample=v, se_sample=sek(k), se_stim=sesk(k), scaled=f["a"] + f["b"] * v,
+                      se_scaled=f["b"] * sek(k), se_stim_scaled=f["b"] * sesk(k), scored=k in human[fig]) for k, (v, lab_tt, x) in m.items()]
         lo, hi = ((wa.get("r2_mc_lo", np.nan), wa.get("r2_mc_hi", np.nan)) if fig == "exp1_adults" else
                   (mc[fig]["r2_mc_lo"], mc[fig]["r2_mc_hi"]) if mc.get(fig) else (np.nan, np.nan))
         fits.append(dict(figure=fig, r2=f["r2"], r2_mc_lo=float(lo), r2_mc_hi=float(hi), rmse_insample=f["rmse"], a=f["a"], b=f["b"], n=len(keys)))

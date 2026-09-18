@@ -24,6 +24,16 @@ def test_loaders_match_legacy():
     pd.testing.assert_frame_equal(data.load_adult_exp1().reset_index(drop=True), adult_long().reset_index(drop=True))
 
 
+def test_adult_pairs_every_pair_of_the_experiment():
+    """pipeline.PAIRS (2026-09-18): the re-evaluations run every stimulus pair the participants saw; a sample of n is
+    the first n of them, so the legacy 6-pair runs are a prefix of the record's."""
+    every, six = data.load_adult_exp1_pairs(None), data.load_adult_exp1_pairs(6)
+    assert len(every) == 1180 and every[:6] == six
+    e2, s2 = data.load_exp2_adult_pairs(None), data.load_exp2_adult_pairs(6)
+    assert {vt: len(v) for vt, v in e2.items()} == {"background": 84, "pose": 96, "number": 91, "identity": 269, "animacy": 305}
+    assert all(e2[vt][:6] == s2[vt] for vt in e2)
+
+
 def test_manifest_verifies():
     assert len(data.verify_manifest()) >= 10
 
@@ -42,9 +52,12 @@ def test_split_half_cv_matches_legacy(human_cm):
 def test_named_configurations():
     assert CANONICAL.variable is EIGConcept and CANONICAL.sigma_true > 0 and CANONICAL.model.noise.inferred_
     assert CANONICAL.sigma_true == 0.2 and CANONICAL.adult_sigma_true == 0.1         # MCF 2026-09-16: may differ
+    from ranch.settings import QUADRATURE
+    adult_ref = cfg_inferred(V=3.0)                                                   # the adult learner on the production eps axis (2026-09-18)
+    adult_ref.n_eps, adult_ref.spacing = QUADRATURE["adults"].n_eps, QUADRATURE["adults"].spacing
     for cfg_a, cfg_b in [(CANONICAL.model.fast_config(window_half_width=0.2, n_z=5), cfg_inferred(sd_eps=1.0, sigma_true=0.2)),
-                         (CANONICAL.adult_model.fast_config(window_half_width=0.1, n_z=5), cfg_inferred(V=3.0))]:
-        for k in ("V_prior", "alpha_prior", "beta_prior", "eps_box", "n_sigma", "n_eps", "infer_eps", "sd_epsilon"):
+                         (CANONICAL.adult_model.fast_config(window_half_width=0.1, n_z=5), adult_ref)]:
+        for k in ("V_prior", "alpha_prior", "beta_prior", "eps_box", "n_sigma", "n_eps", "spacing", "infer_eps", "sd_epsilon"):
             assert getattr(cfg_a, k) == getattr(cfg_b, k), k
     a, b = PUBLISHED_SPEC.model.fast_config(), cfg_published_infeps()
     for k in ("V_prior", "alpha_prior", "beta_prior", "eps_box", "n_sigma", "n_eps", "infer_eps"):

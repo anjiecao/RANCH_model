@@ -65,14 +65,25 @@ def test_infant_winners_reproduce_phase1c_trajectories(emb, sub_rows):
             assert row[f"{'bg' if tt == 'background' else 'dev'}_{int(tn)}"] == pytest.approx(v, rel=1e-6)
 
 
-def test_adult_winners_reproduce_phase1e(emb):
+def adult_legacy_cfg(s):
+    """The legacy selfcons make_cfg at the production ADULT quadrature (settings.QUADRATURE), as test_api_pipeline."""
+    from ranch.settings import QUADRATURE
+    cfg = selfcons_make_cfg(s)
+    q = QUADRATURE["adults"]
+    cfg.n_sigma, cfg.n_eps, cfg.spacing = q.n_sigma, q.n_eps, q.spacing
+    return cfg
+
+
+def test_adult_winners_reproduce_phase1e(emb, monkeypatch):
     """adult_winners seeds [5_000_000 + i, pair, rollout] as phase1e; the curves match bitwise."""
     S = settings_table("adult_ext")
     s = S[(S.V_prior == 1) & (S.alpha_prior == 1) & (S.beta_prior == 0.1) & (S.sd_epsilon == 0.5) & np.isclose(S.sigma_true, 0.1)].iloc[0]
     sc = pd.DataFrame([dict(setting=0, metric="mi_concept", world_EIGs=3.2e-5, r2_21=0.69, rmse21_cv=192.0, b21=200.0, bg1=24.0, bg11=17.5, dev=20.7, **s.to_dict())])
     w = selection.adult_winners(sc, "adult_ext", metrics=("mi_concept",), rules=("r2", "rmse"), rollouts=2, pairs=1, procs=1)
     assert len(w) == 1 and w.rule.iloc[0] == "r2" and w.seed.iloc[0] == 5_000_000     # the rmse pick duplicates the r2 pick
+    assert w.pairs.iloc[0] == 1 and "bg_se_stim_1" in w.columns                        # the pairs actually run; the between-stimulus SE
     P1E._init(data.load_adult_exp1_pairs(1)); P1E._EMB = emb
+    monkeypatch.setattr(P1E, "make_cfg", adult_legacy_cfg)
     wid, pi, bgs, dvs = P1E._one_pair((0, s.to_dict(), "mi_concept", 3.2e-5, 0, "exemplar_mean", 2))
     assert np.allclose([w.iloc[0][f"bg_{i}"] for i in range(1, 12)], bgs.mean(0), rtol=1e-12)
     assert np.allclose([w.iloc[0][f"dev_{D}"] for D in range(1, 11)], dvs.mean(0), rtol=1e-12)
@@ -92,12 +103,13 @@ def test_mc_fit_standard_errors_and_attenuation():
     few, many = pipeline.mc_fit(draws(12), human, keys, n_boot=300), pipeline.mc_fit(draws(2048), human, keys, n_boot=300)
     u = draws(50); f = pipeline.mc_fit(u, human, keys, n_boot=50)
     assert np.isclose(f["se"]["a"], np.sqrt(sum(np.var(x["a"], ddof=1) / 50 for x in u)) / 6)
+    assert np.isclose(f["se_stim"]["a"], np.std([x["a"].mean() for x in u], ddof=1) / np.sqrt(6))    # over stimulus units
     assert np.isclose(f["mean"]["a"], np.mean([x["a"].mean() for x in u]))
     assert many["r2"] > 0.97 and few["r2"] < many["r2"] - 0.1 and few["r2_mc_sd"] > 5 * many["r2_mc_sd"]
     assert many["r2_mc_lo"] <= many["r2"] <= many["r2_mc_hi"] + 1e-9
 
 
-def test_phase2_reproduces_run_phase2_selfcons(emb):
+def test_phase2_reproduces_run_phase2_selfcons(emb, monkeypatch):
     """One (metric, rule) of the noisy Phase 2 at one rollout: selection, carried predictions,
     scaled fit and orderings equal the legacy worker's."""
     S = settings_table("selfcons_ext"); A = settings_table("adult_ext")
@@ -105,6 +117,8 @@ def test_phase2_reproduces_run_phase2_selfcons(emb):
     sa = A[(A.V_prior == 1) & (A.alpha_prior == 1) & (A.beta_prior == 0.1) & (A.sd_epsilon == 0.5) & np.isclose(A.sigma_true, 0.1)].iloc[0]
     inf = pd.DataFrame([_score_row(0, "mi_concept", 1e-5, **s.to_dict())])
     adu = pd.DataFrame([dict(setting=0, metric="mi_concept", world_EIGs=3.2e-5, r2_21=0.69, rmse21_cv=192.0, b21=200.0, bg1=24.0, bg11=17.5, dev=20.7, **sa.to_dict())])
+    monkeypatch.setitem(pipeline.PAIRS, "exp2_adults", 6)                        # the legacy worker samples 6 pairs per violation type
+    monkeypatch.setattr(RP2, "make_cfg", lambda r: adult_legacy_cfg(r) if float(r["sd_epsilon"]) == 0.5 else selfcons_make_cfg(r))   # the adult row (sd_eps .5) at the production adult quadrature; the infant row untouched
     ours = pipeline.phase2(inf, adu, "selfcons_ext", "adult_ext", ["mi_concept"], rules=("paper",), rollouts_inf=1, rollouts_adu=1, procs=1).iloc[0]
     RP2._init(); RP2._EMB = emb
     theirs = RP2._one(("mi_concept", "paper", inf.iloc[0], adu.iloc[0], "exemplar_mean", 1, 1))
