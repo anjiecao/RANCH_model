@@ -73,6 +73,8 @@ def test_sync_block_applies_to_a_clone_one_commit_behind(tmp_path):
     the whole checkout batch, so the 2026-09-15 concept study and gate silently ran stale
     code (5.4 node-hours lost). Apply the sbatch sync block to a clone one commit behind: it
     must end at HEAD with every tracked file outside granch_fast/phase1/ equal to HEAD."""
+    if os.path.exists(f"{ROOT}/.git/shallow"):
+        pytest.skip("shallow clone: no commit behind HEAD to reset to (the side-run clones on the cluster)")
     block = _sync_block(glob.glob(f"{ROOT}/sherlock/*.sbatch")[0])
     clone = tmp_path / "clone"
     subprocess.run(["git", "clone", "-q", "--shared", "-b", "exact-inference-reboot", ROOT, str(clone)], check=True)
