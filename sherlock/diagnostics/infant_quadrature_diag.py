@@ -7,7 +7,7 @@ import sys
 from multiprocessing import Pool
 
 os.environ["OMP_NUM_THREADS"] = os.environ["OPENBLAS_NUM_THREADS"] = os.environ["MKL_NUM_THREADS"] = "1"
-ROOT = os.environ.get("RANCH_ROOT", "/Users/mcfrank/Projects/ranch")
+ROOT = os.environ.get("RANCH_ROOT", os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 sys.path.insert(0, ROOT + "/RANCH_model")
 import numpy as np                                                  # noqa: E402
 import pandas as pd                                                 # noqa: E402

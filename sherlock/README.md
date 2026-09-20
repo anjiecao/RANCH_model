@@ -14,8 +14,8 @@ $HOME/ranch/
   venv/                   # python -m venv; pip install numpy==1.26.4 scipy==1.13.1 pandas==2.2.3
 ```
 
-Every path resolves through the `RANCH_ROOT` env var (default = the laptop layout
-`/Users/mcfrank/Projects/ranch`). The pipeline is the `ranch` package: `python -m ranch <stage>`
+Every path resolves through the `RANCH_ROOT` env var (default = the directory that holds the
+`RANCH_model` checkout, next to the two data checkouts). The pipeline is the `ranch` package: `python -m ranch <stage>`
 (see `python -m ranch --help`); the drivers that produced the 2026-08/09 tables are frozen under
 `granch_fast/legacy/` for the identity tests and are never scheduled.
 
@@ -70,8 +70,8 @@ Outputs land in `granch_fast/phase1/` (the tables are tracked; the `*.npz` grids
 stay on the cluster). Sync tables back to the laptop:
 
 ```bash
-rsync -av sherlock:ranch/RANCH_model/granch_fast/phase1/'*.csv' /Users/mcfrank/Projects/ranch/RANCH_model/granch_fast/phase1/
-rsync -av sherlock:ranch/RANCH_model/granch_fast/'*.csv' /Users/mcfrank/Projects/ranch/RANCH_model/granch_fast/   # figure data
+rsync -av sherlock:ranch/RANCH_model/granch_fast/phase1/'*.csv' $RANCH_ROOT/RANCH_model/granch_fast/phase1/
+rsync -av sherlock:ranch/RANCH_model/granch_fast/'*.csv' $RANCH_ROOT/RANCH_model/granch_fast/   # figure data
 ```
 
 Job logs and the gate verdicts are archived under `sherlock/logs/`.

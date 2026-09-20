@@ -17,7 +17,7 @@ import os
 import numpy as np
 import pandas as pd
 
-_PAPER = os.environ.get("RANCH_ROOT", "/Users/mcfrank/Projects/ranch") + "/pkbb_paper_writing"
+_PAPER = os.environ.get("RANCH_ROOT", os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))) + "/pkbb_paper_writing"
 
 
 def _demean(df, group, cols):

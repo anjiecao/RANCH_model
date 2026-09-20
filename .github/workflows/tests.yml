@@ -1,0 +1,57 @@
+name: tests
+# The fast suite on every push and pull request; the slow (statistical) suite weekly and on demand. The package reads
+# its input data from two sibling public repositories, checked out here at the commits the record used and verified
+# against the hash manifest (`ranch check`) before anything runs. Note: GitHub runs `schedule` only from the default
+# branch, so the weekly job starts once this workflow is on `main`; `workflow_dispatch` runs it from any branch.
+on:
+  push:
+    branches: [exact-inference-reboot, main]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 10 * * 1"
+
+env:
+  RANCH_ROOT: ${{ github.workspace }}/ranch_root
+  OMP_NUM_THREADS: "1"
+  OPENBLAS_NUM_THREADS: "1"
+  MKL_NUM_THREADS: "1"
+
+jobs:
+  suite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: ranch_root/RANCH_model
+      - uses: actions/checkout@v4
+        with:
+          repository: GalRaz/pkbb_paper_writing
+          ref: 171450f5d9b308f27a4f95efaa9e705a5eab2165
+          path: ranch_root/pkbb_paper_writing
+      - uses: actions/checkout@v4
+        with:
+          repository: anjiecao/RANCH_cluster
+          ref: 4b1a0e582ec7fe3482f385ce1d1d2753354e117b
+          path: ranch_root/RANCH_cluster
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: ranch_root/RANCH_model/requirements-lock.txt
+      - name: install (the record's pinned environment)
+        working-directory: ranch_root/RANCH_model
+        run: |
+          pip install -r requirements-lock.txt
+          pip install -e . --no-deps
+      - name: verify the input data against the manifest
+        run: ranch check
+      - name: fast suite
+        if: github.event_name != 'schedule'
+        working-directory: ranch_root/RANCH_model/granch_fast
+        run: python -m pytest
+      - name: slow suite (statistical and long-running tests; the torch faithfulness tests need the original grid code and are skipped)
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        working-directory: ranch_root/RANCH_model/granch_fast
+        run: python -m pytest -m slow

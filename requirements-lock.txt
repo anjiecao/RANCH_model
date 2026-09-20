@@ -1,0 +1,15 @@
+# The environment the tables of record were computed in (Sherlock, Python 3.12.1; jobs 44027063 and 44122930).
+# The suite also passes, and the record's reference numbers reproduce, on Python 3.13 with numpy 2.5.1 / pandas 3.0.3 /
+# scipy 1.18.0. Use: pip install -r requirements-lock.txt && pip install -e . --no-deps
+numpy==1.26.4
+pandas==2.2.3
+scipy==1.13.1
+python-dateutil==2.9.0.post0
+pytz==2026.3.post1
+six==1.17.0
+tzdata==2026.4
+# tests
+pytest==9.1.1
+iniconfig==2.3.0
+packaging==26.3
+pluggy==1.6.0

@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ranch-model"                 # the import packages are `ranch` (API, pipeline) and `granch_fast` (exact-inference engine)
+version = "0.1.0"
+description = "RANCH, a rational-learner model of habituation and dishabituation, under exact inference: the concept-EIG model, its decision variables, paradigms, linking, and the pipeline that reproduces the results"
+readme = "MODEL_CARD.md"
+requires-python = ">=3.12"           # tested on 3.12 (the record) and 3.13
+authors = [{ name = "Gal Raz" }, { name = "Anjie Cao" }, { name = "Rebecca Saxe" }, { name = "Michael C. Frank" }]
+# license: not chosen yet (none of the three repositories carries one); add `license = ...` and a LICENSE file before a public release
+dependencies = ["numpy>=1.26", "scipy>=1.13", "pandas>=2.2"]   # lower bounds = the record's environment; exact pins in requirements-lock.txt
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[project.scripts]
+ranch = "ranch.__main__:main"        # `ranch <stage>` == `python -m ranch <stage>`
+
+[project.urls]
+Repository = "https://github.com/anjiecao/RANCH_model"
+
+# Install EDITABLY from a checkout (`pip install -e ".[test]"`): the pipeline reads and writes the tables under
+# granch_fast/phase1/ next to the code, and finds its input data in the sibling checkouts pkbb_paper_writing/ and
+# RANCH_cluster/ (or under $RANCH_ROOT); `ranch check` verifies them against granch_fast/tests/data_manifest.json.
+[tool.setuptools]
+packages = ["ranch", "granch_fast", "granch_fast.legacy"]

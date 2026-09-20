@@ -6,7 +6,7 @@ import os
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-RANCH = os.environ.get("RANCH_ROOT", "/Users/mcfrank/Projects/ranch")
+RANCH = os.environ.get("RANCH_ROOT", os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 FILES = [
     "RANCH_model/resnet50_downscaled.csv",
     "pkbb_paper_writing/data/infants/exp1.csv",

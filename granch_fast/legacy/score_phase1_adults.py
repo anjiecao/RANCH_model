@@ -11,7 +11,7 @@ import sys, argparse
 import numpy as np
 import pandas as pd
 
-ROOT = os.environ.get("RANCH_ROOT", "/Users/mcfrank/Projects/ranch") + "/RANCH_model"
+ROOT = os.environ.get("RANCH_ROOT", os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))) + "/RANCH_model"
 sys.path.insert(0, ROOT)
 from granch_fast.linking_mixed import adult_long, condition_mean_fit, deconfounded_fit
 from granch_fast.legacy.phase1_infants import OUT

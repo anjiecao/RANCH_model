@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-RANCH = os.environ.get("RANCH_ROOT", "/Users/mcfrank/Projects/ranch")
+RANCH = os.environ.get("RANCH_ROOT", os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 GF = f"{RANCH}/RANCH_model/granch_fast"
 P1 = f"{GF}/phase1"
 METRICS = ["eig_code", "eig_within", "kl", "mi", "surprisal_b"]

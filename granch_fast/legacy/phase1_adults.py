@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 from multiprocessing import Pool
 
-RANCH = os.environ.get("RANCH_ROOT", "/Users/mcfrank/Projects/ranch")
+RANCH = os.environ.get("RANCH_ROOT", os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 ROOT = f"{RANCH}/RANCH_model"
 sys.path.insert(0, ROOT)
 from granch_fast.run_fast import FastConfig, make_grid

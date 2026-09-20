@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 from multiprocessing import Pool
 
-ROOT = os.environ.get("RANCH_ROOT", "/Users/mcfrank/Projects/ranch") + "/RANCH_model"
+ROOT = os.environ.get("RANCH_ROOT", os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))) + "/RANCH_model"
 sys.path.insert(0, ROOT)
 from granch_fast.run_fast import make_grid
 from granch_fast import metrics as M

@@ -20,6 +20,12 @@ grid cannot rank its own best cells; the 10 best per rule are re-evaluated at 51
 the best of them reported on independent seeds): V3 a1 b0.1, sd_eps .5, sigma_true .1, w 1e-4 --
 the same prior as the infants' -- R2 .851 [.794, .878], Exp-2 .787 [.742, .815]. The grid-argmax
 cell of the morning (V1, w 3.2e-5) is fifth on the re-evaluated shortlist (.775).
+
+2026-09-18/20: the adult cell was regenerated after two numerical problems were found in that record (a 30-node
+linear eps axis that parked the eps posterior between two nodes; six of the experiment's 1180 stimulus pairs):
+on 120 log-spaced eps nodes and every stimulus pair the shortlist protocol selects V3 a1 b0.1, sd_eps 1,
+sigma_true .1, w 3.2e-5 -- R2 .890 [.853, .907], Exp-2 .778 [.710, .813] (settings.QUADRATURE, pipeline.PAIRS;
+job 44122930). The adult numbers of the paragraphs above are superseded; the infant ones stand.
 """
 from dataclasses import dataclass
 

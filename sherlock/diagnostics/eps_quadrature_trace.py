@@ -7,7 +7,7 @@ import sys
 import time
 
 os.environ["OMP_NUM_THREADS"] = os.environ["OPENBLAS_NUM_THREADS"] = "1"
-sys.path.insert(0, "/Users/mcfrank/Projects/ranch/RANCH_model")
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))    # RANCH_model
 import numpy as np                                                  # noqa: E402
 import pandas as pd                                                 # noqa: E402
 from ranch import data                                              # noqa: E402

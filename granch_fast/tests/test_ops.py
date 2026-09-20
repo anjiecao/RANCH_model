@@ -28,7 +28,7 @@ def test_every_multiprocessing_driver_pins_blas_threads():
 
 def test_driver_import_sets_thread_env_in_a_clean_process():
     env = {k: v for k, v in os.environ.items() if not k.endswith("_NUM_THREADS")}
-    env["RANCH_ROOT"] = os.environ.get("RANCH_ROOT", "/Users/mcfrank/Projects/ranch")
+    env["RANCH_ROOT"] = os.environ.get("RANCH_ROOT", os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
     code = ("import os, sys; sys.path.insert(0, %r); import granch_fast.legacy.phase1_selfconsistent; "
             "print(os.environ['OMP_NUM_THREADS'])" % ROOT)
     out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, env=env)
@@ -95,7 +95,7 @@ def test_cluster_jobs_use_only_the_package_entry_points():
     stage a job uses starts up (`--help`) in a clean process -- py_compile does not catch
     NameErrors at argparse construction (a 2026-09-15 job died that way at its last-but-three step)."""
     import re
-    env = dict(os.environ, RANCH_ROOT=os.environ.get("RANCH_ROOT", "/Users/mcfrank/Projects/ranch"))
+    env = dict(os.environ, RANCH_ROOT=os.environ.get("RANCH_ROOT", os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))))
     stages = set()
     for sb in glob.glob(f"{ROOT}/sherlock/*.sbatch") + glob.glob(f"{ROOT}/sherlock/*.sh"):
         src = open(sb).read()
@@ -131,15 +131,22 @@ def test_cluster_jobs_verify_their_inputs_before_computing():
 
 def test_package_has_no_hardcoded_laptop_paths():
     """Every path resolves through RANCH_ROOT (the 2026-09-14 regeneration died at its first
-    scoring step because four scorers still hardcoded the laptop path). A literal
-    '/Users/mcfrank' is allowed only as the RANCH_ROOT default inside os.environ.get(...)."""
+    scoring step because four scorers still hardcoded the laptop path), whose default is the
+    directory that holds this checkout -- derived from the file's own location, so that the
+    released package, the legacy drivers, the tests and the cluster scripts name no machine."""
     offenders = []
-    for f in glob.glob(f"{ROOT}/ranch/*.py") + [f"{GF}/metrics.py", f"{GF}/eig.py", f"{GF}/analytic_core.py", f"{GF}/run_fast.py",
-                                                f"{GF}/linking_mixed.py", f"{GF}/fit_infants.py"]:
-        for line in open(f):
-            if "/Users/mcfrank" in line and "os.environ.get(" not in line:
-                offenders.append((os.path.relpath(f, ROOT), line.strip()))
+    files = (glob.glob(f"{ROOT}/ranch/*.py") + glob.glob(f"{GF}/legacy/*.py") + glob.glob(f"{GF}/tests/*.py") + glob.glob(f"{ROOT}/sherlock/**/*", recursive=True)
+             + [f"{GF}/metrics.py", f"{GF}/eig.py", f"{GF}/analytic_core.py", f"{GF}/run_fast.py", f"{GF}/linking_mixed.py", f"{GF}/fit_infants.py",
+                f"{ROOT}/pyproject.toml", f"{ROOT}/MODEL_CARD.md"])
+    for f in files:
+        if os.path.isdir(f) or f.endswith((".out", ".txt")) or os.path.abspath(f) == os.path.abspath(__file__):   # job logs quote the paths they ran under
+            continue
+        for line in open(f, errors="ignore"):
+            if "/Users/" in line or "/home/users/" in line:
+                offenders.append((os.path.relpath(f, ROOT), line.strip()[:120]))
     assert not offenders, offenders
+    from ranch import data
+    assert data.RANCH == os.environ.get("RANCH_ROOT", os.path.dirname(ROOT))
 
 
 @pytest.mark.slow

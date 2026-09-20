@@ -5,7 +5,7 @@ conditions + full-fit RMSE (ms). Also rescoring of the paper's published grid ou
 import os, sys, numpy as np, pandas as pd
 for _v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "VECLIB_MAXIMUM_THREADS"):
     os.environ.setdefault(_v, "1")
-RANCH = os.environ.get("RANCH_ROOT", "/Users/mcfrank/Projects/ranch")
+RANCH = os.environ.get("RANCH_ROOT", os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 sys.path.insert(0, f"{RANCH}/RANCH_model")
 from granch_fast.linking_mixed import adult_long
 from granch_fast.legacy.phase1_infants import OUT

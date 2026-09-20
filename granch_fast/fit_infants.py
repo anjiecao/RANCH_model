@@ -13,7 +13,7 @@ import sys, os, time, argparse
 import numpy as np
 import pandas as pd
 
-RANCH = os.environ.get("RANCH_ROOT", "/Users/mcfrank/Projects/ranch")
+RANCH = os.environ.get("RANCH_ROOT", os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 ROOT = f"{RANCH}/RANCH_model"
 sys.path.insert(0, ROOT)
 PAPER = f"{RANCH}/pkbb_paper_writing"

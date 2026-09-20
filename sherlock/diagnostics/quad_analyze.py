@@ -1,15 +1,16 @@
 """Quadrature diagnostic (job 44088878): Exp-1 curves per variant with bootstrap SEs, record-vs-fine differences,
 per-pair profiles, per-rollout distributions, and the 21-condition fit of each variant."""
+import os
 import sys
 
 import numpy as np
 import pandas as pd
 
-sys.path.insert(0, "/Users/mcfrank/Projects/ranch/RANCH_model")
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))    # RANCH_model
 from ranch import data                                              # noqa: E402
 
 pd.set_option("display.width", 250)
-Q = "/private/tmp/claude-502/-Users-mcfrank-Projects-ranch/93e53cd3-671f-49e2-a342-595ee41f4cb2/scratchpad/quad/"
+Q = (sys.argv[1] if len(sys.argv) > 1 else ".").rstrip("/") + "/"          # the directory holding the quad_*.csv tables of adult_quadrature_diag.py
 V = {"record 80x30 lin": "quad_80x30_linear.csv", "80x120 lin": "quad_80x120_linear.csv", "160x120 lin": "quad_160x120_linear.csv", "80x30 log": "quad_80x30_log.csv"}
 POS = list(range(1, 12))
 h1 = data.load_adult_exp1().groupby(["trial_type", "trial_number"]).LT.mean() / 1000
