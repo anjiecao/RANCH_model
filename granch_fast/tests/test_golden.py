@@ -73,13 +73,13 @@ def test_infant_winners(golden):
 
 
 def test_adult_winners_shortlist_protocol(golden):
-    """The adult winners of record: selected from the re-evaluated shortlist, reported at 512 rollouts per pair on
-    independent seeds, with their Monte-Carlo interval; and the figure data's fits agree with them."""
+    """The adult winners of record: selected from the re-evaluated shortlist, reported on independent seeds over every
+    stimulus pair (1180 x 4 rollouts), with their Monte-Carlo interval; and the figure data's fits agree with them."""
     w = pd.read_csv(f"{PHASE1}/adult_winners.csv").set_index(["metric", "rule"])
     for key, v in golden["adult_winners"].items():
         m, rule = key.split("|")
         r = w.loc[(m, rule)]
-        assert r.rollouts == v["rollouts"] and r.setting == v["setting"] and r.world_EIGs == pytest.approx(v["w"], rel=1e-9)
+        assert r.rollouts == v["rollouts"] and r.pairs == v["pairs"] == 1180 and r.setting == v["setting"] and r.world_EIGs == pytest.approx(v["w"], rel=1e-9)
         for k, col in (("r2", "r2_21_reeval"), ("r2_mc_lo", "r2_mc_lo"), ("r2_mc_hi", "r2_mc_hi"), ("grid_r2", "r2_21_grid"), ("hab", "hab"), ("dis", "dis")):
             assert r[col] == pytest.approx(v[k], abs=1e-3), (key, k)
     pf = pd.read_csv(f"{GF}/paper_panels_concept_fits.csv").set_index("figure")

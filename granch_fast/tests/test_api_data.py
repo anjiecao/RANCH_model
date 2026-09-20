@@ -53,7 +53,7 @@ def test_named_configurations():
     assert CANONICAL.variable is EIGConcept and CANONICAL.sigma_true > 0 and CANONICAL.model.noise.inferred_
     assert CANONICAL.sigma_true == 0.2 and CANONICAL.adult_sigma_true == 0.1         # MCF 2026-09-16: may differ
     from ranch.settings import QUADRATURE
-    adult_ref = cfg_inferred(V=3.0)                                                   # the adult learner on the production eps axis (2026-09-18)
+    adult_ref = cfg_inferred(V=3.0, sd_eps=1.0)                                       # the adult cell of record, on the production eps axis (2026-09-18)
     adult_ref.n_eps, adult_ref.spacing = QUADRATURE["adults"].n_eps, QUADRATURE["adults"].spacing
     for cfg_a, cfg_b in [(CANONICAL.model.fast_config(window_half_width=0.2, n_z=5), cfg_inferred(sd_eps=1.0, sigma_true=0.2)),
                          (CANONICAL.adult_model.fast_config(window_half_width=0.1, n_z=5), adult_ref)]:

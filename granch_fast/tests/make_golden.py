@@ -17,9 +17,11 @@ METRICS = ["eig_code", "eig_within", "kl", "mi", "surprisal_b"]
 
 
 def main():
-    g = {"_note": "pinned from the reproduction command's outputs of 2026-09-17 (job 44027063): eq-15 fix; exemplar-mean "
-                  "window under noise; concept EIG; clamped linkings; infants re-evaluated at R32; adults selected from a "
-                  "re-evaluated shortlist and reported at 512 rollouts per pair on independent seeds (plan §0 #14)"}
+    g = {"_note": "pinned from the reproduction command's outputs of 2026-09-17 (job 44027063: infants, deterministic kinds) "
+                  "and the adult regeneration of 2026-09-18 (job 44122930): eq-15 fix; exemplar-mean window under noise; "
+                  "concept EIG; clamped linkings; infants re-evaluated at R32; adults on 120 log eps nodes, selected from a "
+                  "re-evaluated shortlist and reported on independent seeds over every stimulus pair (1180 x 4 rollouts in "
+                  "Exp 1, 845 x 12 in Exp 2; plan §0 #14, settings.QUADRATURE, pipeline.PAIRS)"}
     sc = pd.read_csv(f"{P1}/infant_scores_main.csv")
     g["infant_main_best"] = {m: dict(r2=float(sc[sc.metric == m].pooled_r2.max()),
                                      rmse=float(sc[sc.metric == m].pooled_rmse.min())) for m in METRICS}
@@ -46,7 +48,7 @@ def main():
     aw = pd.read_csv(f"{P1}/adult_winners.csv")
     g["adult_winners"] = {f"{r.metric}|{r.rule}": dict(r2=float(r.r2_21_reeval), r2_mc_lo=float(r.r2_mc_lo), r2_mc_hi=float(r.r2_mc_hi),
                                                      grid_r2=float(r.r2_21_grid), hab=float(r.hab), dis=float(r.dis), setting=int(r.setting),
-                                                     w=float(r.world_EIGs), rollouts=int(r.rollouts))
+                                                     w=float(r.world_EIGs), rollouts=int(r.rollouts), pairs=int(r.pairs))
                           for r in aw.itertuples()}
     pf = pd.read_csv(f"{GF}/paper_panels_concept_fits.csv")
     g["paper_panels_concept"] = {r.figure: dict(r2=float(r.r2), setting=r.setting) for r in pf.itertuples()}

@@ -18,13 +18,13 @@ theme_p <- function() theme_few(13) + theme(plot.title = element_text(size = 12.
 se <- function(v) sd(v) / sqrt(length(v))
 concept <- read_csv(file.path(GF, "paper_panels_concept.csv"), show_col_types = FALSE)
 beh1 <- suppressWarnings(read_csv(file.path(PAPER, "exp1_data_plot.csv"), show_col_types = FALSE, guess_max = 50000)) %>% mutate(tt = tolower(tt))
-lines_panel <- function(d, ttl, xlab, ylab, ylim, breaks, legend = FALSE) {
+lines_panel <- function(d, ttl, xlab, ylab, ylim, breaks, legend = FALSE, legend_pos = c(.8, .16)) {
   if (!"se" %in% names(d)) d$se <- NA_real_                       # Monte-Carlo SE of a model mean, where the tables carry it
   p <- ggplot(d, aes(x, y, color = tt, group = tt)) + geom_line(linewidth = .9) + geom_point(size = 2) +
     geom_linerange(aes(ymin = y - ifelse(is.na(se), 0, se), ymax = y + ifelse(is.na(se), 0, se)), linewidth = .5) +
     scale_color_manual(values = COL, name = NULL) + scale_x_continuous(breaks = breaks) + coord_cartesian(ylim = ylim) +
     theme_p() + labs(x = xlab, y = ylab, title = ttl)
-  if (legend) p <- p + theme(legend.position = c(.8, .16), legend.background = element_blank(), legend.key.size = unit(.4, "cm"))
+  if (legend) p <- p + theme(legend.position = legend_pos, legend.background = element_blank(), legend.key.size = unit(.4, "cm"))
   p
 }
 
@@ -54,7 +54,7 @@ p2b <- ggplot(ab, aes(x, y, color = tt, group = tt)) + geom_line(linewidth = .6)
   theme_p() + labs(x = "Trial number", y = "Looking time (s)", title = "Adult behaviour")
 ggsave(file.path(FIGS, "figC2_adult_exp1.png"), width = 10.5, height = 3.3, dpi = 160, bg = "white",
        plot_grid(p2b, lines_panel(ap, PUB, "Trial number", "Scaled samples (s)", ylim2, c(1, 3, 6, 9, 11)),
-                 lines_panel(ac, CON, "Trial number", "Scaled samples (s)", ylim2, c(1, 3, 6, 9, 11), legend = TRUE), nrow = 1))
+                 lines_panel(ac, CON, "Trial number", "Scaled samples (s)", ylim2, c(1, 3, 6, 9, 11), legend = TRUE, legend_pos = c(.8, .38)), nrow = 1))
 
 ## ---- C3 = paper Fig. 6: infants, Exp 2
 ORD <- c("familiar", "pose", "identity", "number", "animacy")

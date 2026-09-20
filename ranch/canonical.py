@@ -44,17 +44,18 @@ CANONICAL = NamedConfiguration(
     name="canonical: noisy world + inferred eps + concept EIG (eps a nuisance)",
     model=Model(Prior(0.0, 3.0, 1.0, 0.1, (0.001, 1.5)), LearnerNoise.inferred(1e-3, 1.0, (1e-3, 1.2)),
                 quadrature=Quadrature(n_sigma=80, n_eps=30)),
-    sigma_true=0.2, variable=EIGConcept, w_infants=1e-5, w_adults=1e-4,
-    adult_model=Model(Prior(0.0, 3.0, 1.0, 0.1, (0.001, 1.5)), LearnerNoise.inferred(1e-3, 0.5, (1e-3, 1.2)),
+    sigma_true=0.2, variable=EIGConcept, w_infants=1e-5, w_adults=10 ** -4.5,
+    adult_model=Model(Prior(0.0, 3.0, 1.0, 0.1, (0.001, 1.5)), LearnerNoise.inferred(1e-3, 1.0, (1e-3, 1.2)),
                       quadrature=Quadrature(n_sigma=80, n_eps=120, spacing="log")),     # settings.QUADRATURE["adults"]
     adult_sigma_true=0.1,
-    note="each population at its own best cell (MCF, 2026-09-16: world noise may differ between populations); the adult "
-         "numbers below are the 80x30-quadrature, 6-pair record's, superseded by the 2026-09-18 regeneration (120 log eps "
-         "nodes, every stimulus pair; settings.QUADRATURE, pipeline.PAIRS): "
+    note="each population at its own best cell (MCF, 2026-09-16: world noise may differ between populations): "
          "infants sigma_true .2 / sd_eps 1 -> R2 .747 +/- .025 on 32 fresh rollouts (grid .755; hab .87 dis 1.12); "
-         "adults (shortlist protocol, 2026-09-17) sigma_true .1 / sd_eps .5 -> 21-cond .851 [.794, .878] at 512 "
-         "rollouts per pair on independent seeds (hab .82 dis 1.11); Exp-2 carried .51 / .79 with the correct "
-         "violation orderings. The shared sigma_true .1 / sd_eps .5 infant cell gives .64")
+         "adults (regeneration of 2026-09-18, job 44122930: 120 log eps nodes, shortlist protocol over every stimulus "
+         "pair) sigma_true .1 / sd_eps 1 / w 3.2e-5 -> 21-cond .890 [.853, .907] on 1180 pairs x 4 rollouts, independent "
+         "seeds (CV RMSE 121 ms; hab .85 dis 1.11); Exp-2 carried .51 / .78 [.71, .81] with the correct violation "
+         "orderings. The beta < .1 and nu < 1 extensions do not beat it (.872, .62). Superseded: the 80x30-quadrature, "
+         "6-pair record (sd_eps .5, w 1e-4: .851), whose eps axis inflated and whose pair sample distorted the curves "
+         "(sherlock/logs/quadrature_check_adults_2026-09-18.txt)")
 
 TOTAL_EIG_REFERENCE = NamedConfiguration(
     name="reference: noisy world + inferred eps + total EIG (information about eps included)",

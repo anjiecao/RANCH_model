@@ -1,0 +1,72 @@
+238162e Adult protocol 2026-09-18: 120 log eps nodes, every stimulus pair, between-stimulus error bars, the beta extension
+=== 2026-09-18 09:15:52  check inputs
+inputs verified: 15 files match the data manifest
+=== 2026-09-18 09:15:56  snapshot to /home/users/mcfrank/ranch/snapshots/44122930_before
+=== 2026-09-18 09:15:57  adults ext
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1/adult_preds_selfcons_ext.csv (1760 rows)
+saved adult_scores_selfcons_ext.csv / adult_scores21_selfcons_ext.csv
+=== 2026-09-19 05:25:47  winners infants R32
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1/infant_winners.csv (5 rows)
+  eig_code     [r2] grid 0.459 -> re-evaluated 0.076 (hab 0.89 dis 0.98)
+  kl           [r2] grid 0.373 -> re-evaluated 0.231 (hab 0.73 dis 1.03)
+  mi           [r2] grid 0.289 -> re-evaluated 0.229 (hab 0.64 dis 1.03)
+  surprisal_b  [r2] grid 0.719 -> re-evaluated 0.579 (hab 0.96 dis 1.06)
+  mi_concept   [r2] grid 0.755 -> re-evaluated 0.747 (hab 0.87 dis 1.12)
+=== 2026-09-19 05:46:20  winners adults
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1/adult_shortlist.csv (58 cells re-evaluated)
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1/adult_winners.csv (7 rows)
+  eig_code     [r2] grid 0.282 -> re-evaluated 0.222 (hab 0.30 dis 1.18)
+  mi           [r2] grid 0.265 -> re-evaluated 0.235 (hab 0.22 dis 1.47)
+  mi           [rmse] grid 0.285 -> re-evaluated 0.234 (hab 0.23 dis 1.35)
+  kl           [r2] grid 0.332 -> re-evaluated 0.272 (hab 0.46 dis 1.29)
+  kl           [rmse] grid 0.337 -> re-evaluated 0.299 (hab 0.33 dis 1.35)
+  surprisal_b  [r2] grid 0.360 -> re-evaluated 0.826 (hab 0.85 dis 1.10)
+  mi_concept   [r2] grid 0.742 -> re-evaluated 0.890 (hab 0.85 dis 1.11)
+=== 2026-09-20 01:01:53  phase2 selfcons
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1/phase2_selfcons_results.csv (10 rows)
+  [eig_code | paper] infants Exp1 R2 0.459 -> Exp2 R2 0.373 (back>iden>numb>pose>anim); adults Exp1 0.222 -> Exp2 0.263 (pose>iden>numb>anim)
+  [eig_code | r2] infants Exp1 R2 0.459 -> Exp2 R2 0.373 (back>iden>numb>pose>anim); adults Exp1 0.222 -> Exp2 0.263 (pose>iden>numb>anim)
+  [mi | paper] infants Exp1 R2 0.289 -> Exp2 R2 0.035 (iden>back>anim>numb>pose); adults Exp1 0.234 -> Exp2 0.306 (anim>pose>numb>iden)
+  [mi | r2] infants Exp1 R2 0.289 -> Exp2 R2 0.035 (iden>back>anim>numb>pose); adults Exp1 0.235 -> Exp2 0.315 (anim>iden>pose>numb)
+  [kl | paper] infants Exp1 R2 0.373 -> Exp2 R2 0.127 (iden>numb>anim>back>pose); adults Exp1 0.299 -> Exp2 0.498 (anim>iden>numb>pose)
+  [kl | r2] infants Exp1 R2 0.373 -> Exp2 R2 0.127 (iden>numb>anim>back>pose); adults Exp1 0.272 -> Exp2 0.483 (anim>iden>numb>pose)
+  [surprisal_b | paper] infants Exp1 R2 0.719 -> Exp2 R2 0.494 (anim>iden>numb>pose>back); adults Exp1 0.826 -> Exp2 0.664 (anim>iden>numb>pose)
+  [surprisal_b | r2] infants Exp1 R2 0.719 -> Exp2 R2 0.494 (anim>iden>numb>pose>back); adults Exp1 0.826 -> Exp2 0.664 (anim>iden>numb>pose)
+  [mi_concept | paper] infants Exp1 R2 0.755 -> Exp2 R2 0.510 (anim>iden>numb>pose>back); adults Exp1 0.890 -> Exp2 0.778 (anim>iden>numb>pose)
+  [mi_concept | r2] infants Exp1 R2 0.755 -> Exp2 R2 0.510 (anim>iden>numb>pose>back); adults Exp1 0.890 -> Exp2 0.778 (anim>iden>numb>pose)
+=== 2026-09-20 02:40:01  figures
+figB1: implemented EIG r=+0.28 hab=0.89 dis=0.98 [R32]; KL r=+0.48 hab=0.73 dis=1.03 [R32]; true EIG r=+0.48 hab=0.64 dis=1.03 [R32]; surprisal r=+0.76 hab=0.96 dis=1.06 [R32]; concept EIG r=+0.86 hab=0.87 dis=1.12 [R32]
+figB2: mechanism trajectories written
+figB3:
+                                                         config  hab  dis  kind
+                                         human (infants, Exp 1) 0.57 1.72 human
+   PUBLISHED: noiseless + inferred eps + implemented EIG + grid 0.34 2.80 works
+             CORRECTED: noiseless + FIXED eps + implemented EIG 0.55 1.58 works
+ noiseless + inferred eps, EXACT inference (any DV; degenerate) 0.51 1.00 fails
+                         noisy + inferred eps + implemented EIG 0.89 0.98 fails
+ noisy + inferred eps + total EIG (incl. information about eps) 0.64 1.03 fails
+CONCEPTUAL: noisy + inferred eps + CONCEPT EIG (eps a nuisance) 0.87 1.12 works
+          noiseless + fixed eps + true EIG (max-dishab setting) 0.93 1.18 fails
+figB4: implemented EIG R2=0.22 hab=0.30 dis=0.97; KL R2=0.27 hab=0.46 dis=1.12; true EIG R2=0.23 hab=0.22 dis=1.07; concept EIG R2=0.89 hab=0.85 dis=1.14; surprisal R2=0.83 hab=0.85 dis=1.07
+report v3, Table 2: published model rescored -> published_rescored.csv
+figC1-4 (concept EIG at the paper-rule cells): exp1_infants R2=0.747; exp1_adults R2=0.890; exp2_infants R2=0.510; exp2_adults R2=0.778
+figB5: novel/familiar at t1 and t5 by quantity:
+  1. noiseless world, eps fixed .1     I_mu (concept mean)          t1   0.99  t5   0.97
+  1. noiseless world, eps fixed .1     I_sigma (spread & noise)     t1   3.26  t5   7.80
+  1. noiseless world, eps fixed .1     total (true EIG)             t1   1.29  t5   1.50
+  1. noiseless world, eps fixed .1     concept EIG (eps nuisance)   t1   1.29  t5   1.50
+  1. noiseless world, eps fixed .1     KL (realized)                t1   1.37  t5   2.45
+  1. noiseless world, eps fixed .1     implemented EIG              t1   1.51  t5   1.88
+  2. noisy world (.1), eps fixed .1    I_mu (concept mean)          t1   0.99  t5   0.98
+  2. noisy world (.1), eps fixed .1    I_sigma (spread & noise)     t1   1.54  t5   3.33
+  2. noisy world (.1), eps fixed .1    total (true EIG)             t1   1.18  t5   1.40
+  2. noisy world (.1), eps fixed .1    concept EIG (eps nuisance)   t1   1.18  t5   1.40
+  2. noisy world (.1), eps fixed .1    KL (realized)                t1   1.39  t5   1.39
+  2. noisy world (.1), eps fixed .1    implemented EIG              t1   1.08  t5   1.18
+  3. noisy world (.1), eps inferred    I_mu (concept mean)          t1   0.99  t5   0.98
+  3. noisy world (.1), eps inferred    I_sigma (spread & noise)     t1   1.11  t5   1.03
+  3. noisy world (.1), eps inferred    total (true EIG)             t1   1.08  t5   1.03
+  3. noisy world (.1), eps inferred    concept EIG (eps nuisance)   t1   1.16  t5   1.33
+  3. noisy world (.1), eps inferred    KL (realized)                t1   1.37  t5   1.02
+  3. noisy world (.1), eps inferred    implemented EIG              t1   1.01  t5   0.93
+=== 2026-09-20 02:57:51  done

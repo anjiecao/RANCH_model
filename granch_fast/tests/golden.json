@@ -1,5 +1,5 @@
 {
- "_note": "pinned from the reproduction command's outputs of 2026-09-17 (job 44027063): eq-15 fix; exemplar-mean window under noise; concept EIG; clamped linkings; infants re-evaluated at R32; adults selected from a re-evaluated shortlist and reported at 512 rollouts per pair on independent seeds (plan \u00a70 #14)",
+ "_note": "pinned from the reproduction command's outputs of 2026-09-17 (job 44027063: infants, deterministic kinds) and the adult regeneration of 2026-09-18 (job 44122930): eq-15 fix; exemplar-mean window under noise; concept EIG; clamped linkings; infants re-evaluated at R32; adults on 120 log eps nodes, selected from a re-evaluated shortlist and reported on independent seeds over every stimulus pair (1180 x 4 rollouts in Exp 1, 845 x 12 in Exp 2; plan \u00a70 #14, settings.QUADRATURE, pipeline.PAIRS)",
  "infant_main_best": {
   "eig_code": {
    "r2": 0.7530120652166034,
@@ -86,31 +86,31 @@
  "phase2_selfcons_paper_rule": {
   "eig_code": {
    "inf": 0.3734854800316645,
-   "adu": 0.285143143188699,
+   "adu": 0.2626960434797245,
    "inf_order": "back>iden>numb>pose>anim",
-   "adu_order": "numb>pose>iden>anim"
+   "adu_order": "pose>iden>numb>anim"
   },
   "mi": {
    "inf": 0.0346784131681432,
-   "adu": 0.3715456822195903,
+   "adu": 0.3064994159490573,
    "inf_order": "iden>back>anim>numb>pose",
-   "adu_order": "anim>iden>numb>pose"
+   "adu_order": "anim>pose>numb>iden"
   },
   "kl": {
    "inf": 0.1267148904100796,
-   "adu": 0.4607307670485381,
+   "adu": 0.49759718936295,
    "inf_order": "iden>numb>anim>back>pose",
    "adu_order": "anim>iden>numb>pose"
   },
   "surprisal_b": {
    "inf": 0.49357881647345,
-   "adu": 0.641256546263392,
+   "adu": 0.6644461707386592,
    "inf_order": "anim>iden>numb>pose>back",
    "adu_order": "anim>iden>numb>pose"
   },
   "mi_concept": {
    "inf": 0.5096167446995887,
-   "adu": 0.7869995143670229,
+   "adu": 0.7778681687336848,
    "inf_order": "anim>iden>numb>pose>back",
    "adu_order": "anim>iden>numb>pose"
   }
@@ -190,70 +190,88 @@
  },
  "adult_winners": {
   "eig_code|r2": {
-   "r2": 0.2442224386768781,
-   "r2_mc_lo": 0.2283886643934306,
-   "r2_mc_hi": 0.2586842963378171,
-   "grid_r2": 0.2784919591185078,
-   "hab": 0.3294146298264258,
-   "dis": 1.1624235499697562,
-   "setting": 22,
+   "r2": 0.2224538907099069,
+   "r2_mc_lo": 0.2141861528858989,
+   "r2_mc_hi": 0.229428140111267,
+   "grid_r2": 0.281765489995687,
+   "hab": 0.2994528979312703,
+   "dis": 1.1828765819773526,
+   "setting": 20,
    "w": 0.01,
-   "rollouts": 512
+   "rollouts": 4,
+   "pairs": 1180
   },
   "mi|r2": {
-   "r2": 0.2562998906073904,
-   "r2_mc_lo": 0.2443511468204983,
-   "r2_mc_hi": 0.2678441690546709,
-   "grid_r2": 0.2693199776516936,
-   "hab": 0.2680261067753298,
-   "dis": 1.340630032854474,
+   "r2": 0.2346212902986345,
+   "r2_mc_lo": 0.2283414993514112,
+   "r2_mc_hi": 0.2409774779013153,
+   "grid_r2": 0.2650704829639124,
+   "hab": 0.2249036928571917,
+   "dis": 1.467711217256381,
    "setting": 8,
-   "w": 0.01,
-   "rollouts": 512
+   "w": 0.0031622776601683,
+   "rollouts": 4,
+   "pairs": 1180
+  },
+  "mi|rmse": {
+   "r2": 0.2343074737385575,
+   "r2_mc_lo": 0.2281387955341147,
+   "r2_mc_hi": 0.2399732501898741,
+   "grid_r2": 0.2851021559548617,
+   "hab": 0.2259754758089201,
+   "dis": 1.34796015936255,
+   "setting": 2,
+   "w": 0.0316227766016837,
+   "rollouts": 4,
+   "pairs": 1180
   },
   "kl|r2": {
-   "r2": 0.2811958693203987,
-   "r2_mc_lo": 0.2676711067138722,
-   "r2_mc_hi": 0.2931107979701098,
-   "grid_r2": 0.3268963300453196,
-   "hab": 0.3029279279279279,
-   "dis": 1.407477838146983,
-   "setting": 8,
-   "w": 0.0316227766016837,
-   "rollouts": 512
+   "r2": 0.2716954273138764,
+   "r2_mc_lo": 0.2575358273681384,
+   "r2_mc_hi": 0.2849140649629953,
+   "grid_r2": 0.3322453502063504,
+   "hab": 0.457594888567734,
+   "dis": 1.28999335106383,
+   "setting": 10,
+   "w": 0.3162277660168379,
+   "rollouts": 4,
+   "pairs": 1180
   },
   "kl|rmse": {
-   "r2": 0.2978191239951508,
-   "r2_mc_lo": 0.2853141539795132,
-   "r2_mc_hi": 0.3093696528330635,
-   "grid_r2": 0.2958908306276765,
-   "hab": 0.3040882194728348,
-   "dis": 1.3718468070051302,
+   "r2": 0.299099339588423,
+   "r2_mc_lo": 0.2893089096033078,
+   "r2_mc_hi": 0.3085950659862453,
+   "grid_r2": 0.3367862353245406,
+   "hab": 0.3347561764325443,
+   "dis": 1.353426069036579,
    "setting": 10,
-   "w": 0.01,
-   "rollouts": 512
+   "w": 0.0999999999999999,
+   "rollouts": 4,
+   "pairs": 1180
   },
   "surprisal_b|r2": {
-   "r2": 0.7718146471498036,
-   "r2_mc_lo": 0.561276914119647,
-   "r2_mc_hi": 0.8089458988737853,
-   "grid_r2": 0.5557649676660723,
-   "hab": 0.8301634472511145,
-   "dis": 1.0969989857407076,
+   "r2": 0.8263479130848553,
+   "r2_mc_lo": 0.6823109163173903,
+   "r2_mc_hi": 0.8596358205405025,
+   "grid_r2": 0.3602568245689877,
+   "hab": 0.8495086085864184,
+   "dis": 1.0960335409345532,
    "setting": 10,
-   "w": 1.0,
-   "rollouts": 512
+   "w": 0.3981071705534973,
+   "rollouts": 4,
+   "pairs": 1180
   },
   "mi_concept|r2": {
-   "r2": 0.8512698052774885,
-   "r2_mc_lo": 0.7944756886170975,
-   "r2_mc_hi": 0.8775737481683307,
-   "grid_r2": 0.6368042597985369,
-   "hab": 0.8210283295656775,
-   "dis": 1.110439367311072,
-   "setting": 16,
-   "w": 0.0001,
-   "rollouts": 512
+   "r2": 0.8898168748088441,
+   "r2_mc_lo": 0.8534364340622994,
+   "r2_mc_hi": 0.9073338543825588,
+   "grid_r2": 0.7417872294606525,
+   "hab": 0.84887875665841,
+   "dis": 1.1130716591349257,
+   "setting": 18,
+   "w": 3.1622776601683795e-05,
+   "rollouts": 4,
+   "pairs": 1180
   }
  },
  "paper_panels_concept": {
@@ -262,16 +280,16 @@
    "setting": "V3 a1 b0.1 sd1 st0.2 w1.0e-05"
   },
   "exp1_adults": {
-   "r2": 0.8512698052774882,
-   "setting": "V3 a1 b0.1 sd0.5 st0.1 w1.0e-04"
+   "r2": 0.8898168748088444,
+   "setting": "V3 a1 b0.1 sd1 st0.1 w3.2e-05"
   },
   "exp2_infants": {
    "r2": 0.5096167446995887,
    "setting": "V3 a1 b0.1 sd1 st0.2 w1.0e-05"
   },
   "exp2_adults": {
-   "r2": 0.7869995143670229,
-   "setting": "V3 a1 b0.1 sd0.5 st0.1 w1.0e-04"
+   "r2": 0.7778681687336853,
+   "setting": "V3 a1 b0.1 sd1 st0.1 w3.2e-05"
   }
  },
  "channel_ratios_t1_t5": {

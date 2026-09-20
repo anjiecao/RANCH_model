@@ -1,0 +1,15 @@
+238162e Adult protocol 2026-09-18: 120 log eps nodes, every stimulus pair, between-stimulus error bars, the beta extension
+=== 2026-09-18 09:09:20  check inputs
+inputs verified: 15 files match the data manifest
+=== 2026-09-18 09:09:32  adults nu
+saved /home/users/mcfrank/ranch_nu/mi/RANCH_model/granch_fast/phase1/adult_preds_selfcons_nu.csv (528 rows)
+saved adult_scores_selfcons_nu.csv / adult_scores21_selfcons_nu.csv
+=== 2026-09-18 13:05:10  winners adults
+saved /home/users/mcfrank/ranch_nu/mi/RANCH_model/granch_fast/phase1/adult_shortlist_selfcons_nu.csv (12 cells re-evaluated)
+saved /home/users/mcfrank/ranch_nu/mi/RANCH_model/granch_fast/phase1/adult_winners_selfcons_nu.csv (1 rows)
+  mi           [r2] grid 0.280 -> re-evaluated 0.238 (hab 0.25 dis 1.35)
+=== 2026-09-18 15:16:00  phase2 selfcons
+saved /home/users/mcfrank/ranch_nu/mi/RANCH_model/granch_fast/phase1/phase2_selfcons_results_nu.csv (2 rows)
+  [mi | paper] infants Exp1 R2 0.289 -> Exp2 R2 0.035 (iden>back>anim>numb>pose); adults Exp1 0.238 -> Exp2 0.354 (anim>iden>pose>numb)
+  [mi | r2] infants Exp1 R2 0.289 -> Exp2 R2 0.035 (iden>back>anim>numb>pose); adults Exp1 0.238 -> Exp2 0.354 (anim>iden>pose>numb)
+=== 2026-09-18 15:25:08  done

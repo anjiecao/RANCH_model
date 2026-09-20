@@ -323,7 +323,8 @@ def test_concept_eig_matches_exact_quadrature_under_noise(concept_runs):
 
 
 @pytest.mark.parametrize("kw", [dict(V=3.0, a=1.0, b=0.1, sd_eps=1.0, sigma_true=0.2),     # the fitted infant setting
-                                dict(V=3.0, a=1.0, b=0.1, sd_eps=0.5, sigma_true=0.1),     # the fitted adult setting (shortlist protocol)
+                                dict(V=3.0, a=1.0, b=0.1, sd_eps=1.0, sigma_true=0.1),     # the fitted adult setting (regeneration of 2026-09-18)
+                                dict(V=3.0, a=1.0, b=0.1, sd_eps=0.5, sigma_true=0.1),     # the adult setting of the 6-pair shortlist record
                                 dict(V=1.0, a=1.0, b=0.1, sd_eps=0.5, sigma_true=0.1)])    # the adult setting of report v3
 def test_concept_eig_accuracy_at_the_fitted_settings(kw, stim_pair):
     """Report v3 states that the concept EIG is within 1.6% of brute-force quadrature at both fitted settings."""
