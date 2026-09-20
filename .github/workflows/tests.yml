@@ -22,20 +22,20 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           path: ranch_root/RANCH_model
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           repository: GalRaz/pkbb_paper_writing
           ref: 171450f5d9b308f27a4f95efaa9e705a5eab2165
           path: ranch_root/pkbb_paper_writing
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           repository: anjiecao/RANCH_cluster
           ref: 4b1a0e582ec7fe3482f385ce1d1d2753354e117b
           path: ranch_root/RANCH_cluster
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
