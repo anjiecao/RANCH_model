@@ -1,0 +1,8 @@
+238162e Adult protocol 2026-09-18: 120 log eps nodes, every stimulus pair, between-stimulus error bars, the beta extension
+=== 2026-09-18 09:47:51  check inputs
+inputs verified: 15 files match the data manifest
+=== 2026-09-18 09:47:56  adults nu
+saved /home/users/mcfrank/ranch_nu/eig_code/RANCH_model/granch_fast/phase1/adult_preds_selfcons_nu.csv (528 rows)
+saved adult_scores_selfcons_nu.csv / adult_scores21_selfcons_nu.csv
+=== 2026-09-20 00:51:18  winners adults
+[2026-09-20T09:48:16.277] error: *** JOB 44122946 ON sh03-07n70 CANCELLED AT 2026-09-20T09:48:16 DUE TO TIME LIMIT ***

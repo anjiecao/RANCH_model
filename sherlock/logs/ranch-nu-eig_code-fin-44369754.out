@@ -1,0 +1,12 @@
+96a3843 Adult record regenerated: 120 log eps nodes, every stimulus pair (jobs 44122930 + side runs)
+=== 2026-09-20 11:06:44  check inputs
+inputs verified: 15 files match the data manifest
+=== 2026-09-20 11:06:50  winners adults
+saved /home/users/mcfrank/ranch_nu/eig_code/RANCH_model/granch_fast/phase1/adult_shortlist_selfcons_nu.csv (11 cells re-evaluated)
+saved /home/users/mcfrank/ranch_nu/eig_code/RANCH_model/granch_fast/phase1/adult_winners_selfcons_nu.csv (1 rows)
+  eig_code     [r2] grid 0.269 -> re-evaluated 0.204 (hab 0.32 dis 1.23)
+=== 2026-09-20 21:17:34  phase2 selfcons
+saved /home/users/mcfrank/ranch_nu/eig_code/RANCH_model/granch_fast/phase1/phase2_selfcons_results_nu.csv (2 rows)
+  [eig_code | paper] infants Exp1 R2 0.459 -> Exp2 R2 0.373 (back>iden>numb>pose>anim); adults Exp1 0.204 -> Exp2 0.248 (numb>pose>iden>anim)
+  [eig_code | r2] infants Exp1 R2 0.459 -> Exp2 R2 0.373 (back>iden>numb>pose>anim); adults Exp1 0.204 -> Exp2 0.248 (numb>pose>iden>anim)
+=== 2026-09-20 23:10:37  done
