@@ -6,6 +6,7 @@ test (failure #3 / #10) and symmetries.
 """
 import numpy as np
 import pytest
+from scipy.integrate import trapezoid
 
 from granch_fast.analytic_core import SigmaEpsGrid, FeaturePosterior, LOG2PI
 from granch_fast.eig import _joint_kl, feature_eig_closed_form, feature_eig_channels
@@ -347,7 +348,7 @@ def _concept_kl_exact(pn, mn, vn, pc, mc, vc, ns, ne, n_x=2001, floor=1e-8):
         act = Wn > 1e-12
         x = np.linspace((m1[act] - 14 * np.sqrt(v1[act])).min(), (m1[act] + 14 * np.sqrt(v1[act])).max(), n_x)
         l1, l0 = logmix(x, Wn[act], m1[act], v1[act]), logmix(x, Wc, m0, v0)
-        tot += cn[i] * np.trapezoid(np.exp(l1) * (l1 - l0), x)
+        tot += cn[i] * trapezoid(np.exp(l1) * (l1 - l0), x)      # scipy's: np.trapezoid needs numpy >= 2 (CI and the cluster pin 1.26)
     return float(tot)
 
 

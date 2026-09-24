@@ -1,0 +1,8 @@
+record cell (57): V3 a1 b0.1 sd_eps 1 sigma_true 0.2, w 1e-05
+  cap   500: R2 0.755   first presentation    48.1 samples   hab 0.857   dis 1.137   looking after the 40 simulated samples 25%
+  cap  1000: R2 0.755   first presentation    48.1 samples   hab 0.857   dis 1.137   looking after the 40 simulated samples 25%
+  cap  5000: R2 0.755   first presentation    48.1 samples   hab 0.857   dis 1.137   looking after the 40 simulated samples 25%
+extended grid's best cell (53): V3 a1 b0.1 sd_eps 0.5 sigma_true 0.2, w 1.78e-07
+  cap   500: R2 0.770   first presentation   420.4 samples   hab 0.958   dis 1.038   looking after the 40 simulated samples 90%
+  cap  1000: R2 0.763   first presentation   702.8 samples   hab 0.921   dis 1.077   looking after the 40 simulated samples 94%
+  cap  5000: R2 0.721   first presentation  1270.7 samples   hab 0.807   dis 1.238   looking after the 40 simulated samples 97%

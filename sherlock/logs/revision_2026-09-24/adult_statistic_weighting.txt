@@ -1,0 +1,26 @@
+SHARE OF THE HUMAN BETWEEN-CONDITION VARIANCE
+  trial 1: 0.61 of the 75 cells, 0.23 of the 21 conditions
+  novel trials: 0.11 / 0.30
+
+FITS (R2; human first-trial drop 0.31)
+                                                          model  first_trial_drop  r2_21  r2_21_without_trial1  paper_75  paper_75_without_trial1
+published EIG, the setting best on the paper's statistic (#159)             0.681  0.866                 0.831     0.903                    0.711
+         published EIG, parameter-averaged curve (paper Fig. 5)             0.644  0.836                 0.792     0.892                    0.678
+                           corrected: concept EIG (record cell)             0.084  0.890                 0.865     0.834                    0.585
+                                          corrected: concept KL             0.056  0.818                 0.768     0.709                    0.373
+                                           corrected: surprisal             0.080  0.826                 0.773     0.795                    0.455
+
+CONCEPT-EIG SHORTLIST (re-evaluated on every pair, the shortlist's seeds), ranked by the paper's statistic
+ setting  world_EIGs  V_prior  sd_epsilon  sigma_true  r2_21_reeval  rmse21_cv_reeval  paper_75  first_trial_drop
+      18    3.16e-05        3           1         0.1         0.899               110     0.845            0.0826
+      16      0.0001        3         0.5         0.1         0.884               122     0.845               0.1
+      18      0.0001        3           1         0.1         0.832               155     0.824              0.11
+      19    3.16e-05        3           1         0.2         0.839               152     0.752            0.0549
+       0    3.16e-05        1         0.5         0.1         0.732               199     0.735             0.111
+       2    3.16e-05        1           1         0.1          0.73               200     0.735             0.112
+       2      0.0001        1           1         0.1         0.676               220     0.732             0.138
+       0      0.0001        1         0.5         0.1         0.658               229     0.723              0.13
+       2       0.001        1           1         0.1         0.444               279     0.684             0.211
+       3    3.16e-05        1           1         0.2         0.612               227     0.658            0.0955
+
+SPLIT-HALF RELIABILITY OF THE HUMAN CONDITION MEANS (Spearman-Brown, 200 splits): 75 cells 0.960, 21 cells 0.965
