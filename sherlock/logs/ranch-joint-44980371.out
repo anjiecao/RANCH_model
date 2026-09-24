@@ -1,0 +1,54 @@
+9721eaf Revision analyses: w boundary, embedding scale, joint scaling (sherlock/diagnostics)
+=== 2026-09-23 23:28:17  joint_scaling.py granch_fast/phase1 out_joint_scaling
+1824 infant cells x 352 adult cells = 642048 pairs; joint RMSE min 1.370 s, median 2.528 s
+
+BEST PAIR UNDER EACH CONSTRAINT (grid; params infant/adult)
+                constraint  joint_rmse        a      b                                                               params_infant_adult
+   everything shared but w      1.3982 -19.7078 0.8098 V 3/3 | alpha 1/1 | beta 0.1/0.1 | sd 0.5/0.5 | sigma 0.2/0.2 | w 1.0e-05/3.2e-05
+           sigma_true free      1.3953  -5.8321 0.4277     V 1/1 | alpha 1/1 | beta 0.1/0.1 | sd 1/1 | sigma 0.2/0.1 | w 1.0e-05/3.2e-05
+               sd_eps free      1.3701 -19.7431 0.8110   V 3/3 | alpha 1/1 | beta 0.1/0.1 | sd 1/0.5 | sigma 0.2/0.2 | w 1.0e-05/3.2e-05
+sd_eps and sigma_true free      1.3701 -19.7431 0.8110   V 3/3 | alpha 1/1 | beta 0.1/0.1 | sd 1/0.5 | sigma 0.2/0.2 | w 1.0e-05/3.2e-05
+  prior free, noise shared      1.3954  -4.9913 0.4125     V 1/3 | alpha 1/1 | beta 0.1/0.1 | sd 1/1 | sigma 0.2/0.2 | w 1.0e-05/1.0e-04
+                  all free      1.3701 -19.7431 0.8110   V 3/3 | alpha 1/1 | beta 0.1/0.1 | sd 1/0.5 | sigma 0.2/0.2 | w 1.0e-05/3.2e-05
+
+SENSITIVITY: each cell's best joint RMSE, by parameter value
+population   parameter  value  best   p10  median  n_cells
+   infants     V_prior    1.0 1.371 1.652   1.970      912
+   infants     V_prior    3.0 1.370 1.648   1.853      912
+   infants alpha_prior    1.0 1.370 1.586   1.854      912
+   infants alpha_prior   10.0 1.445 1.721   1.943      912
+   infants  beta_prior    0.1 1.370 1.565   1.836      912
+   infants  beta_prior    1.0 1.703 1.751   1.998      912
+   infants  sd_epsilon    0.1 1.371 1.628   1.880      608
+   infants  sd_epsilon    0.5 1.398 1.663   1.890      608
+   infants  sd_epsilon    1.0 1.370 1.662   1.925      608
+   infants  sigma_true    0.1 1.391 1.548   1.933      456
+   infants  sigma_true    0.2 1.370 1.636   1.896      456
+   infants  sigma_true    0.3 1.417 1.701   1.892      456
+   infants  sigma_true    0.5 1.617 1.752   1.885      456
+    adults     V_prior    1.0 1.393 1.448   1.476      176
+    adults     V_prior    3.0 1.370 1.439   1.475      176
+    adults alpha_prior    1.0 1.370 1.422   1.471      176
+    adults alpha_prior   10.0 1.433 1.464   1.478      176
+    adults  beta_prior    0.1 1.370 1.432   1.476      176
+    adults  beta_prior    1.0 1.391 1.453   1.474      176
+    adults  sd_epsilon    0.5 1.370 1.447   1.475      176
+    adults  sd_epsilon    1.0 1.371 1.444   1.475      176
+    adults  sigma_true    0.1 1.371 1.448   1.474      176
+    adults  sigma_true    0.2 1.370 1.437   1.476      176
+  re-evaluated adult cell 187 (1/6): R2 0.772
+  re-evaluated adult cell 22 (2/6): R2 0.757
+  re-evaluated adult cell 210 (3/6): R2 0.689
+  re-evaluated adult cell 198 (4/6): R2 0.889
+  re-evaluated adult cell 176 (5/6): R2 0.849
+  re-evaluated adult cell 188 (6/6): R2 0.750
+
+BEST PAIR UNDER EACH CONSTRAINT (adult cells re-evaluated on every pair x 4 rollouts)
+                constraint  joint_rmse        a      b                                                               params_infant_adult
+   everything shared but w      1.3229 -19.3885 0.8035 V 3/3 | alpha 1/1 | beta 0.1/0.1 | sd 0.5/0.5 | sigma 0.2/0.2 | w 1.0e-05/3.2e-05
+           sigma_true free      1.3229 -19.3885 0.8035 V 3/3 | alpha 1/1 | beta 0.1/0.1 | sd 0.5/0.5 | sigma 0.2/0.2 | w 1.0e-05/3.2e-05
+               sd_eps free      1.2931 -19.4234 0.8047   V 3/3 | alpha 1/1 | beta 0.1/0.1 | sd 1/0.5 | sigma 0.2/0.2 | w 1.0e-05/3.2e-05
+sd_eps and sigma_true free      1.2931 -19.4234 0.8047   V 3/3 | alpha 1/1 | beta 0.1/0.1 | sd 1/0.5 | sigma 0.2/0.2 | w 1.0e-05/3.2e-05
+  prior free, noise shared      1.3229 -19.3885 0.8035 V 3/3 | alpha 1/1 | beta 0.1/0.1 | sd 0.5/0.5 | sigma 0.2/0.2 | w 1.0e-05/3.2e-05
+                  all free      1.2931 -19.4234 0.8047   V 3/3 | alpha 1/1 | beta 0.1/0.1 | sd 1/0.5 | sigma 0.2/0.2 | w 1.0e-05/3.2e-05
+=== 2026-09-24 02:15:09  done

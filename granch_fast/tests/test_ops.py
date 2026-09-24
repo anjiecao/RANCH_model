@@ -139,7 +139,8 @@ def test_package_has_no_hardcoded_laptop_paths():
              + [f"{GF}/metrics.py", f"{GF}/eig.py", f"{GF}/analytic_core.py", f"{GF}/run_fast.py", f"{GF}/linking_mixed.py", f"{GF}/fit_infants.py",
                 f"{ROOT}/pyproject.toml", f"{ROOT}/MODEL_CARD.md"])
     for f in files:
-        if os.path.isdir(f) or f.endswith((".out", ".txt")) or os.path.abspath(f) == os.path.abspath(__file__):   # job logs quote the paths they ran under
+        if (os.path.isdir(f) or f.endswith((".out", ".txt", ".pyc")) or "__pycache__" in f or f"{os.sep}logs{os.sep}" in f
+                or os.path.abspath(f) == os.path.abspath(__file__)):             # job logs quote the paths they ran under; caches are not source
             continue
         for line in open(f, errors="ignore"):
             if "/Users/" in line or "/home/users/" in line:

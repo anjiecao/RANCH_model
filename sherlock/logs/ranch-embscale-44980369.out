@@ -1,0 +1,24 @@
+9721eaf Revision analyses: w boundary, embedding scale, joint scaling (sherlock/diagnostics)
+=== 2026-09-24 01:10:16  embedding_scale.py out_embedding_scale
+{'scale': 1.0, 'inf_w': 0.0, 'inf_r2': 0.7417, 'inf_rmse': 4.0797, 'inf_hab': 0.8729, 'inf_dis': 1.1245, 'inf_exp2_r2': 0.5096, 'inf_exp2_order': 'anim>iden>numb>pose>back', 'adu_w': 0.0001, 'adu_r2': 0.866, 'adu_rmse_ms': 123.8632, 'adu_hab': 0.8205, 'adu_dis': 1.1127, 'adu_first_drop': 0.098, 'adu_exp2_r2': 0.7766, 'adu_exp2_order': 'anim>iden>numb>pose'}
+{'scale': 0.5, 'inf_w': 0.0, 'inf_r2': 0.6534, 'inf_rmse': 4.1933, 'inf_hab': 0.9387, 'inf_dis': 1.0467, 'inf_exp2_r2': 0.526, 'inf_exp2_order': 'anim>iden>numb>pose>back', 'adu_w': 0.0, 'adu_r2': 0.6986, 'adu_rmse_ms': 228.911, 'adu_hab': 0.896, 'adu_dis': 1.041, 'adu_first_drop': 0.0543, 'adu_exp2_r2': 0.5294, 'adu_exp2_order': 'anim>iden>numb>pose'}
+{'scale': 2.0, 'inf_w': 0.0, 'inf_r2': 0.758, 'inf_rmse': 4.0689, 'inf_hab': 0.8788, 'inf_dis': 1.1083, 'inf_exp2_r2': 0.4843, 'inf_exp2_order': 'anim>iden>numb>pose>back', 'adu_w': 0.0001, 'adu_r2': 0.8986, 'adu_rmse_ms': 110.9855, 'adu_hab': 0.728, 'adu_dis': 1.2387, 'adu_first_drop': 0.1352, 'adu_exp2_r2': 0.779, 'adu_exp2_order': 'anim>iden>numb>pose'}
+{'scale': 10.0, 'inf_w': 0.0, 'inf_r2': 0.6387, 'inf_rmse': 4.2281, 'inf_hab': 0.6522, 'inf_dis': 1.2653, 'inf_exp2_r2': 0.482, 'inf_exp2_order': 'iden>anim>numb>pose>back', 'adu_w': 0.0, 'adu_r2': 0.7993, 'adu_rmse_ms': 166.2646, 'adu_hab': 0.5126, 'adu_dis': 1.4165, 'adu_first_drop': 0.2461, 'adu_exp2_r2': 0.3747, 'adu_exp2_order': 'numb>anim>iden>pose'}
+                                       0                         1                         2                         3
+scale                                1.0                       0.5                       2.0                      10.0
+inf_w                                0.0                       0.0                       0.0                       0.0
+inf_r2                            0.7417                    0.6534                     0.758                    0.6387
+inf_rmse                          4.0797                    4.1933                    4.0689                    4.2281
+inf_hab                           0.8729                    0.9387                    0.8788                    0.6522
+inf_dis                           1.1245                    1.0467                    1.1083                    1.2653
+inf_exp2_r2                       0.5096                     0.526                    0.4843                     0.482
+inf_exp2_order  anim>iden>numb>pose>back  anim>iden>numb>pose>back  anim>iden>numb>pose>back  iden>anim>numb>pose>back
+adu_w                             0.0001                       0.0                    0.0001                       0.0
+adu_r2                             0.866                    0.6986                    0.8986                    0.7993
+adu_rmse_ms                     123.8632                   228.911                  110.9855                  166.2646
+adu_hab                           0.8205                     0.896                     0.728                    0.5126
+adu_dis                           1.1127                     1.041                    1.2387                    1.4165
+adu_first_drop                     0.098                    0.0543                    0.1352                    0.2461
+adu_exp2_r2                       0.7766                    0.5294                     0.779                    0.3747
+adu_exp2_order       anim>iden>numb>pose       anim>iden>numb>pose       anim>iden>numb>pose       numb>anim>iden>pose
+=== 2026-09-24 06:22:37  done

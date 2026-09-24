@@ -1,0 +1,39 @@
+9721eaf Revision analyses: w boundary, embedding scale, joint scaling (sherlock/diagnostics)
+=== 2026-09-24 00:05:58  w_boundary.py granch_fast/phase1 out_w_boundary
+INFANTS
+rule                                                grid  setting   w  grid_r2  grid_rmse    hab    dis
+rmse                                         record grid       57 0.0   0.7549     4.0764    NaN    NaN
+rmse                                       extended grid       53 0.0   0.7704     4.0468    NaN    NaN
+  r2                                         record grid       57 0.0   0.7549     4.0764    NaN    NaN
+  r2                                       extended grid       53 0.0   0.7704     4.0468    NaN    NaN
+rmse extended grid, re-evaluated (32 rollouts, seed 877)       53 0.0   0.7725     4.0509 0.9604 1.0357
+ADULTS: grid profile at the record's setting (18)
+ world_EIGs  r2_21  rmse21_cv    bg1   bg11    dev
+      0.000  0.012    371.698 76.073 76.458 76.903
+      0.000  0.480    264.302 69.688 67.250 70.383
+      0.000  0.513    231.450 56.479 50.385 57.204
+      0.000  0.515    248.244 39.844 33.938 40.774
+      0.000  0.362    287.298 26.760 22.177 27.054
+      0.000  0.742    168.871 19.969 17.302 18.304
+      0.000  0.683    204.041 14.125 11.062 12.432
+      0.000  0.510    256.156 10.302  7.146  8.198
+      0.001  0.508    275.860  6.521  4.594  5.607
+      0.003  0.393    300.862  5.104  3.354  3.771
+      0.010  0.207    374.465  3.490  2.365  2.575
+      0.032  0.069    382.957  2.229  1.594  1.803
+      0.100  0.048    374.395  1.583  1.219  1.461
+      0.316  0.040    360.266  1.125  1.062  1.193
+      1.000  0.002    369.624  1.083  1.042  1.078
+      3.162  0.000    360.909  1.000  1.021  1.034
+ADULTS: shortlist on the extended grid (every pair x 4 rollouts)
+ V_prior  alpha_prior  beta_prior  sd_epsilon  sigma_true  world_EIGs  r2_21_grid  r2_21_reeval  rmse21_cv_reeval    hab    dis
+     3.0          1.0         0.1         0.5         0.1      0.0001      0.6942        0.8709          127.6362 0.8141 1.1192
+     3.0          1.0         0.1         1.0         0.1      0.0001      0.6828        0.8696          134.1866 0.8067 1.1156
+     3.0          1.0         0.1         1.0         0.1      0.0000      0.7418        0.8395          147.4789 0.8463 1.1209
+     1.0          1.0         0.1         0.5         0.1      0.0000      0.7214        0.7878          160.4659 0.7772 1.1429
+     1.0          1.0         0.1         1.0         0.1      0.0000      0.7077        0.7816          160.6895 0.7750 1.1486
+     3.0          1.0         0.1         0.5         0.2      0.0000      0.8011        0.8060          162.0521 0.8876 1.1030
+ADULTS: winners on independent seeds
+rule  V_prior  alpha_prior  beta_prior  sd_epsilon  sigma_true  world_EIGs  r2_21_grid  r2_21_reeval  rmse21_cv_reeval    hab    dis  r2_mc_lo  r2_mc_hi
+  r2      3.0          1.0         0.1         0.5         0.1      0.0001      0.6942        0.8585          127.7838 0.8195 1.1149    0.8175    0.8794
+=== 2026-09-24 06:33:12  done
