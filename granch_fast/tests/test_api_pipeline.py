@@ -50,6 +50,10 @@ def test_restricted_runs_keep_the_other_variables_rows(tmp_path):
     assert list(out.metric) == ["a", "b", "c"] and list(out.x) == [1, 9, 8] and pd.read_csv(fn).equals(out)
     out = merge_write(pd.DataFrame(dict(metric=["z"], x=[0])), fn, None)                  # unrestricted: overwrite
     assert list(pd.read_csv(fn).metric) == ["z"]
+    w = list(np.logspace(-7, -1, 19)); pd.DataFrame(dict(metric="a", w=w)).to_csv(fn, index=False)     # the other rows' text is kept
+    before = open(fn).read()
+    merge_write(pd.DataFrame(dict(metric=["b"], w=[1.0])), fn, ["b"])
+    assert open(fn).read().startswith(before.rstrip("\n"))
 
 
 def test_spec_quadrature_per_population():

@@ -33,7 +33,7 @@ import pandas as pd
 before, T, V = sys.argv[1:]
 for f in ("infant_scores_selfcons_base.csv", "infant_scores_selfcons_ext.csv", "infant_winners.csv", "adult_preds_selfcons_ext.csv",
           "adult_shortlist.csv", "adult_winners.csv", "phase2_selfcons_results.csv"):
-    old, new = pd.read_csv(f"{before}/{f}"), pd.read_csv(f"{T}/{f}")
+    old, new = pd.read_csv(f"{before}/{f}", float_precision="round_trip"), pd.read_csv(f"{T}/{f}", float_precision="round_trip")
     keep_old, keep_new = old[old.metric != V].reset_index(drop=True), new[new.metric != V].reset_index(drop=True)
     sort = [c for c in ("setting", "metric", "world_EIGs", "rule") if c in keep_old]
     pd.testing.assert_frame_equal(keep_new.sort_values(sort).reset_index(drop=True), keep_old.sort_values(sort).reset_index(drop=True),

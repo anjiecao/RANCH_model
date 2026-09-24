@@ -52,7 +52,7 @@ def merge_write(df, fn, metrics, sort=None):
     variable added to an existing record). Returns what was written."""
     if metrics and os.path.exists(fn):
         try:
-            old = pd.read_csv(fn)
+            old = pd.read_csv(fn, float_precision="round_trip")      # the default parser can move a float by an ulp
         except pd.errors.EmptyDataError:
             old = pd.DataFrame()
         if len(old) and "metric" in old:
