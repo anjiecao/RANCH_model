@@ -1,0 +1,26 @@
+9bb5d0d merge_write: read with round-trip float precision so untouched rows keep their exact text
+=== 2026-09-23 20:58:33  check inputs
+inputs verified: 15 files match the data manifest
+=== 2026-09-23 20:58:36  snapshot to /home/users/mcfrank/ranch/snapshots/44981351_before
+=== 2026-09-23 20:58:37  grid selfcons base kl_concept
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1/infant_traj_selfcons_kl_concept.npz (16, 480, 8, 1, 40)
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1/infant_scores_selfcons_base.csv (2224 rows)
+=== 2026-09-23 21:06:06  grid selfcons ext kl_concept
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1/infant_traj_selfcons_ext_kl_concept.npz (80, 480, 8, 1, 40)
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1/infant_scores_selfcons_ext.csv (11120 rows)
+=== 2026-09-23 21:35:15  winners infants kl_concept
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1/infant_winners.csv (7 rows, 2 new)
+  kl_concept   [r2] grid 0.761 -> re-evaluated 0.703 (hab 0.90 dis 1.08)
+  kl_concept   [rmse] grid 0.725 -> re-evaluated 0.662 (hab 0.92 dis 1.05)
+=== 2026-09-23 21:39:42  adults ext kl_concept
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1/adult_preds_selfcons_ext.csv (2176 rows)
+saved adult_scores_selfcons_ext.csv / adult_scores21_selfcons_ext.csv
+=== 2026-09-23 23:31:22  winners adults kl_concept
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1/adult_shortlist.csv (11 cells re-evaluated)
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1/adult_winners.csv (8 rows, 1 new)
+  kl_concept   [r2] grid 0.621 -> re-evaluated 0.818 (hab 0.84 dis 1.12)
+=== 2026-09-24 04:53:35  phase2 selfcons kl_concept
+saved /home/users/mcfrank/ranch/RANCH_model/granch_fast/phase1/phase2_selfcons_results.csv (2 rows)
+  [kl_concept | paper] infants Exp1 R2 0.725 -> Exp2 R2 0.458 (anim>iden>numb>pose>back); adults Exp1 0.818 -> Exp2 0.728 (anim>iden>numb>pose)
+  [kl_concept | r2] infants Exp1 R2 0.761 -> Exp2 R2 0.438 (anim>iden>numb>pose>back); adults Exp1 0.818 -> Exp2 0.728 (anim>iden>numb>pose)
+=== 2026-09-24 05:48:05  done
