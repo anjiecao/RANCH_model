@@ -12,18 +12,22 @@ def _scores():
             "V_prior", "alpha_prior", "beta_prior", "sd_epsilon", "sigma_true"]
     rows = [
         [0, "mi", 1e-4, 1.0, 0.90, -0.95, 20, 10, 12, 3, 1, 0.1, 0.5, 0.1],   # inverted: excluded despite the best R2/RMSE
-        [1, "mi", 1e-4, 2.0, 0.60, +0.77, 480, 470, 480, 3, 1, 0.1, 0.5, 0.1],  # saturated: excluded
-        [2, "mi", 1e-4, 2.5, 0.50, +0.71, 20, 15, 18, 3, 1, 0.1, 0.5, 0.1],   # best R2 among admissible
-        [3, "mi", 1e-4, 2.2, 0.40, +0.63, 20, 14, 17, 3, 1, 0.1, 0.5, 0.1],   # best RMSE among admissible
+        [1, "mi", 1e-4, 2.0, 0.60, +0.77, 480, 470, 480, 3, 1, 0.1, 0.5, 0.1],  # long looker: admissible (no cap since 2026-09-24)
+        [2, "mi", 1e-4, 2.5, 0.50, +0.71, 20, 15, 18, 3, 1, 0.1, 0.5, 0.1],
+        [3, "mi", 1e-4, 2.2, 0.40, +0.63, 20, 14, 17, 3, 1, 0.1, 0.5, 0.1],
+        [5, "mi", 1e-4, 0.5, 0.95, +0.97, 20, 1.01, 18, 3, 1, 0.1, 0.5, 0.1],  # collapsed (one sample of everything): excluded
         [4, "kl", 1e-4, 2.1, 0.45, +0.67, 20, 14, 17, 3, 1, 0.1, 0.5, 0.1],
     ]
     return pd.DataFrame(rows, columns=cols)
 
 
-def test_select_infant_applies_sign_and_saturation_filters():
+def test_select_infant_applies_sign_and_collapse_filters_but_no_saturation_filter():
+    """Looking has no cap (pipeline.INFANT_CAP), so a long looker is admissible; inverted and collapsed rows are not."""
     sc = _scores()
-    assert int(select_infant(sc, "mi", "r2").row.setting) == 2
-    assert int(select_infant(sc, "mi", "rmse").row.setting) == 3
+    assert int(select_infant(sc, "mi", "r2").row.setting) == 1
+    assert int(select_infant(sc, "mi", "rmse").row.setting) == 1
+    assert int(select_infant(sc[sc.setting != 1], "mi", "r2").row.setting) == 2
+    assert int(select_infant(sc[sc.setting != 1], "mi", "rmse").row.setting) == 3
     assert int(select_infant(sc, "kl", "r2").row.setting) == 4
     assert select_infant(sc, "surprisal_b", "r2") is None
 
@@ -35,7 +39,7 @@ def test_stochastic_selection_is_unquotable_until_reevaluated():
         sel.quote()
     assert "UNQUOTABLE" in sel.describe()
     det = select_infant(_scores(), "mi", "r2", stochastic=False)
-    assert det.quotable and det.quote()["setting"] == 2
+    assert det.quotable and det.quote()["setting"] == 1
 
 
 def test_select_adult_filters():

@@ -61,8 +61,10 @@ class Selection:
 
 
 def select_infant(scores, metric, rule="rmse", kind="selfcons_base", stochastic=True):
-    """Best sign-consistent (pooled_r > 0), non-saturated (bg1 < 450, bg10 > 1.02) row."""
-    g = scores[(scores.metric == metric) & (scores.pooled_r > 0) & (scores.pred_bg1 < 450) & (scores.pred_bg10 > 1.02)]
+    """Best sign-consistent (pooled_r > 0), non-collapsed (familiar looking after nine exposures > 1.02 samples) row.
+    No saturation filter since 2026-09-24: looking has no cap (pipeline.INFANT_CAP), so nothing saturates; before, rows
+    with bg1 >= 450 of the 500-sample cap were excluded."""
+    g = scores[(scores.metric == metric) & (scores.pooled_r > 0) & (scores.pred_bg10 > 1.02)]
     g = g.dropna(subset=["pooled_rmse", "pooled_r2"])
     if g.empty:
         return None
@@ -102,10 +104,14 @@ def _infant_chunk(args):
     return lo, hi, out
 
 
-def reevaluate_infant(sel, rollouts=32, seed=777, T_max=40, window="exemplar_mean", procs=8, n_groups=4, rows=None):
+def reevaluate_infant(sel, rollouts=32, seed=777, T_max=None, window="exemplar_mean", procs=8, n_groups=4, rows=None, cap=None):
     """Re-run the selected (setting, w) on `rollouts` fresh, explicitly seeded rollouts of every
     Exp-1 stimulus row and score it with the split-half protocol; also the SD of R2 over
-    n_groups disjoint rollout groups (the sampling error of a grid cell). Fills sel.reevaluated."""
+    n_groups disjoint rollout groups (the sampling error of a grid cell). T_max / cap default to the protocol's
+    (pipeline.INFANT_T_MAX, INFANT_CAP); the share of looking past the simulated samples is reported. Fills sel.reevaluated."""
+    from .pipeline import INFANT_T_MAX, INFANT_CAP
+    T_max = T_max or INFANT_T_MAX["noisy"]
+    cap = INFANT_CAP if cap is None else cap
     trials = data.load_trials()
     rows = trials.to_dict("records") if rows is None else rows
     meta = pd.DataFrame(rows)[["trial_type", "trial_number"]]
@@ -122,13 +128,17 @@ def reevaluate_infant(sel, rollouts=32, seed=777, T_max=40, window="exemplar_mea
 
     def score(tr):
         from granch_fast.metrics import expected_samples
-        es = np.array([[expected_samples(tr[r, k], w) for k in range(tr.shape[1])] for r in range(tr.shape[0])]).mean(1)
+        E = np.array([[expected_samples(tr[r, k], w, max_obs=cap) for k in range(tr.shape[1])] for r in range(tr.shape[0])])
+        p = np.clip(w / (tr + w), 0.0, 1.0)                                          # the part of E within the simulated samples
+        within = np.concatenate([np.ones(tr.shape[:2] + (1,)), np.cumprod(1.0 - p, axis=-1)], axis=-1)[..., :-1].sum(-1)
+        es = E.mean(1)
         by_row = meta.assign(es=es).groupby(["trial_type", "trial_number"]).es
         cond = by_row.mean().reset_index().rename(columns={"es": "mean_sample"})
         out = split_half_cv(cond, human_cm)
         bg = cond[cond.trial_type == "background"].set_index("trial_number").mean_sample
         dv = cond[cond.trial_type == "deviant"].set_index("trial_number").mean_sample
-        out.update(hab=float(bg.get(10, np.nan) / bg.get(1, np.nan)), dis=float(dv.get(10, np.nan) / bg.get(10, np.nan)))
+        out.update(hab=float(bg.get(10, np.nan) / bg.get(1, np.nan)), dis=float(dv.get(10, np.nan) / bg.get(10, np.nan)),
+                   past_sim=float(1.0 - within.mean() / E.mean()))
         out["curve"] = {**{f"bg_{int(tn)}": float(v) for tn, v in bg.items()},       # native condition means, no linking
                         **{f"dev_{int(tn)}": float(v) for tn, v in dv.items()}}
         cse = by_row.sem()                                                            # over a condition's stimulus rows (24 each)
@@ -257,9 +267,9 @@ SETTING_COLS = ("V_prior", "alpha_prior", "beta_prior", "sd_epsilon", "sigma_tru
 
 
 def infant_winners(scores, kind, metrics=None, rules=("r2", "rmse"), rollouts=32, seed=777, window="exemplar_mean", procs=8,
-                   n_groups=4, rows=None, T_max=40, only=None):
+                   n_groups=4, rows=None, T_max=None, only=None, cap=None):
     """Stage B for a stochastic infant grid: each decision variable's best sign-consistent,
-    non-saturated row (by `rule`) re-evaluated on fresh rollouts. One row per metric with the
+    non-collapsed row (by `rule`) re-evaluated on fresh rollouts. One row per metric with the
     grid numbers, the honest numbers, the R2 SD over disjoint rollout groups, and the native
     condition-mean curve (bg_1..bg_10, dev_1..dev_10). Seeds are [seed + i, row, rollout] with i
     the index of the winner's setting among the distinct winning settings in metric order --
@@ -283,12 +293,13 @@ def infant_winners(scores, kind, metrics=None, rules=("r2", "rmse"), rollouts=32
     for sel, ci in sels:
         if only is not None and sel.metric not in only:
             continue
-        reevaluate_infant(sel, rollouts=rollouts, seed=seed + ci, T_max=T_max, window=window, procs=procs, n_groups=n_groups, rows=rows)
+        reevaluate_infant(sel, rollouts=rollouts, seed=seed + ci, T_max=T_max, window=window, procs=procs, n_groups=n_groups, rows=rows,
+                          cap=cap)
         r, q = sel.row, sel.reevaluated
         out.append(dict(metric=sel.metric, rule=sel.rule, setting=int(r.setting), world_EIGs=float(r.world_EIGs),
                         **{c: float(r[c]) for c in SETTING_COLS if c in r.index},
                         grid_r2=q["grid_r2"], grid_rmse=q["grid_rmse"], r2=q["r2"], r=q["r"], rmse=q["rmse"],
-                        hab=q["hab"], dis=q["dis"], r2_group_sd=q["r2_group_sd"], rollouts=rollouts, seed=seed + ci,
+                        hab=q["hab"], dis=q["dis"], looking_past_simulation=q["past_sim"], r2_group_sd=q["r2_group_sd"], rollouts=rollouts, seed=seed + ci,
                         window=window, **q["curve"], **q.get("curve_se", {})))
     return pd.DataFrame(out)
 

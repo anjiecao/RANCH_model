@@ -50,7 +50,8 @@ def test_infant_winners_reproduce_phase1c_trajectories(emb, sub_rows):
     S = settings_table("selfcons_ext")
     s = S[(S.V_prior == 3) & (S.alpha_prior == 1) & (S.beta_prior == 0.1) & (S.sd_epsilon == 1.0) & np.isclose(S.sigma_true, 0.2)].iloc[0]
     scores = pd.DataFrame([_score_row(0, "mi_concept", 1e-5, **s.to_dict()), _score_row(0, "kl", 4.6e-5, **s.to_dict())])
-    w = selection.infant_winners(scores, "selfcons_ext", metrics=("kl", "mi_concept"), rollouts=4, seed=777, procs=2, n_groups=2, rows=sub_rows, T_max=12)
+    w = selection.infant_winners(scores, "selfcons_ext", metrics=("kl", "mi_concept"), rollouts=4, seed=777, procs=2, n_groups=2, rows=sub_rows, T_max=12,
+                                 cap=pipeline.LEGACY_INFANT["cap"])                 # the legacy stage-B cap of 500
     assert list(w.metric) == ["kl", "mi_concept"] and (w.seed == 777).all()      # one distinct setting -> chunk index 0 for both
     P1C._init(sub_rows)
     ci, lo, hi, tr = P1C._chunk((0, s.to_dict(), 0, len(sub_rows), 777, "exemplar_mean", 4))
@@ -119,7 +120,8 @@ def test_phase2_reproduces_run_phase2_selfcons(emb, monkeypatch):
     adu = pd.DataFrame([dict(setting=0, metric="mi_concept", world_EIGs=3.2e-5, r2_21=0.69, rmse21_cv=192.0, b21=200.0, bg1=24.0, bg11=17.5, dev=20.7, **sa.to_dict())])
     monkeypatch.setitem(pipeline.PAIRS, "exp2_adults", 6)                        # the legacy worker samples 6 pairs per violation type
     monkeypatch.setattr(RP2, "make_cfg", lambda r: adult_legacy_cfg(r) if float(r["sd_epsilon"]) == 0.5 else selfcons_make_cfg(r))   # the adult row (sd_eps .5) at the production adult quadrature; the infant row untouched
-    ours = pipeline.phase2(inf, adu, "selfcons_ext", "adult_ext", ["mi_concept"], rules=("paper",), rollouts_inf=1, rollouts_adu=1, procs=1).iloc[0]
+    ours = pipeline.phase2(inf, adu, "selfcons_ext", "adult_ext", ["mi_concept"], rules=("paper",), rollouts_inf=1, rollouts_adu=1, procs=1,
+                           infant_protocol=dict(T_max=60, cap=pipeline.LEGACY_INFANT["cap"])).iloc[0]   # the legacy worker's horizon and cap
     RP2._init(); RP2._EMB = emb
     theirs = RP2._one(("mi_concept", "paper", inf.iloc[0], adu.iloc[0], "exemplar_mean", 1, 1))
     h_inf, h_adu = P2.human_infant_exp2(), P2.human_adult_exp2()

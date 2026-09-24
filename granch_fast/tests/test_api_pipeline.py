@@ -41,6 +41,30 @@ def test_infant_grid_variable_subset_equals_the_full_run(sub_rows):
     assert np.array_equal(part["traj"][..., 0, :], full["traj"][..., full["metrics"].index("kl_concept"), :])
 
 
+def test_infant_protocol_defaults(sub_rows):
+    """Protocol of 2026-09-24: noisy infant trials simulated for 200 samples (pipeline.INFANT_T_MAX), looking not capped
+    (INFANT_CAP). The grid draws a setting's trials from one stream (the legacy driver's convention), so a longer horizon
+    is a fresh draw for every trajectory after the first, not an extension; the re-evaluations seed each trajectory
+    separately ([seed, row, rollout]), so there a longer horizon only appends samples."""
+    assert pipeline.INFANT_T_MAX == {"noisy": 200, "deterministic": 60} and np.isinf(pipeline.INFANT_CAP)
+    S = settings_table("selfcons_ext").iloc[[5]]
+    g = pipeline.infant_grid("selfcons_ext", rollouts=1, procs=1, settings=S, rows=sub_rows[:1], metrics=("mi_concept",))
+    assert g["traj"].shape[-1] == 200
+
+
+def test_infant_looking_has_no_cap():
+    """No cap: past the simulated samples the tail is the geometric series at the last value summed to infinity, the
+    limit of ever larger caps; the old cap of 500 truncates it."""
+    traj = np.sort(np.random.default_rng(3).uniform(1e-4, 1e-2, 30))[::-1]
+    w = 1e-7
+    p = w / (traj + w)
+    surv = np.concatenate([[1.0], np.cumprod(1 - p)])
+    closed = surv[:30].sum() + surv[30] / p[-1]
+    assert M.expected_samples(traj, w, max_obs=np.inf) == pytest.approx(closed, rel=1e-12)
+    assert M.expected_samples(traj, w, max_obs=10 ** 8) == pytest.approx(closed, rel=1e-9)
+    assert M.expected_samples(traj, w, max_obs=500) < 0.9 * closed
+
+
 def test_restricted_runs_keep_the_other_variables_rows(tmp_path):
     """merge_write: a run restricted to some variables replaces their rows and keeps everyone else's."""
     from ranch.__main__ import merge_write
@@ -91,10 +115,11 @@ def test_infant_grid_selfcons_matches_legacy_driver(emb, sub_rows):
     assert np.array_equal(g["traj"][0], ref)
 
 
-def test_score_infant_matches_legacy_scorer(emb, sub_rows):
+def test_score_infant_matches_legacy_scorer(emb, sub_rows, monkeypatch):
+    monkeypatch.setitem(pipeline.W_INFANT["selfcons"], "mi_concept", np.logspace(-5, 0, 19))   # the legacy scorer's w grid
     S = settings_table("selfcons_base").iloc[[3]]
     g = pipeline.infant_grid("selfcons_base", rollouts=2, T_max=8, procs=1, settings=S, rows=sub_rows, metrics=P1S.WANT)   # the scorer's variables
-    ours = pipeline.score_infant(g, procs=1)
+    ours = pipeline.score_infant(g, procs=1, cap=pipeline.LEGACY_INFANT["cap"])      # the legacy scorer's cap of 500
     SPS._init((g["meta"], data.infant_condition_means(), data.load_infant_exp1(), g["metrics"]))
     theirs = pd.DataFrame(SPS._score_one((0, S.iloc[0], g["traj"][0])))
     assert len(ours) == len(theirs)
@@ -164,7 +189,7 @@ def test_exp2_predictions_match_legacy(emb):
     saved = RP2.R_INF, RP2.R_ADU
     RP2.R_INF, RP2.R_ADU = 1, 1                      # the legacy functions read their rollout counts from module constants
     try:
-        ours = pipeline.exp2_infants(sp, "mi", 3e-5, rollouts=1, seed=11, T_max=20, durations=(8,), emb=emb)
+        ours = pipeline.exp2_infants(sp, "mi", 3e-5, rollouts=1, seed=11, T_max=20, durations=(8,), emb=emb, cap=pipeline.LEGACY_INFANT["cap"])
         theirs = RP2.infant_exp2_mc(cfg, grid, emb, "mi", 0.0, 3e-5, 0.1, seed=11, T_max=20, durations=(8,), window="exemplar_mean")
         assert ours == theirs
         cfg.max_observation = 80

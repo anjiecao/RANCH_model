@@ -10,12 +10,14 @@
 # (ENGINEERING_PLAN §4, Phase B step 3). Stages and their legacy equivalents are documented in
 # ranch/pipeline.py; the chain is smoke-tested end to end by sherlock/smoke_pipeline.sh.
 # Rough timings on the 24-core owner node: infant grids main 4 min, infeps 10 min, selfcons
-# base 42 min, ext 2.7 h, lesion 5 min; adults main 20 min, base 1.7 h, ext 5 h, lesion 15 min;
+# base 42 min, ext 2.7 h, lesion 5 min (noisy infant trials at 40 samples; about 5x since 2026-09-24, 200 samples:
+# pipeline.INFANT_T_MAX); adults main 20 min, base 1.7 h, ext 5 h, lesion 15 min;
 # winners 35 min + 25 min (adults at 512 rollouts per pair); phase 2 about 1.5 h (Exp-2 adults at 512 rollouts per
 # pair: ranch.pipeline.ROLLOUTS); figures 15 min -- about 14 h in all.
 # Set STAGES to a subset (space-separated) to rerun part of the chain; `adults` is all three adult
-# sweeps, adults-main / adults-base / adults-ext one of them; likewise winners(-infants|-adults) and
-# phase2(-main|-selfcons). Not part of the default chain: `snapshot` (copy every table aside first),
+# sweeps, adults-main / adults-base / adults-ext one of them; likewise infants(-deterministic|-base|-ext|-score: the
+# grids main + infeps, selfcons base, selfcons ext, and scoring all four), winners(-infants|-adults),
+# phase2(-main|-selfcons) and lesion(-infants|-adults). Not part of the default chain: `snapshot` (copy every table aside first),
 # `adults-nu` (the nu < 1 extension of the noisy adult grid), `adults-beta` (the beta < .1 extension) and `add-variable`
 # (VARIABLE=kl_concept: one decision variable computed alone into the record's tables, seeded as a full chain). ADULT_WHICH
 # chooses the adult sweep that the adult winners and the noisy Phase 2 work from (selfcons_ext = the record;
@@ -50,11 +52,17 @@ if has snapshot; then
   SNAP=$RANCH_ROOT/snapshots/${SLURM_JOB_ID:-manual}_before
   step snapshot to $SNAP;     mkdir -p $SNAP/phase1 && cp -p granch_fast/phase1/*.csv $SNAP/phase1/ && cp -p granch_fast/*.csv $SNAP/
 fi
-if has infants; then
+if has infants || has infants-deterministic; then
   step grid main;             R grid --kind main
   step grid infeps;           R grid --kind infeps
+fi
+if has infants || has infants-base; then
   step grid selfcons base;    R grid --kind selfcons_base
+fi
+if has infants || has infants-ext; then
   step grid selfcons ext;     R grid --kind selfcons_ext
+fi
+if has infants || has infants-score; then
   step score infants;         R score --kind main
                               R score --kind infeps
                               R score --kind selfcons_base
@@ -104,10 +112,12 @@ if has add-variable; then      # a decision variable added to the record (VARIAB
   step winners adults $V;     R winners --population adults --which selfcons_ext --pairs all --shortlist 10 --only $V
   step phase2 selfcons $V;    R phase2 --kind selfcons --which selfcons_ext --rules paper,r2 --adult-cells winners --metrics $V
 fi
-if has lesion; then           # the no-noise-learner lesion under the adult protocol of 2026-09-18, re-evaluated like the record
+if has lesion || has lesion-infants; then     # the no-noise-learner lesion, re-evaluated like the record
   step lesion infants;        R grid --kind lesion_infants --rollouts 16
                               R score --kind lesion_infants
                               R winners --population infants --kind lesion_infants --rollouts 32
+fi
+if has lesion || has lesion-adults; then      # under the adult protocol of 2026-09-18
   step lesion adults;         R adults --kind lesion_adults --mode stochastic --pairs 96 --rollouts 1
                               R score-adults --which lesion
                               R winners --population adults --which lesion --pairs all --shortlist 11

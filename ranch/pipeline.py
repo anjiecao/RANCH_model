@@ -26,7 +26,9 @@ W_INFANT = {
              "mi": np.logspace(-5, 0, 25), "surprisal": np.logspace(-2.5, 2, 25), "surprisal_b": np.logspace(-2.5, 2, 25)},
     "selfcons": {"eig_code": np.logspace(-7, -1, 19), "kl": np.logspace(-7, -1, 19), "mi": np.logspace(-5, 0, 19),
                  "surprisal": np.logspace(-2.5, 2, 19), "surprisal_b": np.logspace(-2.5, 2, 19),
-                 "mi_concept": np.logspace(-5, 0, 19),
+                 # the concept EIG: extended two decades below the record's 1e-5..1 (2026-09-24), where its winner sat at the edge
+                 # (analysis G); the record's points are kept, so every earlier cell is still on the grid
+                 "mi_concept": np.concatenate([np.logspace(-7, -5, 8)[:-1], np.logspace(-5, 0, 19)]),
                  # the concept KL (2026-09-23): 1/3-decade steps like the others, over a wider range -- the concept EIG's
                  # winners sat at the lower edge of theirs; w costs nothing here (the stopping time is integrated at scoring)
                  "kl_concept": np.logspace(-9, -1, 25)},
@@ -63,6 +65,17 @@ MAX_D = 10
 # only) keep 96 trajectories per cell, now 96 pairs x 1 rollout. None = every pair.
 PAIRS = {"adult_grid": 96, "adult_winners": None, "exp2_adults": None}
 ROLLOUTS = {"infant_winners": 32, "adult_grid": 1, "adult_winners": 4, "exp2_infants": 8, "exp2_adults": 12}
+# Infant looking (protocol of 2026-09-24): the expected number of samples under the Luce rule with NO upper limit, from
+# decision-variable trajectories simulated for INFANT_T_MAX samples of the test stimulus; past them the tail is integrated
+# at the last simulated value (exact for the deterministic worlds, whose trajectories plateau). Until then noisy worlds were
+# simulated for 40 samples and looking capped at 500: at the lowest w the paper's rule then picked whichever cell saturated
+# at the cap (cap 500 or 5000 alike), a quarter of the fitted cell's looking lay past the simulated samples, and a
+# saturation filter (first presentation < 450 samples) had to exclude cells (sherlock/diagnostics/infant_cap_check.py,
+# infant_cap_selection.py). With no cap that filter has nothing to act on and is gone. LEGACY_INFANT is the old protocol
+# (the identity tests against the legacy drivers pass it explicitly).
+INFANT_T_MAX = {"noisy": 200, "deterministic": 60}
+INFANT_CAP = np.inf
+LEGACY_INFANT = dict(T_max=40, cap=500)
 
 _EMB = None
 
@@ -96,7 +109,7 @@ def infant_grid(kind, rollouts=None, T_max=None, window="exemplar_mean", procs=8
     S = settings_table(kind) if settings is None else settings.reset_index(drop=True)
     noisy = kind.startswith(("selfcons", "lesion"))
     rollouts = rollouts or ({"selfcons_base": 8, "selfcons_ext": 8, "lesion_infants": 16}.get(kind, 1))
-    T_max = T_max or (40 if noisy else 60)
+    T_max = T_max or INFANT_T_MAX["noisy" if noisy else "deterministic"]
     seed0 = 1000 if kind == "selfcons_base" else 20000
     trials = data.load_trials()
     rows = trials.to_dict("records") if rows is None else rows
@@ -129,7 +142,7 @@ def _score_init(ctx):
 
 def _score_setting(args):
     si, s, kind, tr_all = args                            # tr_all: (rows, R, M, T)
-    meta, human_cm, human_long, metrics, w_grid = _CTX
+    meta, human_cm, human_long, metrics, w_grid, cap = _CTX
     sp = spec(s, kind)
     rows = []
     for dm, wg in w_grid.items():
@@ -137,7 +150,7 @@ def _score_setting(args):
         off = sp.surprisal_offset if dm == "surprisal_b" else 0.0
         tr = tr_all[:, :, metrics.index(base), :].astype(float) + off
         for w in wg:
-            es = np.array([[expected_samples(tr[r, k], w) for k in range(tr.shape[1])] for r in range(tr.shape[0])]).mean(1)
+            es = np.array([[expected_samples(tr[r, k], w, max_obs=cap) for k in range(tr.shape[1])] for r in range(tr.shape[0])]).mean(1)
             cond = meta.assign(es=es).groupby(["trial_type", "trial_number"]).es.mean().reset_index().rename(columns={"es": "mean_sample"})
             sh = split_half_cv(cond, human_cm)
             wf = within_subject(human_long, cond, ["trial_type", "trial_number"], subject_col="subject", lt_col="LT", n_folds=10)
@@ -149,13 +162,14 @@ def _score_setting(args):
     return rows
 
 
-def score_infant(g, procs=8):
-    """Pooled split-half and within-subject linkings for every setting x variable x w."""
+def score_infant(g, procs=8, cap=INFANT_CAP):
+    """Pooled split-half and within-subject linkings for every setting x variable x w (looking capped at `cap` samples:
+    none since 2026-09-24, see INFANT_CAP)."""
     kind = g["kind"]
     traj = g["traj"] if traj_is_5d(g) else g["traj"][:, :, None]
     w_grid = W_INFANT["selfcons" if kind.startswith("selfcons") else kind]
     w_grid = {m: w for m, w in w_grid.items() if ("surprisal" if m == "surprisal_b" else m) in g["metrics"]}
-    ctx = (g["meta"], data.infant_condition_means(), data.load_infant_exp1(), list(g["metrics"]), w_grid)
+    ctx = (g["meta"], data.infant_condition_means(), data.load_infant_exp1(), list(g["metrics"]), w_grid, cap)
     jobs = ((si, g["settings"].iloc[si], kind, traj[si]) for si in range(traj.shape[0]))
     with Pool(procs, initializer=_score_init, initargs=(ctx,)) as pool:
         rows = [r for rs in pool.imap_unordered(_score_setting, jobs, chunksize=1) for r in rs]
@@ -269,13 +283,13 @@ def score_adult(preds, human=None):
 # prediction comes with its Monte-Carlo standard error and the fit with a bootstrap interval (plan §0 #14: noise in a model's
 # condition means attenuates its R2). Units run serially (bit-identical to the legacy loops) or, with procs > 1, in a Pool.
 def _exp2_infant_unit(args):
-    sp, metric, w, vi, pi, fam, test, D, rollouts, seed, T_max = args
+    sp, metric, w, vi, pi, fam, test, D, rollouts, seed, T_max, cap = args
     var, off = variable_for(metric, sp)
     vals = []
     for rr in range(rollouts):
         world = World(sp.sigma_true, seed=[seed, vi, pi, D, rr] if sp.sigma_true > 0 else None)
         res = forced_exposure_then_test(sp.model, world, _EMB[fam], _EMB[test], D, T_max=T_max, variables=(var,))
-        vals.append(res.expected_samples(var, w, offset=off))
+        vals.append(res.expected_samples(var, w, offset=off, max_obs=cap))
     return np.array(vals, float)
 
 
@@ -299,17 +313,19 @@ def _run_units(fn, units, emb, procs):
     return [fn(u) for u in units]
 
 
-def exp2_infants(sp, metric, w, rollouts=1, seed=11, T_max=60, durations=(8, 9), emb=None, procs=1, mc=False):
+def exp2_infants(sp, metric, w, rollouts=1, seed=11, T_max=None, durations=(8, 9), emb=None, procs=1, mc=False, cap=INFANT_CAP):
     """E[test samples] by violation type, carried parameters (mean over 6 pairs x durations x
-    rollouts). Seeds [seed, vt, pair, D, rollout] as run_phase2_selfcons.infant_exp2_mc.
+    rollouts). Seeds [seed, vt, pair, D, rollout] as run_phase2_selfcons.infant_exp2_mc. T_max / cap: INFANT_T_MAX,
+    INFANT_CAP (the legacy runs: 60 samples, cap 500).
     mc=True also returns {vt: [per-unit arrays of per-rollout values]} for standard errors and bootstraps."""
+    T_max = T_max or INFANT_T_MAX["noisy" if sp.sigma_true > 0 else "deterministic"]
     emb = data.load_embeddings() if emb is None else emb
     pairs = data.load_exp2_infant_pairs()
     units, owner = [], []
     for vi, vt in enumerate(data.VIOLATION_TYPES):
         for pi, r in enumerate(pairs[pairs.violation_type == vt].itertuples(index=False)):
             for D in durations:
-                units.append((sp, metric, w, vi, pi, r.fam, r.test, D, rollouts, seed, T_max)); owner.append(vt)
+                units.append((sp, metric, w, vi, pi, r.fam, r.test, D, rollouts, seed, T_max, cap)); owner.append(vt)
     res = _run_units(_exp2_infant_unit, units, emb, procs)
     by_vt = {vt: [v for v, o in zip(res, owner) if o == vt] for vt in data.VIOLATION_TYPES}
     out = {vt: float(np.mean(np.concatenate(by_vt[vt]))) for vt in data.VIOLATION_TYPES}
@@ -393,13 +409,13 @@ def exp2_adult_units(by_vt):
 
 
 # ---------------------------------------------------------------- Phase 2: Exp-1 -> Exp-2 with carried parameters
-def _infant_cond_means(g, si, metric, w, window="exemplar_mean"):
-    """Exp-1 condition means (native E[samples]) of one cell of a deterministic infant grid."""
+def _infant_cond_means(g, si, metric, w, window="exemplar_mean", cap=INFANT_CAP):
+    """Exp-1 condition means (native E[samples], looking capped at `cap`) of one cell of a deterministic infant grid."""
     from .settings import variable_for as _vf
     sp = spec(g["settings"].iloc[si], g["kind"], window)
     var, off = _vf(metric, sp)
     tr = g["traj"][si][:, g["metrics"].index(var.key), :].astype(float) + off
-    es = np.array([expected_samples(tr[r], w) for r in range(tr.shape[0])])
+    es = np.array([expected_samples(tr[r], w, max_obs=cap) for r in range(tr.shape[0])])
     return g["meta"].assign(es=es).groupby(["trial_type", "trial_number"]).es.mean().reset_index().rename(columns={"es": "mean_sample"})
 
 
@@ -439,7 +455,7 @@ def _setting_label(row, stochastic):
 
 
 def _phase2_job(args, procs=1):
-    metric, rule, inf_row, inf_kind, adu_row, adu_kind, window, stochastic, r_inf, r_adu, carry = args
+    metric, rule, inf_row, inf_kind, adu_row, adu_kind, window, stochastic, r_inf, r_adu, carry, inf_protocol = args
     from .linking import scaled_fit
     emb = _EMB if _EMB is not None else data.load_embeddings()
     h_inf, h_adu = data.load_exp2_human_infants(), data.load_exp2_human_adults()
@@ -449,7 +465,7 @@ def _phase2_job(args, procs=1):
     if inf_row is not None:
         sp = spec(inf_row, inf_kind, window)
         pred, draws = exp2_infants(sp, metric, float(inf_row.world_EIGs), rollouts=(r_inf if stochastic else 1), seed=11, emb=emb,
-                                   procs=procs, mc=True)
+                                   procs=procs, mc=True, **inf_protocol)
         fi = scaled_fit(pred, h_inf, VT, carry=carry)
         if stochastic and r_inf > 1:
             mcf = mc_fit([{vt: u} for vt in VT for u in draws[vt]], h_inf, VT)
@@ -477,7 +493,7 @@ def _phase2_job(args, procs=1):
 
 def phase2(inf_scores, adu_scores21, inf_kind, adu_kind, metrics, rules=("paper",), rollouts_inf=ROLLOUTS["exp2_infants"],
            rollouts_adu=ROLLOUTS["exp2_adults"], adu_cells=None,
-           window="exemplar_mean", procs=8, inf_grid=None, adu_preds=None):
+           window="exemplar_mean", procs=8, inf_grid=None, adu_preds=None, infant_protocol=None):
     """Exp-1 -> Exp-2 out-of-sample prediction: per (metric, rule) select an infant cell and an
     adult cell from the Phase-1 score tables (sign-consistent, non-saturated), carry every
     parameter untouched to the Exp-2 stimulus sets, score with the paper's statistic (linking
@@ -486,7 +502,9 @@ def phase2(inf_scores, adu_scores21, inf_kind, adu_kind, metrics, rules=("paper"
     selection; needs inf_grid + adu_preds, deterministic kinds). Reproduces run_phase2 and
     run_phase2_selfcons (their seeds; stochastic kinds use rollouts_inf / rollouts_adu).
     adu_cells = {(metric, 'rmse'|'r2'): row} overrides the adult selection for the rules 'paper' / 'r2' -- the
-    shortlisted, re-evaluated winners (selection.adult_winners), whose choice does not rest on 16-rollout grid scores."""
+    shortlisted, re-evaluated winners (selection.adult_winners), whose choice does not rest on 16-rollout grid scores.
+    infant_protocol = dict(T_max=..., cap=...) overrides the Exp-2 infants' horizon and cap (INFANT_T_MAX / INFANT_CAP; the
+    legacy workers: 60 and 500)."""
     from .selection import select_infant, select_adult, Selection
     stochastic = inf_kind.startswith(("selfcons", "lesion"))
     jobs = []
@@ -499,7 +517,7 @@ def phase2(inf_scores, adu_scores21, inf_kind, adu_kind, metrics, rules=("paper"
                 if adu_cells is not None:
                     sa = Selection("adults", adu_kind, m, r, adu_cells[(m, r)], stochastic) if (m, r) in adu_cells else None
             elif rule == "within":
-                g = inf_scores[(inf_scores.metric == m) & (inf_scores.pooled_r > 0) & (inf_scores.pred_bg1 < 450) & (inf_scores.pred_bg10 > 1.02)].dropna(subset=["within_r2"])
+                g = inf_scores[(inf_scores.metric == m) & (inf_scores.pooled_r > 0) & (inf_scores.pred_bg10 > 1.02)].dropna(subset=["within_r2"])   # no cap, no saturation filter (INFANT_CAP)
                 si = Selection("infants", inf_kind, m, "within", g.sort_values("within_r2", ascending=False).iloc[0], stochastic) if len(g) else None
                 sa = select_adult(adu_scores21, m, "r2", kind=adu_kind, stochastic=stochastic)
             elif rule == "joint":
@@ -511,12 +529,13 @@ def phase2(inf_scores, adu_scores21, inf_kind, adu_kind, metrics, rules=("paper"
             else:
                 raise ValueError(rule)
             if si is not None and inf_grid is not None and not stochastic:      # zero-free-parameter RMSE under the Exp-1 scaling
-                cond1 = _infant_cond_means(inf_grid, int(si.row.setting), m, float(si.row.world_EIGs), window)
+                cond1 = _infant_cond_means(inf_grid, int(si.row.setting), m, float(si.row.world_EIGs), window,
+                                           **{k: v for k, v in (infant_protocol or {}).items() if k == "cap"})
                 j = data.infant_condition_means().merge(cond1, on=["trial_type", "trial_number"])
                 b1, a1 = np.polyfit(j.mean_sample, 0.5 * (j.LT_odd + j.LT_even), 1)
                 carry = (a1, b1)
             jobs.append((m, rule, None if si is None else si.row, inf_kind, None if sa is None else sa.row, adu_kind,
-                         window, stochastic, rollouts_inf, rollouts_adu, carry))
+                         window, stochastic, rollouts_inf, rollouts_adu, carry, dict(infant_protocol or {})))
     if stochastic:          # one (metric, rule) at a time, its stimulus pairs in parallel: the rollouts are the cost
         return pd.DataFrame([_phase2_job(j, procs=procs) for j in jobs])
     with Pool(procs, initializer=_init, initargs=(data.load_embeddings(),)) as pool:
