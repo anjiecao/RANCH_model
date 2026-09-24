@@ -332,6 +332,85 @@ def test_concept_eig_accuracy_at_the_fitted_settings(kw, stim_pair):
     _assert_concept_accuracy(_concept_runs(cfg, make_grid(cfg), *stim_pair, sigma_true=kw["sigma_true"]))
 
 
+def _concept_kl_exact(pn, mn, vn, pc, mc, vc, ns, ne, n_x=2001, floor=1e-8):
+    """KL(new || cur) of the (mu, sigma^2) marginal by numerical integration over mu: per sigma^2 column the two
+    mu posteriors are mixtures over the eps nodes, integrated on a fine grid (reference for eig._concept_kl)."""
+    Pn, Pc = pn.reshape(ns, ne), pc.reshape(ns, ne)
+    cn, cc = Pn.sum(1), Pc.sum(1)
+    tot = np.sum(cn * (np.log(np.clip(cn, floor, None)) - np.log(np.clip(cc, floor, None))))
+
+    def logmix(x, W, m, v):
+        return np.logaddexp.reduce(np.log(np.clip(W, 1e-300, None))[None, :] - 0.5 * (np.log(2 * np.pi * v)[None, :] + (x[:, None] - m[None, :]) ** 2 / v[None, :]), axis=1)
+    for i in np.where(cn > 1e-14)[0]:
+        Wn, Wc = Pn[i] / cn[i], Pc[i] / max(cc[i], 1e-300)
+        m1, v1, m0, v0 = (a.reshape(ns, ne)[i] for a in (mn, vn, mc, vc))
+        act = Wn > 1e-12
+        x = np.linspace((m1[act] - 14 * np.sqrt(v1[act])).min(), (m1[act] + 14 * np.sqrt(v1[act])).max(), n_x)
+        l1, l0 = logmix(x, Wn[act], m1[act], v1[act]), logmix(x, Wc, m0, v0)
+        tot += cn[i] * np.trapezoid(np.exp(l1) * (l1 - l0), x)
+    return float(tot)
+
+
+def _concept_kl_runs(cfg, grid, fam, dev, sigma_true, seed=3):
+    """(moment-matched, exact, joint) concept KL, summed over features, on the first glimpses of the very first exemplar
+    (eps still broad) and on a dur-8 test trial with a familiar and a novel stimulus."""
+    from granch_fast.eig import _concept_kl
+    ns, ne = grid.n_sigma, grid.n_eps
+    out = {}
+
+    def glimpse(st, k, z):
+        pre = [(fp.post.copy(), fp.m_mu.copy(), fp.v_mu.copy()) for fp in st.fps]
+        for d in range(3):
+            st.add_sample(d, k, z[d]); st._refresh(d)
+        fps = st.fps
+        return (sum(_concept_kl(fps[d].post, fps[d].m_mu, fps[d].v_mu, *pre[d], ns, ne) for d in range(3)),
+                sum(_concept_kl_exact(fps[d].post, fps[d].m_mu, fps[d].v_mu, *pre[d], ns, ne) for d in range(3)),
+                sum(_joint_kl(fps[d].post, fps[d].m_mu, fps[d].v_mu, *pre[d]) for d in range(3)))
+
+    rng = np.random.default_rng(seed)
+    st = M.State(cfg, grid, 10); st.ensure_init()
+    out["first"] = np.array([glimpse(st, 0, fam + rng.normal(0, sigma_true, 3)) for _ in range(3)])
+    for name, test in (("familiar", fam), ("novel", dev)):
+        rng = np.random.default_rng([seed, 1])
+        st = M.State(cfg, grid, 10)
+        for k in range(8):
+            for _ in range(5):
+                z = fam + rng.normal(0, sigma_true, 3)
+                for d in range(3):
+                    st.add_sample(d, k, z[d])
+        st.ensure_init()
+        for d in range(3):
+            st._refresh(d)
+        out[name] = np.array([glimpse(st, 8, test + rng.normal(0, sigma_true, 3)) for _ in range(3)])
+    return out
+
+
+@pytest.mark.parametrize("kw, n_eps, spacing", [(dict(V=3.0, a=1.0, b=0.1, sd_eps=1.0, sigma_true=0.2), 30, "linear"),   # infants
+                                                (dict(V=3.0, a=1.0, b=0.1, sd_eps=1.0, sigma_true=0.1), 120, "log")])    # adults
+def test_concept_kl_matches_numerical_integration(kw, n_eps, spacing, stim_pair):
+    """The concept KL moment-matches the mu | sigma^2 mixtures over eps. Measured 2026-09-23 at the fitted settings on
+    their production quadratures: <= 0.5% on the first glimpses of the first exemplar (eps still broad), <= 0.1% on the
+    test trial, novel/familiar ratios within 0.1%; held to 1% and 0.5%. Marginalizing cannot increase a KL, so the exact
+    value is never above the joint KL."""
+    cfg = cfg_inferred(**kw); cfg.n_eps, cfg.spacing = n_eps, spacing
+    runs = _concept_kl_runs(cfg, make_grid(cfg), *stim_pair, sigma_true=kw["sigma_true"])
+    for name, r in runs.items():
+        assert np.all(np.abs(r[:, 0] - r[:, 1]) / r[:, 1] < 0.01), (name, r)
+        assert np.all(r[:, 1] <= r[:, 2] + 1e-12), (name, r)
+    ra, re = runs["novel"][:, 0] / runs["familiar"][:, 0], runs["novel"][:, 1] / runs["familiar"][:, 1]
+    assert np.all(np.abs(ra - re) / re < 0.005), (ra, re)
+
+
+def test_concept_kl_is_the_joint_kl_when_eps_is_fixed(ref_fixed, stim_pair):
+    """With a single eps node there is no nuisance to marginalize: the concept KL is the joint KL."""
+    cfg, grid = ref_fixed
+    fam, dev = stim_pair
+    st = _exposed_state(cfg, grid, fam, 4, 5)
+    for z in (fam, dev, dev):
+        a = st.step(4, z, z, want=("kl", "kl_concept"))
+        assert a["kl_concept"] == pytest.approx(a["kl"], rel=1e-12, abs=1e-15)
+
+
 def test_concept_eig_discriminates_where_the_total_does_not(concept_runs):
     """The finding of 2026-09-15: under noise with eps inferred, the total EIG is mostly about
     eps (novel/familiar ~1) while the concept-only EIG habituates and dishabituates."""

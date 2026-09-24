@@ -13,7 +13,10 @@ deciding whether to take sample t+1 -- we compute, summed over the 3 features:
   mi         : proper expected information gain I(z_{t+1}; theta | data), closed form
                (inference note eqs 10-15; < 0.5% vs brute-force MI after the eq-15
                Jensen-gap fix of 2026-09-14 -- see eig.feature_eig_channels)
-  kl         : realized KL(post_t || post_{t-1}) of the sample just observed  (proxy_sim "KL")
+  kl         : realized KL(post_t || post_{t-1}) of the sample just observed  (proxy_sim "KL"), over the joint
+               (mu, sigma^2, eps) posterior as in the original code
+  kl_concept : the same for the concept (mu, sigma^2) only, eps marginalized (opt-in): the realized,
+               backward-looking counterpart of mi_concept
   surprisal  : -log p_concept(z_t) under the PRE-sample posterior           (proxy_sim "surprisal")
                variant (b) = surprisal + n_feature * (-log eps_fixed)  [eps-resolution observation]
                is an additive constant per setting, applied at scoring time.
@@ -23,10 +26,11 @@ The posterior machinery is analytic_core.FeaturePosterior (exact, y and mu integ
 import numpy as np
 from scipy.special import logsumexp
 from .analytic_core import FeaturePosterior, LOG2PI
-from .eig import _kl_gauss, _joint_kl, _predictive, feature_eig_closed_form, feature_eig_concept
+from .eig import _kl_gauss, _joint_kl, _concept_kl, _predictive, feature_eig_closed_form, feature_eig_concept
 
 METRICS = ("eig_code", "eig_within", "mi", "kl", "surprisal")
-# opt-in: "mi_concept" = expected information about the concept (mu, sigma^2) only, eps a nuisance
+# opt-in: "mi_concept" = expected information about the concept (mu, sigma^2) only, eps a nuisance;
+#         "kl_concept" = realized information about the concept only (the backward-looking counterpart)
 
 
 def _dens(z, m, v):
@@ -117,6 +121,8 @@ class State:
             self._refresh(d)
             if "kl" in want:
                 out["kl"] += _joint_kl(fp.post, fp.m_mu, fp.v_mu, *pre)
+            if "kl_concept" in want:
+                out["kl_concept"] += _concept_kl(fp.post, fp.m_mu, fp.v_mu, *pre, fp.grid.n_sigma, fp.grid.n_eps)
             # --- forward-looking quantities use the POST-sample posterior
             n_star, zbar_star, S_star = self.stats[d][k]
             if "mi" in want:

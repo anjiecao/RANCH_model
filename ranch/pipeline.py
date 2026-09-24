@@ -26,7 +26,10 @@ W_INFANT = {
              "mi": np.logspace(-5, 0, 25), "surprisal": np.logspace(-2.5, 2, 25), "surprisal_b": np.logspace(-2.5, 2, 25)},
     "selfcons": {"eig_code": np.logspace(-7, -1, 19), "kl": np.logspace(-7, -1, 19), "mi": np.logspace(-5, 0, 19),
                  "surprisal": np.logspace(-2.5, 2, 19), "surprisal_b": np.logspace(-2.5, 2, 19),
-                 "mi_concept": np.logspace(-5, 0, 19)},
+                 "mi_concept": np.logspace(-5, 0, 19),
+                 # the concept KL (2026-09-23): 1/3-decade steps like the others, over a wider range -- the concept EIG's
+                 # winners sat at the lower edge of theirs; w costs nothing here (the stopping time is integrated at scoring)
+                 "kl_concept": np.logspace(-9, -1, 25)},
 }
 W_INFANT["infeps"] = W_INFANT["main"]
 W_INFANT["lesion_infants"] = W_INFANT["selfcons"]
@@ -37,16 +40,17 @@ W_ADULT = {
                    "surprisal": list(np.logspace(-2, 1.5, 9)), "surprisal_b": list(np.logspace(-2, 1.5, 9))},
     "adult_base": {"eig_code": list(np.logspace(-5.5, -1.5, 9)), "mi": list(np.logspace(-4.5, -0.5, 9)),
                    "kl": list(np.logspace(-5.5, -1.5, 9)), "surprisal_b": list(np.logspace(-2, 1.5, 9)),
-                   "mi_concept": list(np.logspace(-4.5, -0.5, 9))},
+                   "mi_concept": list(np.logspace(-4.5, -0.5, 9)), "kl_concept": list(np.logspace(-6.5, -0.5, 13))},
     "adult_ext": {"eig_code": list(np.logspace(-5.5, -0.5, 11)), "kl": list(np.logspace(-5.5, -0.5, 11)),
                   "mi": list(np.logspace(-4.5, 0.5, 11)), "surprisal_b": list(np.logspace(-2, 2, 11)),
-                  "mi_concept": list(np.logspace(-4.5, 0.5, 11))},
+                  "mi_concept": list(np.logspace(-4.5, 0.5, 11)),
+                  "kl_concept": list(np.logspace(-6.5, -0.5, 13))},   # 2026-09-23; wider below: the concept EIG's optimum is at its lower edge
 }
 W_ADULT["adult_nu"] = W_ADULT["adult_ext"]
 W_ADULT["adult_beta"] = W_ADULT["adult_ext"]
 # A variable's random stream in the noisy adult sweeps (the legacy drivers' indices). Append only: a stream must
 # not depend on how a w-grid dictionary happens to be ordered, nor on which other variables a sweep includes.
-ADULT_SEED = {"eig_code": 0, "mi": 1, "kl": 2, "surprisal_b": 3, "mi_concept": 4}
+ADULT_SEED = {"eig_code": 0, "mi": 1, "kl": 2, "surprisal_b": 3, "mi_concept": 4, "kl_concept": 5}
 T_CAP = 80
 MAX_D = 10
 # Stimulus pairs and rollouts behind each stochastic ADULT number (infants: 32 rollouts per stimulus row, all rows). Noise in
@@ -70,22 +74,25 @@ def _init(emb):
 
 # ---------------------------------------------------------------- infants: grid
 def _infant_setting(args):
-    si, s, kind, rows, rollouts, T_max, window, seed0 = args
+    si, s, kind, rows, rollouts, T_max, window, seed0, keys = args
     sp = spec(s, kind, window)
+    variables = tuple(v for v in sp.variables if v.key in keys)
     world = World(sp.sigma_true, seed=(seed0 + si) if sp.sigma_true > 0 else None)   # one stream per setting, as the legacy driver
-    out = np.empty((len(rows), rollouts, len(sp.keys), T_max), dtype=np.float32)
+    out = np.empty((len(rows), rollouts, len(keys), T_max), dtype=np.float32)
     for ri, r in enumerate(rows):
         res = forced_exposure_then_test(sp.model, world, _EMB[r["fam"]], _EMB[r["test"]], int(r["fam_duration"]),
-                                        T_max=T_max, variables=sp.variables, rollouts=rollouts)
-        for mi, k in enumerate(sp.keys):
+                                        T_max=T_max, variables=variables, rollouts=rollouts)
+        for mi, k in enumerate(keys):
             out[ri, :, mi] = res.trajectories[k]
     return si, out
 
 
-def infant_grid(kind, rollouts=None, T_max=None, window="exemplar_mean", procs=8, settings=None, rows=None):
+def infant_grid(kind, rollouts=None, T_max=None, window="exemplar_mean", procs=8, settings=None, rows=None, metrics=None):
     """Decision-variable trajectories on the Exp-1 test trial for every setting x stimulus
     row (x rollout). Returns dict(traj, metrics, settings, meta); traj is (S, rows, M, T) for
-    deterministic kinds and (S, rows, R, M, T) for noisy ones (the legacy npz layouts)."""
+    deterministic kinds and (S, rows, R, M, T) for noisy ones (the legacy npz layouts). `metrics` restricts the
+    variables computed (engine keys); a noisy world draws the same glimpses whatever is computed, so a variable
+    computed alone equals the same variable in a full run."""
     S = settings_table(kind) if settings is None else settings.reset_index(drop=True)
     noisy = kind.startswith(("selfcons", "lesion"))
     rollouts = rollouts or ({"selfcons_base": 8, "selfcons_ext": 8, "lesion_infants": 16}.get(kind, 1))
@@ -94,8 +101,11 @@ def infant_grid(kind, rollouts=None, T_max=None, window="exemplar_mean", procs=8
     trials = data.load_trials()
     rows = trials.to_dict("records") if rows is None else rows
     keys = spec(S.iloc[0], kind, window).keys
+    keys = keys if metrics is None else tuple(k for k in keys if k in metrics)
+    if not keys:
+        raise ValueError(f"no variable of kind {kind} among {metrics}")
     traj = np.empty((len(S), len(rows), rollouts, len(keys), T_max), dtype=np.float32)
-    jobs = [(si, S.iloc[si], kind, rows, rollouts, T_max, window, seed0) for si in range(len(S))]
+    jobs = [(si, S.iloc[si], kind, rows, rollouts, T_max, window, seed0, keys) for si in range(len(S))]
     with Pool(procs, initializer=_init, initargs=(data.load_embeddings(),)) as pool:
         for si, out in pool.imap_unordered(_infant_setting, jobs):
             traj[si] = out

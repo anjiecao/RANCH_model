@@ -5,7 +5,7 @@ results and linking protocols. Every runner here is proven identical to the engi
 granch_fast/tests/test_api_identity.py.
 """
 from .config import Prior, LearnerNoise, Quadrature, Model
-from .decision import EIG, EIGWithin, EIGConcept, KL, Surprisal, RealizedGain, ALL_VARIABLES, DecisionVariable
+from .decision import EIG, EIGWithin, EIGConcept, KL, KLConcept, Surprisal, RealizedGain, ALL_VARIABLES, DecisionVariable
 from .world import World
 from .learner import Learner
 from .paradigms import forced_exposure_then_test, self_paced, LucePolicy, Result
@@ -13,7 +13,7 @@ from .canonical import CANONICAL, PUBLISHED_CORRECTED, PUBLISHED_SPEC, TOTAL_EIG
 from .selection import Selection, UnquotableSelection, select_infant, select_adult, reevaluate_infant, reevaluate_adult
 from . import linking, data, settings, pipeline, selection
 
-__all__ = ["Prior", "LearnerNoise", "Quadrature", "Model", "EIG", "EIGWithin", "EIGConcept", "KL", "Surprisal",
+__all__ = ["Prior", "LearnerNoise", "Quadrature", "Model", "EIG", "EIGWithin", "EIGConcept", "KL", "KLConcept", "Surprisal",
            "RealizedGain", "ALL_VARIABLES", "DecisionVariable", "World", "Learner",
            "forced_exposure_then_test", "self_paced", "LucePolicy", "Result", "linking", "data", "settings", "pipeline",
            "selection", "Selection", "UnquotableSelection", "select_infant", "select_adult", "reevaluate_infant",

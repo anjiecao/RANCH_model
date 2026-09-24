@@ -136,7 +136,7 @@ def test_phase2_reproduces_run_phase2_selfcons(emb, monkeypatch):
 def test_lesion_kinds_match_phase1d_configs():
     """The lesion settings kinds rebuild phase1d's lesion_cfg: eps fixed at the published 1e-4,
     the EIG window unchanged (n_z 5, half-width sigma_true), canonical priors."""
-    for kind, (V, a, b) in (("lesion_infants", (3.0, 1.0, 0.1)), ("lesion_adults", (1.0, 1.0, 0.1))):
+    for kind, (V, a, b) in (("lesion_infants", (3.0, 1.0, 0.1)), ("lesion_adults", (3.0, 1.0, 0.1))):
         S = settings_table(kind)
         for _, s in S.iterrows():
             sp = spec(s, kind)
@@ -178,6 +178,34 @@ def test_published_model_rescored_reproduces_the_printed_exp2_fits():
     assert t[("exp1_infants", "r2_best")] == pytest.approx(0.739, abs=2e-3)
     assert t[("exp1_adults", "r2_best")] == pytest.approx(0.871, abs=2e-3)
     assert t[("exp1_infants", "hab_plotted")] == pytest.approx(0.596, abs=2e-3) and t[("exp1_adults", "dis_plotted")] == pytest.approx(5.82, abs=2e-2)
+
+
+def test_a_variable_added_alone_gets_the_numbers_of_a_full_run(emb, sub_rows):
+    """`only` (adding a decision variable to an existing record): selection runs over every variable, so cells, winners
+    and their seeds are numbered exactly as in a full run, but only the named variable is re-evaluated -- its rows are
+    identical to the full run's."""
+    S = settings_table("adult_ext")
+    s = S[(S.V_prior == 3) & (S.alpha_prior == 1) & (S.beta_prior == 0.1) & (S.sd_epsilon == 1.0) & np.isclose(S.sigma_true, 0.1)].iloc[0]
+    rows = [dict(setting=0, metric=m, world_EIGs=w, r2_21=r2, rmse21_cv=rm, b21=200.0, bg1=24.0, bg11=17.5, dev=20.7, **s.to_dict())
+            for m, w, r2, rm in (("mi_concept", 3.2e-5, 0.8, 150.0), ("mi_concept", 1e-4, 0.7, 160.0),
+                                 ("kl_concept", 1e-5, 0.6, 200.0), ("kl_concept", 1e-4, 0.5, 210.0))]
+    sc = pd.DataFrame(rows)
+    mets = ("mi_concept", "kl_concept")
+    full = selection.adult_shortlist(sc, "adult_ext", metrics=mets, K=1, rollouts=2, pairs=1, procs=1)
+    part = selection.adult_shortlist(sc, "adult_ext", metrics=mets, K=1, rollouts=2, pairs=1, procs=1, only=("kl_concept",))
+    pd.testing.assert_frame_equal(part.reset_index(drop=True), full[full.metric == "kl_concept"].reset_index(drop=True))
+    wf = selection.adult_winners(sc, "adult_ext", metrics=mets, rules=("rmse",), rollouts=2, pairs=1, procs=1, shortlist=full)
+    wp = selection.adult_winners(sc, "adult_ext", metrics=mets, rules=("rmse",), rollouts=2, pairs=1, procs=1, shortlist=full, only=("kl_concept",))
+    pd.testing.assert_frame_equal(wp.reset_index(drop=True), wf[wf.metric == "kl_concept"].reset_index(drop=True))
+    si = settings_table("selfcons_ext")
+    t = si[(si.V_prior == 3) & (si.alpha_prior == 1) & (si.beta_prior == 0.1) & (si.sd_epsilon == 1.0) & np.isclose(si.sigma_true, 0.2)].iloc[0]
+    u = si[(si.V_prior == 1) & (si.alpha_prior == 1) & (si.beta_prior == 0.1) & (si.sd_epsilon == 1.0) & np.isclose(si.sigma_true, 0.1)].iloc[0]
+    scores = pd.DataFrame([_score_row(0, "mi_concept", 1e-5, **t.to_dict()), _score_row(1, "kl_concept", 1e-6, **u.to_dict())])
+    kw = dict(metrics=mets, rollouts=2, seed=777, procs=1, n_groups=2, rows=sub_rows[:4], T_max=8)
+    fi = selection.infant_winners(scores, "selfcons_ext", **kw)
+    pi = selection.infant_winners(scores, "selfcons_ext", only=("kl_concept",), **kw)
+    assert list(fi.seed) == [777, 778] and list(pi.seed) == [778]
+    pd.testing.assert_frame_equal(pi.reset_index(drop=True), fi[fi.metric == "kl_concept"].reset_index(drop=True))
 
 
 def test_adult_shortlist_selects_on_reevaluated_scores_and_reports_on_independent_seeds():

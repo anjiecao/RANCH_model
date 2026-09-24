@@ -20,7 +20,15 @@ EIG = DecisionVariable(
     "the sufficient statistics.")
 KL = DecisionVariable(
     "kl", "KL", False,
-    "KL(posterior after the glimpse just observed || posterior before it), summed over features.")
+    "KL(posterior after the glimpse just observed || posterior before it), summed over features; the joint "
+    "(mu, sigma^2, eps) posterior, as the original code's kl_div.")
+KLConcept = DecisionVariable(
+    "kl_concept", "concept KL", False,
+    "KL(p(mu, sigma^2 | data after the glimpse just observed) || p(mu, sigma^2 | data before it)), eps marginalized, "
+    "summed over features: the realized, backward-looking counterpart of the concept EIG, which is its expectation "
+    "over the next glimpse. Added 2026-09-23: the joint KL counts information about eps, which the familiar supplies as "
+    "well as the novel, so 'concept EIG beats KL' could not separate forward- from backward-looking "
+    "(eig._concept_kl; numerical-integration reference in the tests).")
 Surprisal = DecisionVariable(
     "surprisal", "surprisal", False,
     "-log p_concept(z_t) under the pre-glimpse posterior (concept-level predictive). The "
@@ -66,4 +74,4 @@ class RealizedGain(DecisionVariable):
         object.__setattr__(self, "n_z", int(n_z))
 
 
-ALL_VARIABLES = (EIG, KL, Surprisal, EIGWithin, RealizedGain(), EIGConcept)
+ALL_VARIABLES = (EIG, KL, Surprisal, EIGWithin, RealizedGain(), EIGConcept, KLConcept)

@@ -12,7 +12,7 @@ byte-identical against them):
                    violation types dishabituate (2026-09-18)
   lesion_*      -- the no-noise-learner lesion of the canonical model: eps FIXED at the
                    published 1e-4 inside the noisy world, everything else as the canonical
-                   priors (infants V3 a1 b0.1 at sigma_true .1/.2; adults V1 a1 b0.1 at .1)
+                   priors (infants V3 a1 b0.1 at sigma_true .1/.2; adults V3 a1 b0.1 at .1)
 """
 import itertools
 from dataclasses import dataclass
@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 
 from .config import Prior, LearnerNoise, Quadrature, Model
-from .decision import EIG, EIGWithin, EIGConcept, KL, Surprisal, RealizedGain
+from .decision import EIG, EIGWithin, EIGConcept, KL, KLConcept, Surprisal, RealizedGain
 
 KINDS = ("main", "infeps", "selfcons_base", "selfcons_ext", "adult_base", "adult_ext", "adult_nu", "adult_beta", "lesion_infants",
          "lesion_adults")
@@ -69,8 +69,8 @@ def settings_table(kind):
     elif kind == "lesion_infants":
         for st in (0.1, 0.2):
             rows.append(dict(V_prior=3.0, alpha_prior=1.0, beta_prior=0.1, sigma_true=st, sd_epsilon=np.nan, infer_eps=False, eps_fixed=LESION_EPS))
-    elif kind == "lesion_adults":
-        rows.append(dict(V_prior=1.0, alpha_prior=1.0, beta_prior=0.1, sigma_true=0.1, sd_epsilon=np.nan, infer_eps=False, eps_fixed=LESION_EPS))
+    elif kind == "lesion_adults":        # the adult cell of record's prior (V3 since 2026-09-17; the legacy lesion used V1)
+        rows.append(dict(V_prior=3.0, alpha_prior=1.0, beta_prior=0.1, sigma_true=0.1, sd_epsilon=np.nan, infer_eps=False, eps_fixed=LESION_EPS))
     else:
         raise ValueError(kind)
     return pd.DataFrame(rows)
@@ -112,7 +112,7 @@ def spec(s, kind, window="exemplar_mean"):
         q = QUADRATURE["adults" if kind.startswith("adult") else "infants"]
         model = Model(prior, LearnerNoise.inferred(1e-3, float(s["sd_epsilon"]), (1e-3, 1.2)), quadrature=q)
         rg = RealizedGain(window, st, 5)
-        return Spec(model, st, rg, 3.0 * (-np.log(st)), (rg, EIG, KL, Surprisal, EIGConcept))
+        return Spec(model, st, rg, 3.0 * (-np.log(st)), (rg, EIG, KL, Surprisal, EIGConcept, KLConcept))
     raise ValueError(kind)
 
 

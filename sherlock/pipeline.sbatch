@@ -16,7 +16,8 @@
 # Set STAGES to a subset (space-separated) to rerun part of the chain; `adults` is all three adult
 # sweeps, adults-main / adults-base / adults-ext one of them; likewise winners(-infants|-adults) and
 # phase2(-main|-selfcons). Not part of the default chain: `snapshot` (copy every table aside first),
-# `adults-nu` (the nu < 1 extension of the noisy adult grid) and `adults-beta` (the beta < .1 extension). ADULT_WHICH
+# `adults-nu` (the nu < 1 extension of the noisy adult grid), `adults-beta` (the beta < .1 extension) and `add-variable`
+# (VARIABLE=kl_concept: one decision variable computed alone into the record's tables, seeded as a full chain). ADULT_WHICH
 # chooses the adult sweep that the adult winners and the noisy Phase 2 work from (selfcons_ext = the record;
 # selfcons_nu / selfcons_beta = the extensions), ADULT_METRICS restricts those adult stages to some decision variables
 # (e.g. mi_concept). Adult protocol since 2026-09-18: 120 log eps nodes (settings.QUADRATURE) and every stimulus pair of
@@ -91,11 +92,25 @@ fi
 if has phase2 || has phase2-selfcons; then
   step phase2 selfcons;       R phase2 --kind selfcons --which $ADULT_WHICH --rules paper,r2 --adult-cells winners $MET
 fi
-if has lesion; then
+if has add-variable; then      # a decision variable added to the record (VARIABLE=...): computed alone, into the record's
+  V=${VARIABLE:?set VARIABLE}   # tables, with the seeds a full chain would give it (grid/adults --metrics, winners --only)
+  step grid selfcons base $V; R grid --kind selfcons_base --metrics $V
+                              R score --kind selfcons_base --metrics $V
+  step grid selfcons ext $V;  R grid --kind selfcons_ext --metrics $V
+                              R score --kind selfcons_ext --metrics $V
+  step winners infants $V;    R winners --population infants --kind selfcons --rollouts 32 --only $V
+  step adults ext $V;         R adults --kind adult_ext --mode stochastic --pairs 96 --rollouts 1 --metrics $V
+                              R score-adults --which selfcons_ext
+  step winners adults $V;     R winners --population adults --which selfcons_ext --pairs all --shortlist 10 --only $V
+  step phase2 selfcons $V;    R phase2 --kind selfcons --which selfcons_ext --rules paper,r2 --adult-cells winners --metrics $V
+fi
+if has lesion; then           # the no-noise-learner lesion under the adult protocol of 2026-09-18, re-evaluated like the record
   step lesion infants;        R grid --kind lesion_infants --rollouts 16
                               R score --kind lesion_infants
-  step lesion adults;         R adults --kind lesion_adults --mode stochastic --pairs 6 --rollouts 16
+                              R winners --population infants --kind lesion_infants --rollouts 32
+  step lesion adults;         R adults --kind lesion_adults --mode stochastic --pairs 96 --rollouts 1
                               R score-adults --which lesion
+                              R winners --population adults --which lesion --pairs all --shortlist 11
 fi
 if has figures; then
   step figures;               R figures

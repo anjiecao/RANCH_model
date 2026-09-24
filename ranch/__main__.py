@@ -16,6 +16,9 @@ pipelines interoperate; 'selfcons' as a kind for the selection stages means the 
 grids together (setting indices offset by the base count, as the legacy scorer wrote them).
 --pairs N|all (adult stages): the stimulus pairs to run; the default is the protocol's (pipeline.PAIRS: 96 for a
 grid, every pair of the experiment for the re-evaluations and Phase 2), --rollouts likewise (pipeline.ROLLOUTS).
+Adding a decision variable to an existing record: `grid`/`score` and `adults` take --metrics (the infant grid then goes to
+its own npz, suffixed with the variables), `winners` takes --only (select over every variable, re-evaluate only these, with
+the seeds a full run would use), `phase2` takes --metrics; a restricted run keeps the table's rows for the other variables.
 """
 import argparse
 import os
@@ -40,8 +43,29 @@ ADULT_KIND = {"main": "main", "selfcons": "adult_base", "selfcons_ext": "adult_e
               "lesion": "lesion_adults"}
 
 
-def load_grid(out, kind):
-    z = np.load(f"{out}/{NPZ[kind]}", allow_pickle=True)
+def npz_name(kind, metrics=None):
+    return NPZ[kind] if not metrics else NPZ[kind].replace(".npz", f"_{'-'.join(metrics)}.npz")
+
+
+def merge_write(df, fn, metrics, sort=None):
+    """Write a table; when the run was restricted to some decision variables, keep the file's rows for the others (a
+    variable added to an existing record). Returns what was written."""
+    if metrics and os.path.exists(fn):
+        try:
+            old = pd.read_csv(fn)
+        except pd.errors.EmptyDataError:
+            old = pd.DataFrame()
+        if len(old) and "metric" in old:
+            gone = set(metrics) | (set(df.metric) if "metric" in df else set())
+            df = pd.concat([old[~old.metric.isin(gone)], df], ignore_index=True)
+            if sort:
+                df = df.sort_values(sort).reset_index(drop=True)
+    df.to_csv(fn, index=False)
+    return df
+
+
+def load_grid(out, kind, metrics=None):
+    z = np.load(f"{out}/{npz_name(kind, metrics)}", allow_pickle=True)
     return dict(traj=z["traj"], metrics=[str(m) for m in z["metrics"]], settings=pd.DataFrame(z["settings"]),
                 meta=pd.DataFrame({"trial_type": z["trial_type"], "trial_number": z["trial_number"]}), kind=kind,
                 window=str(z["window"]) if "window" in z else "oracle")
@@ -69,6 +93,7 @@ def main(argv=None):
     ap.add_argument("--rollouts", type=int, default=None)
     ap.add_argument("--pairs", default=None, help="adult stages: stimulus pairs to run, N or 'all' (default: pipeline.PAIRS)")
     ap.add_argument("--metrics", default=None)
+    ap.add_argument("--only", default=None, help="winners: re-evaluate only these variables (comma list), seeded as in a run over all")
     ap.add_argument("--window", default="exemplar_mean")
     ap.add_argument("--procs", type=int, default=8)
     ap.add_argument("--limit", type=int, default=None, help="adults: limit the number of jobs (smoke tests)")
@@ -81,23 +106,24 @@ def main(argv=None):
     OUT = a.out or globals()["OUT"]
     os.makedirs(OUT, exist_ok=True)
     mets = a.metrics.split(",") if a.metrics else None
+    only = tuple(a.only.split(",")) if a.only else None
     pairs = None if a.pairs in (None, "all") else int(a.pairs)
     if a.stage == "check":
         print(f"inputs verified: {len(data.verify_manifest())} files match the data manifest")
         return
     rows = data.load_trials().iloc[:: a.every].to_dict("records") if a.every > 1 else None
     if a.stage == "grid":
-        g = pipeline.infant_grid(a.kind, rollouts=a.rollouts, window=a.window, procs=a.procs, rows=rows)
-        pipeline.save_infant_grid(g, f"{OUT}/{NPZ[a.kind]}")
-        print(f"saved {OUT}/{NPZ[a.kind]} {g['traj'].shape}")
+        g = pipeline.infant_grid(a.kind, rollouts=a.rollouts, window=a.window, procs=a.procs, rows=rows, metrics=mets)
+        pipeline.save_infant_grid(g, f"{OUT}/{npz_name(a.kind, mets)}")
+        print(f"saved {OUT}/{npz_name(a.kind, mets)} {g['traj'].shape}")
     elif a.stage == "score":
-        sc = pipeline.score_infant(load_grid(OUT, a.kind), procs=a.procs)
-        sc.to_csv(f"{OUT}/{SCORES[a.kind]}", index=False)
+        sc = pipeline.score_infant(load_grid(OUT, a.kind, mets), procs=a.procs)
+        sc = merge_write(sc, f"{OUT}/{SCORES[a.kind]}", mets)
         print(f"saved {OUT}/{SCORES[a.kind]} ({len(sc)} rows)")
     elif a.stage == "adults":
         preds = pipeline.adult_grid(a.kind, a.mode, pairs=pairs, rollouts=a.rollouts, window=a.window, metrics=mets,
                                     procs=a.procs, limit=a.limit)
-        preds.to_csv(f"{OUT}/{PREDS[a.kind]}", index=False)
+        preds = merge_write(preds, f"{OUT}/{PREDS[a.kind]}", mets, sort=["setting", "metric", "world_EIGs"])
         print(f"saved {OUT}/{PREDS[a.kind]} ({len(preds)} rows)")
     elif a.stage == "score-adults":
         preds = pd.read_csv(f"{OUT}/adult_preds_{a.which}.csv")
@@ -110,7 +136,7 @@ def main(argv=None):
             kind = "selfcons_ext" if a.kind == "selfcons" else a.kind
             w = selection.infant_winners(load_infant_scores(OUT, a.kind), kind, metrics=mets, rules=tuple((a.rules or "r2,rmse").split(",")),
                                          rollouts=a.rollouts or (8 if a.smoke else pipeline.ROLLOUTS["infant_winners"]), window=a.window,
-                                         procs=a.procs, rows=rows)
+                                         procs=a.procs, rows=rows, only=only)
             fn = f"{OUT}/infant_winners{'' if a.kind in ('selfcons', 'selfcons_ext') else '_' + a.kind}.csv"
         else:
             sc = pd.read_csv(f"{OUT}/adult_scores21_{a.which}.csv")
@@ -118,15 +144,17 @@ def main(argv=None):
             short = None
             if a.shortlist:
                 short = selection.adult_shortlist(sc, ADULT_KIND[a.which], metrics=mets, K=a.shortlist, rollouts=a.rollouts or (1 if a.smoke else None),
-                                                  pairs=pairs, window=a.window, procs=a.procs)
-                short.to_csv(f"{OUT}/adult_shortlist{suffix}.csv", index=False)
+                                                  pairs=pairs, window=a.window, procs=a.procs, only=only)
                 print(f"saved {OUT}/adult_shortlist{suffix}.csv ({len(short)} cells re-evaluated)")
+                short = merge_write(short, f"{OUT}/adult_shortlist{suffix}.csv", only or mets)   # every variable's cells: the winners' numbering
             w = selection.adult_winners(sc, ADULT_KIND[a.which], metrics=mets, rules=tuple((a.rules or "r2,rmse").split(",")),
                                         rollouts=a.rollouts or (1 if a.smoke else None), pairs=pairs, window=a.window, procs=a.procs,
-                                        shortlist=short)
+                                        shortlist=short, only=only)
             fn = f"{OUT}/adult_winners{suffix}.csv"
-        w.to_csv(fn, index=False)
-        print(f"saved {fn} ({len(w)} rows)")
+        new = w
+        w = merge_write(w, fn, only or mets)
+        print(f"saved {fn} ({len(w)} rows, {len(new)} new)")
+        w = new
         for r in w.itertuples(index=False):
             print(f"  {r.metric:12s} [{r.rule}] grid {getattr(r, 'grid_r2', getattr(r, 'r2_21_grid', np.nan)):.3f} -> "
                   f"re-evaluated {getattr(r, 'r2', getattr(r, 'r2_21_reeval', np.nan)):.3f} (hab {r.hab:.2f} dis {r.dis:.2f})")
@@ -154,7 +182,7 @@ def main(argv=None):
                               rollouts_adu=r_adu, window=a.window, procs=a.procs, inf_grid=inf_grid, adu_preds=adu_preds, adu_cells=cells)
         fn = (f"{OUT}/phase2_results.csv" if a.kind == "main" else
               f"{OUT}/phase2_selfcons_results{'' if which == 'selfcons_ext' else '_' + which.replace('selfcons_', '')}.csv")
-        res.to_csv(fn, index=False)
+        merge_write(res, fn, mets)
         print(f"saved {fn} ({len(res)} rows)")
         for r in res.itertuples(index=False):
             print(f"  [{r.metric} | {r.rule}] infants Exp1 R2 {getattr(r, 'inf_exp1_r2', np.nan):.3f} -> Exp2 R2 {getattr(r, 'inf_exp2_r2', np.nan):.3f} "

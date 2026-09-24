@@ -31,6 +31,27 @@ def adult_legacy_cfg(s):
     return cfg
 
 
+def test_infant_grid_variable_subset_equals_the_full_run(sub_rows):
+    """A noisy world draws the same glimpses whatever is computed, so a variable computed alone (a variable added to an
+    existing record) equals the same variable computed with all the others."""
+    S = settings_table("selfcons_ext").iloc[[5]]
+    full = pipeline.infant_grid("selfcons_ext", rollouts=2, T_max=6, procs=1, settings=S, rows=sub_rows[:3])
+    part = pipeline.infant_grid("selfcons_ext", rollouts=2, T_max=6, procs=1, settings=S, rows=sub_rows[:3], metrics=("kl_concept",))
+    assert part["metrics"] == ["kl_concept"] and "kl_concept" in full["metrics"]
+    assert np.array_equal(part["traj"][..., 0, :], full["traj"][..., full["metrics"].index("kl_concept"), :])
+
+
+def test_restricted_runs_keep_the_other_variables_rows(tmp_path):
+    """merge_write: a run restricted to some variables replaces their rows and keeps everyone else's."""
+    from ranch.__main__ import merge_write
+    fn = str(tmp_path / "t.csv")
+    pd.DataFrame(dict(metric=["a", "b", "b"], x=[1, 2, 3])).to_csv(fn, index=False)
+    out = merge_write(pd.DataFrame(dict(metric=["b", "c"], x=[9, 8])), fn, ["b", "c"])
+    assert list(out.metric) == ["a", "b", "c"] and list(out.x) == [1, 9, 8] and pd.read_csv(fn).equals(out)
+    out = merge_write(pd.DataFrame(dict(metric=["z"], x=[0])), fn, None)                  # unrestricted: overwrite
+    assert list(pd.read_csv(fn).metric) == ["z"]
+
+
 def test_spec_quadrature_per_population():
     """The adult learner's eps axis is 120 log nodes: 30 linear ones parked its posterior between two nodes at sigma_true .1
     and inflated the adult Exp-1 fit (sherlock/logs/quadrature_check_adults_2026-09-18.txt); infants keep the legacy 80x30
@@ -60,7 +81,7 @@ def test_infant_grid_main_matches_legacy_engine(emb, sub_rows):
 
 def test_infant_grid_selfcons_matches_legacy_driver(emb, sub_rows):
     S = settings_table("selfcons_base").iloc[[0]]
-    g = pipeline.infant_grid("selfcons_base", rollouts=2, T_max=40, procs=1, settings=S, rows=sub_rows)
+    g = pipeline.infant_grid("selfcons_base", rollouts=2, T_max=40, procs=1, settings=S, rows=sub_rows, metrics=P1S.WANT)   # the driver's variables
     P1S._init(sub_rows)
     si, ref = P1S._one((0, S.iloc[0], 2, 1000, "exemplar_mean"))     # one RNG stream per setting, T_MAX=40
     assert np.array_equal(g["traj"][0], ref)
@@ -68,7 +89,7 @@ def test_infant_grid_selfcons_matches_legacy_driver(emb, sub_rows):
 
 def test_score_infant_matches_legacy_scorer(emb, sub_rows):
     S = settings_table("selfcons_base").iloc[[3]]
-    g = pipeline.infant_grid("selfcons_base", rollouts=2, T_max=8, procs=1, settings=S, rows=sub_rows)
+    g = pipeline.infant_grid("selfcons_base", rollouts=2, T_max=8, procs=1, settings=S, rows=sub_rows, metrics=P1S.WANT)   # the scorer's variables
     ours = pipeline.score_infant(g, procs=1)
     SPS._init((g["meta"], data.infant_condition_means(), data.load_infant_exp1(), g["metrics"]))
     theirs = pd.DataFrame(SPS._score_one((0, S.iloc[0], g["traj"][0])))

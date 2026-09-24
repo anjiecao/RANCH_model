@@ -214,12 +214,14 @@ def _adult_candidates(scores21, metric):
 
 
 def adult_shortlist(scores21, kind, metrics=None, K=10, rollouts=None, seed=7_000_000, pairs=None, window="exemplar_mean",
-                    procs=8, max_D=10, T_cap=80):
+                    procs=8, max_D=10, T_cap=80, only=None):
     """Stage A of the adult selection. A grid of 96 trajectories per cell cannot rank its own best cells (the Monte-Carlo
     sd of a cell's R2 is about .1, and noise attenuates every cell's fit: plan §0 #14), so per metric the K best
     sign-consistent, non-saturated cells under EACH rule (CV RMSE, R2) are re-evaluated at full precision on seeds
     [seed + cell index, pair, rollout]. adult_winners(shortlist=...) selects among the re-evaluated cells and reports
-    the selected one on independent seeds. One row per (metric, cell), all cells x pairs in one pool."""
+    the selected one on independent seeds. One row per (metric, cell), all cells x pairs in one pool. `only` re-evaluates
+    just those variables' cells, numbered (and so seeded) as in the run over all `metrics`: a variable added to a record
+    gets the numbers a full run would give it."""
     from .pipeline import ROLLOUTS
     rollouts = rollouts or ROLLOUTS["adult_winners"]
     metrics = metrics or ADULT_METRICS
@@ -229,14 +231,16 @@ def adult_shortlist(scores21, kind, metrics=None, K=10, rollouts=None, seed=7_00
         top = pd.concat([g.sort_values("rmse21_cv").head(K), g.sort_values("r2_21", ascending=False).head(K)])
         cells += [r for _, r in top.drop_duplicates(["setting", "world_EIGs"]).iterrows()]
     prs = data.load_adult_exp1_pairs(pairs)
-    jobs = [(cid, r, kind, window, r.metric, p, pi, rollouts, seed + cid, max_D, T_cap) for cid, r in enumerate(cells) for pi, p in enumerate(prs)]
-    by_cell = {cid: {} for cid in range(len(cells))}
+    todo = [cid for cid, r in enumerate(cells) if only is None or r.metric in only]
+    jobs = [(cid, cells[cid], kind, window, cells[cid].metric, p, pi, rollouts, seed + cid, max_D, T_cap) for cid in todo for pi, p in enumerate(prs)]
+    by_cell = {cid: {} for cid in todo}
     with Pool(procs, initializer=_init, initargs=(data.load_embeddings(),)) as pool:
         for cid, pi, bg, dv in pool.imap_unordered(_adult_cell_pair, jobs, chunksize=1):
             by_cell[cid][pi] = (bg, dv)
     human = data.load_adult_exp1()
     out = []
-    for cid, r in enumerate(cells):
+    for cid in todo:
+        r = cells[cid]
         q = _score_adult_cell(r, by_cell[cid], human, rollouts, seed + cid, window, max_D)
         out.append(dict(metric=r.metric, setting=int(r.setting), world_EIGs=float(r.world_EIGs), **{c: float(r[c]) for c in SETTING_COLS if c in r.index},
                         r2_21_reeval=q["r2"], rmse21_cv_reeval=q["rmse"], b21_reeval=q["b"], r2_21_grid=q["grid_r2"], rmse21_cv_grid=q["grid_rmse"],
@@ -246,14 +250,14 @@ def adult_shortlist(scores21, kind, metrics=None, K=10, rollouts=None, seed=7_00
 
 
 # ---------------------------------------------------------------- winners tables (Stage B)
-INFANT_METRICS = {"selfcons": ("eig_code", "kl", "mi", "surprisal_b", "mi_concept"),
+INFANT_METRICS = {"selfcons": ("eig_code", "kl", "mi", "surprisal_b", "mi_concept", "kl_concept"),
                   "main": ("eig_code", "eig_within", "kl", "mi", "surprisal_b")}
-ADULT_METRICS = ("eig_code", "mi", "kl", "surprisal_b", "mi_concept")
+ADULT_METRICS = ("eig_code", "mi", "kl", "surprisal_b", "mi_concept", "kl_concept")   # append only: positions set the seeds
 SETTING_COLS = ("V_prior", "alpha_prior", "beta_prior", "sd_epsilon", "sigma_true", "eps_fixed")
 
 
 def infant_winners(scores, kind, metrics=None, rules=("r2", "rmse"), rollouts=32, seed=777, window="exemplar_mean", procs=8,
-                   n_groups=4, rows=None, T_max=40):
+                   n_groups=4, rows=None, T_max=40, only=None):
     """Stage B for a stochastic infant grid: each decision variable's best sign-consistent,
     non-saturated row (by `rule`) re-evaluated on fresh rollouts. One row per metric with the
     grid numbers, the honest numbers, the R2 SD over disjoint rollout groups, and the native
@@ -262,7 +266,7 @@ def infant_winners(scores, kind, metrics=None, rules=("r2", "rmse"), rollouts=32
     the phase1c_selfcons_winners convention, so its Stage-B numbers reproduce exactly. Rules are
     processed one after the other (r2 for every metric, then rmse), so adding the paper's rule
     appends new settings without moving the r2 winners' indices; a cell both rules pick is listed
-    once, under the first."""
+    once, under the first. `only` re-evaluates just those variables, seeded as in the run over all `metrics`."""
     metrics = metrics or INFANT_METRICS["selfcons" if kind.startswith(("selfcons", "lesion")) else "main"]
     sels, keys, cells = [], [], set()
     for rule in ((rules,) if isinstance(rules, str) else rules):
@@ -277,6 +281,8 @@ def infant_winners(scores, kind, metrics=None, rules=("r2", "rmse"), rollouts=32
             sels.append((sel, keys.index(key)))
     out = []
     for sel, ci in sels:
+        if only is not None and sel.metric not in only:
+            continue
         reevaluate_infant(sel, rollouts=rollouts, seed=seed + ci, T_max=T_max, window=window, procs=procs, n_groups=n_groups, rows=rows)
         r, q = sel.row, sel.reevaluated
         out.append(dict(metric=sel.metric, rule=sel.rule, setting=int(r.setting), world_EIGs=float(r.world_EIGs),
@@ -288,7 +294,7 @@ def infant_winners(scores, kind, metrics=None, rules=("r2", "rmse"), rollouts=32
 
 
 def adult_winners(scores21, kind, metrics=None, rules=("r2", "rmse"), rollouts=None, seed=5_000_000, pairs=None,
-                  window="exemplar_mean", procs=8, shortlist=None):
+                  window="exemplar_mean", procs=8, shortlist=None, only=None):
     """Stage B for a stochastic adult sweep (phase1e_adults_winners over Selection objects):
     each metric's best sign-consistent, non-saturated row under each rule (a row selected by
     both rules appears once), re-evaluated on fresh rollouts x pairs (pairs=None = every pair) and scored at the
@@ -296,7 +302,8 @@ def adult_winners(scores21, kind, metrics=None, rules=("r2", "rmse"), rollouts=N
     (metric, rule) order -- the legacy convention, so adult_winners_R64 reproduces exactly.
     With `shortlist` (adult_shortlist's table) the selection is made among its re-evaluated cells, by their
     re-evaluated score, instead of by the grid's 16-rollout score; the reported numbers still come from this
-    function's own seeds, which the shortlist never used, so they carry no selection optimism."""
+    function's own seeds, which the shortlist never used, so they carry no selection optimism. `only` re-evaluates just
+    those variables, seeded as in the run over all `metrics` (the shortlist must then hold every variable's cells)."""
     metrics = metrics or ADULT_METRICS
     winners = []
     for m in metrics:
@@ -317,6 +324,8 @@ def adult_winners(scores21, kind, metrics=None, rules=("r2", "rmse"), rollouts=N
             winners.append((key, sel))
     out = []
     for wid, (key, sel) in enumerate(winners):
+        if only is not None and sel.metric not in only:
+            continue
         reevaluate_adult(sel, rollouts=rollouts, seed=seed + wid, pairs=pairs, window=window, procs=procs)
         r, q = sel.row, sel.reevaluated
         out.append(dict(metric=sel.metric, rule=sel.rule, setting=int(r.setting), world_EIGs=float(r.world_EIGs),

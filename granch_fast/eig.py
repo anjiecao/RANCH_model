@@ -23,6 +23,31 @@ def _kl_gauss(m_new, v_new, m_cur, v_cur):
     return 0.5 * (np.log(v_cur / v_new) + (v_new + (m_new - m_cur) ** 2) / v_cur - 1.0)
 
 
+def _concept_kl(post_new, m_new, v_new, post_cur, m_cur, v_cur, n_sigma, n_eps, floor=1e-8):
+    """KL( new || cur ) of the CONCEPT posterior p(mu, sigma^2 | data), the learner's glimpse noise eps
+    marginalized: the realized, backward-looking counterpart of feature_eig_concept (which is the
+    expectation of this quantity over the next glimpse). The discrete KL of the sigma^2 marginal (the column
+    sums of the (sigma^2, eps) grid) plus, weighted by the new marginal, the KL between the two mu | sigma^2
+    posteriors -- mixtures over the eps nodes of a column, each moment-matched to a Gaussian as in
+    feature_eig_concept. With a single eps node this is _joint_kl exactly. Reference by numerical
+    integration over mu: tests/test_decision_variables.py."""
+    Pn, Pc = post_new.reshape(n_sigma, n_eps), post_cur.reshape(n_sigma, n_eps)
+    cn, cc = Pn.sum(1), Pc.sum(1)
+    disc = np.sum(cn * (np.log(np.clip(cn, floor, None)) - np.log(np.clip(cc, floor, None))))
+    keep = cn > 1e-14
+    Wn = Pn[keep] / cn[keep, None]
+    Wc = np.where(cc[keep, None] > 1e-300, Pc[keep] / np.clip(cc[keep, None], 1e-300, None), Wn)   # an emptied column: no mu term
+
+    def moments(W, m, v):
+        M, V = m.reshape(n_sigma, n_eps)[keep], v.reshape(n_sigma, n_eps)[keep]
+        mean = (W * M).sum(1)
+        return mean, (W * (V + (M - mean[:, None]) ** 2)).sum(1)
+
+    Mn, Vn = moments(Wn, m_new, v_new)
+    Mc, Vc = moments(Wc, m_cur, v_cur)
+    return float(disc + np.sum(cn[keep] * _kl_gauss(Mn, Vn, Mc, Vc)))
+
+
 def _joint_kl(post_new, m_new, v_new, post_cur, m_cur, v_cur, floor=1e-8):
     """KL( new || cur ) of the joint (mu, sigma^2, eps) posterior, mu analytic.
 
