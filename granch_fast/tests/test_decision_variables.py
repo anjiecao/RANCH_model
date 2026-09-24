@@ -440,3 +440,24 @@ def test_translation_dependence_is_a_documented_property(ref_fixed, stim_pair):
     a = M.infant_trajectories(cfg, grid, fam, dev, 3, T_max=2, want=("mi",))["mi"][0]
     b = M.infant_trajectories(cfg, grid, fam + 1.0, dev + 1.0, 3, T_max=2, want=("mi",))["mi"][0]
     assert abs(a - b) / a > 1e-3
+
+
+def test_embedding_scale_is_a_reparametrization(stim_pair):
+    """Multiplying the embeddings by c is the same model as dividing beta by c^2 and sigma_true, sd_eps, mu_eps and
+    both quadrature supports by c: information does not depend on the units (2e-9 at c = 2 on the fitted infant
+    setting, 2026-09-24). The embedding scale is a direction in the existing parameters, not a parameter of its own
+    (note v3.3, section 7E); surprisal, a log density, is the one variable that shifts with the units."""
+    fam, dev = stim_pair
+    c, st, want = 2.0, 0.2, ("mi_concept", "kl_concept", "mi", "kl")
+
+    def model(k):                       # k = 1: embeddings x c in their own units; k = c: the same in the original units
+        cfg = cfg_inferred(V=3.0, a=1.0, b=0.1, sd_eps=1.0, sigma_true=st / k)
+        cfg.beta_prior, cfg.sd_epsilon, cfg.mu_epsilon = 0.1 / k ** 2, 1.0 / k, 1e-3 / k
+        cfg.eps_box, cfg.sigma_box = (1e-3 / k, 1.2 / k), (1e-3 / k, 1.5 / k)
+        return cfg, make_grid(cfg)
+
+    (ca, ga), (cb, gb) = model(1.0), model(c)
+    a = M.infant_trajectories(ca, ga, fam * c, dev * c, 3, T_max=6, rng=np.random.default_rng(0), sigma_true=st, want=want)
+    b = M.infant_trajectories(cb, gb, fam, dev, 3, T_max=6, rng=np.random.default_rng(0), sigma_true=st / c, want=want)
+    for m in want:
+        assert np.allclose(a[m], b[m], rtol=1e-6, atol=0), (m, a[m], b[m])
