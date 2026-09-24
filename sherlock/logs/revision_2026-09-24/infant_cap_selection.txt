@@ -1,0 +1,32 @@
+WINNER PER VARIABLE, CAP AND RULE (grid scores, 8 rollouts; the record re-evaluates its winner on 32 fresh ones)
+   variable  cap rule  setting         w     r2  rmse  first_presentation  looking_past_simulation
+ mi_concept  500 rmse       53 1.778e-07 0.7704 4.047               420.4                   0.9037
+ mi_concept  500   r2       53 1.778e-07 0.7704 4.047               420.4                   0.9037
+ mi_concept 5000 rmse       53     1e-09 0.7756 4.041                4944                   0.9919
+ mi_concept 5000   r2       53     1e-09 0.7756 4.041                4944                   0.9919
+ mi_concept  inf rmse       57     1e-05 0.7549 4.076                48.1                   0.2491
+ mi_concept  inf   r2       57     1e-05 0.7549 4.076                48.1                   0.2491
+surprisal_b  500 rmse       37   0.05623 0.7194  4.11               79.95                   0.6013
+surprisal_b  500   r2       37   0.05623 0.7194  4.11               79.95                   0.6013
+surprisal_b 5000 rmse       37   0.05623 0.7132 4.116               80.24                   0.6029
+surprisal_b 5000   r2       72        10 0.7194 4.169                1.54                        0
+surprisal_b  inf rmse       37   0.05623 0.7132 4.116               80.24                   0.6029
+surprisal_b  inf   r2       72        10 0.7194 4.169                1.54                        0
+         kl  500 rmse       52 4.642e-05 0.3734 4.492               272.9                   0.8349
+         kl  500   r2       52 4.642e-05 0.3734 4.492               272.9                   0.8349
+         kl 5000 rmse       66     1e-07 0.3861 4.475                4901                   0.9918
+         kl 5000   r2       52     1e-05 0.4134 4.491                1861                   0.9747
+         kl  inf rmse       27 2.154e-05 0.3815 4.518                2095                    0.972
+         kl  inf   r2       47     1e-07 0.4027 4.647           3.956e+05                   0.9999
+         mi  500 rmse       52 0.0004642 0.2891 4.571               123.9                   0.6524
+         mi  500   r2       52 0.0004642 0.2891 4.571               123.9                   0.6524
+         mi 5000 rmse       52 0.0004642 0.2861 4.574               127.6                   0.6607
+         mi 5000   r2       24 6.813e-05 0.2984 4.592               700.4                   0.9367
+         mi  inf rmse       52 0.0004642 0.2861 4.574               127.6                   0.6607
+         mi  inf   r2       24     1e-05 0.3023 4.601                4713                   0.9904
+   eig_code  500 rmse       64     0.001 0.4592 4.418               43.54                    0.319
+   eig_code  500   r2       64     0.001 0.4592 4.418               43.54                    0.319
+   eig_code 5000 rmse       64     0.001 0.4598 4.418               43.54                   0.3191
+   eig_code 5000   r2       64     0.001 0.4598 4.418               43.54                   0.3191
+   eig_code  inf rmse       64     0.001 0.4598 4.418               43.54                   0.3191
+   eig_code  inf   r2       64     0.001 0.4598 4.418               43.54                   0.3191
