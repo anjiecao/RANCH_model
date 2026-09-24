@@ -129,7 +129,7 @@ def reevaluate_infant(sel, rollouts=32, seed=777, T_max=None, window="exemplar_m
     def score(tr):
         from granch_fast.metrics import expected_samples
         E = np.array([[expected_samples(tr[r, k], w, max_obs=cap) for k in range(tr.shape[1])] for r in range(tr.shape[0])])
-        p = np.clip(w / (tr + w), 0.0, 1.0)                                          # the part of E within the simulated samples
+        p = w / (np.maximum(tr, 0.0) + w)                                            # the part of E within the simulated samples (as metrics.expected_samples)
         within = np.concatenate([np.ones(tr.shape[:2] + (1,)), np.cumprod(1.0 - p, axis=-1)], axis=-1)[..., :-1].sum(-1)
         es = E.mean(1)
         by_row = meta.assign(es=es).groupby(["trial_type", "trial_number"]).es

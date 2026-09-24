@@ -65,6 +65,17 @@ def test_infant_looking_has_no_cap():
     assert M.expected_samples(traj, w, max_obs=500) < 0.9 * closed
 
 
+def test_a_negative_value_means_looking_away_not_looking_forever():
+    """Only the offset surprisal can go below zero. Such a value counts as zero (p_away = 1): the learner looks away. The
+    old clip turned any value below -w into p_away = 0, looking until the cap, and with no cap forever (the smoke run of
+    2026-09-24 died on it)."""
+    w = 1e-3
+    traj = np.array([0.5, 0.2, -0.4, -0.6])
+    assert M.expected_samples(traj, w, max_obs=np.inf) == pytest.approx(1 + (1 - w / (0.5 + w)) + (1 - w / (0.5 + w)) * (1 - w / (0.2 + w)))
+    assert np.isfinite(M.expected_samples(np.array([-2.0, -3.0]), w, max_obs=np.inf))
+    assert M.expected_samples(np.array([-2.0, -3.0]), w, max_obs=np.inf) == 1.0
+
+
 def test_restricted_runs_keep_the_other_variables_rows(tmp_path):
     """merge_write: a run restricted to some variables replaces their rows and keeps everyone else's."""
     from ranch.__main__ import merge_write

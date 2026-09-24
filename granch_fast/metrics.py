@@ -166,8 +166,12 @@ class State:
 #  Expected samples from a metric trajectory (survival product), original clipping
 # --------------------------------------------------------------------------- #
 def expected_samples(traj, w, max_obs=500):
+    """E[samples] under the Luce rule p_away = w / (value + w) after each sample; past the trajectory the value is held at
+    its last entry, and looking stops at max_obs (np.inf: no cap). A value below zero -- only the offset surprisal can go
+    there -- counts as zero, so the learner looks away (2026-09-24; before, a value below -w gave p_away = 0 after
+    clipping, i.e. looking until the cap, the opposite of what a low surprisal means, and with no cap forever)."""
     traj = np.asarray(traj, dtype=float)
-    p = np.clip(w / (traj + w), 0.0, 1.0)           # p_away after each sample
+    p = w / (np.maximum(traj, 0.0) + w)             # p_away after each sample, in (0, 1] for w > 0
     surv = np.concatenate([[1.0], np.cumprod(1.0 - p)])
     T = len(traj)
     E = surv[:T].sum()
