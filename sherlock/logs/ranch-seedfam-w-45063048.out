@@ -1,0 +1,76 @@
+edef378 Revision analysis H: every reported adult cell on independent seed families, with record-reproduction controls
+=== 2026-09-24 10:54:12  adult_seed_families.py out_seed_families 8
+=== 2026-09-24 10:54:12  [45063048] 114 tasks, K = 8, procs = 24
+=== 2026-09-24 10:54:12  [45063048] taking over kl_concept_exp1_f01 from 45063048
+=== 2026-09-24 10:54:12  [45063048] start kl_concept_exp1_f01
+=== 2026-09-24 12:20:59  [45063048] done  kl_concept_exp1_f01: R2 0.8161 (bootstrap sd 0.0158) in 86.8 min
+=== 2026-09-24 12:21:00  [45063048] start mi_exp1_f02
+=== 2026-09-24 12:31:58  [45063048] done  mi_exp1_f02: R2 0.2423 (bootstrap sd 0.0031) in 11.0 min
+=== 2026-09-24 12:31:58  [45063048] start mi_concept_exp2_f02
+=== 2026-09-24 13:00:33  [45063048] done  mi_concept_exp2_f02: R2 0.7707 (bootstrap sd 0.0234) in 28.6 min
+=== 2026-09-24 13:00:33  [45063048] start mi_exp2_f02
+=== 2026-09-24 13:09:51  [45063048] done  mi_exp2_f02: R2 0.3083 (bootstrap sd 0.0063) in 9.3 min
+=== 2026-09-24 13:09:51  [45063048] start kl_exp2_f02
+=== 2026-09-24 13:16:15  [45063048] done  kl_exp2_f02: R2 0.4908 (bootstrap sd 0.0108) in 6.4 min
+=== 2026-09-24 13:16:15  [45063048] start v31_mi_concept_exp1_f03
+=== 2026-09-24 13:44:57  [45063048] done  v31_mi_concept_exp1_f03: R2 0.8699 (bootstrap sd 0.0148) in 28.7 min
+=== 2026-09-24 13:44:57  [45063048] start surprisal_b_exp1_f03
+=== 2026-09-24 14:16:34  [45063048] done  surprisal_b_exp1_f03: R2 0.8946 (bootstrap sd 0.0357) in 31.6 min
+=== 2026-09-24 14:16:36  [45063048] start v31_mi_concept_exp2_f03
+=== 2026-09-24 14:37:13  [45063048] done  v31_mi_concept_exp2_f03: R2 0.8407 (bootstrap sd 0.0222) in 20.6 min
+=== 2026-09-24 14:37:15  [45063048] start surprisal_b_exp2_f03
+=== 2026-09-24 15:01:15  [45063048] done  surprisal_b_exp2_f03: R2 0.6404 (bootstrap sd 0.0282) in 24.0 min
+=== 2026-09-24 15:01:15  [45063048] start mi_exp2_f03
+=== 2026-09-24 15:09:33  [45063048] done  mi_exp2_f03: R2 0.2961 (bootstrap sd 0.0065) in 8.3 min
+=== 2026-09-24 15:09:34  [45063048] start mi_concept_exp1_f04
+=== 2026-09-24 15:44:39  [45063048] done  mi_concept_exp1_f04: R2 0.9017 (bootstrap sd 0.0132) in 35.1 min
+=== 2026-09-24 15:44:44  [45063048] start mi_exp1_f04
+=== 2026-09-24 15:54:31  [45063048] done  mi_exp1_f04: R2 0.2343 (bootstrap sd 0.0030) in 9.8 min
+=== 2026-09-24 15:54:31  [45063048] start kl_exp1_f04
+=== 2026-09-24 16:02:12  [45063048] done  kl_exp1_f04: R2 0.2988 (bootstrap sd 0.0049) in 7.7 min
+=== 2026-09-24 16:02:12  [45063048] start mi_concept_exp2_f04
+=== 2026-09-24 16:26:17  [45063048] done  mi_concept_exp2_f04: R2 0.7914 (bootstrap sd 0.0242) in 24.1 min
+=== 2026-09-24 16:26:18  [45063048] start surprisal_b_exp2_f04
+=== 2026-09-24 16:46:40  [45063048] done  surprisal_b_exp2_f04: R2 0.5835 (bootstrap sd 0.0290) in 20.4 min
+=== 2026-09-24 16:46:41  [45063048] start v31_mi_concept_exp1_f05
+=== 2026-09-24 17:10:05  [45063048] done  v31_mi_concept_exp1_f05: R2 0.8521 (bootstrap sd 0.0152) in 23.4 min
+=== 2026-09-24 17:10:06  [45063048] start surprisal_b_exp1_f05
+=== 2026-09-24 17:35:23  [45063048] done  surprisal_b_exp1_f05: R2 0.8788 (bootstrap sd 0.0327) in 25.3 min
+=== 2026-09-24 17:35:25  [45063048] start kl_exp1_f05
+=== 2026-09-24 17:43:02  [45063048] done  kl_exp1_f05: R2 0.2866 (bootstrap sd 0.0049) in 7.6 min
+=== 2026-09-24 17:43:02  [45063048] start v31_mi_concept_exp2_f05
+=== 2026-09-24 17:59:31  [45063048] done  v31_mi_concept_exp2_f05: R2 0.8099 (bootstrap sd 0.0248) in 16.5 min
+=== 2026-09-24 17:59:32  [45063048] start surprisal_b_exp2_f05
+=== 2026-09-24 18:18:52  [45063048] done  surprisal_b_exp2_f05: R2 0.5723 (bootstrap sd 0.0312) in 19.3 min
+=== 2026-09-24 18:18:52  [45063048] start mi_exp2_f05
+=== 2026-09-24 18:26:21  [45063048] done  mi_exp2_f05: R2 0.3154 (bootstrap sd 0.0061) in 7.5 min
+=== 2026-09-24 18:26:21  [45063048] start kl_exp2_f05
+=== 2026-09-24 18:30:56  [45063048] done  kl_exp2_f05: R2 0.4865 (bootstrap sd 0.0112) in 4.6 min
+=== 2026-09-24 18:30:57  [45063048] start v31_mi_concept_exp1_f06
+=== 2026-09-24 18:54:07  [45063048] done  v31_mi_concept_exp1_f06: R2 0.8663 (bootstrap sd 0.0148) in 23.2 min
+=== 2026-09-24 18:54:08  [45063048] start surprisal_b_exp1_f06
+=== 2026-09-24 19:18:34  [45063048] done  surprisal_b_exp1_f06: R2 0.8029 (bootstrap sd 0.0435) in 24.4 min
+=== 2026-09-24 19:18:36  [45063048] start v31_mi_concept_exp2_f06
+=== 2026-09-24 19:34:38  [45063048] done  v31_mi_concept_exp2_f06: R2 0.7950 (bootstrap sd 0.0230) in 16.0 min
+=== 2026-09-24 19:34:38  [45063048] start surprisal_b_exp2_f06
+=== 2026-09-24 19:52:49  [45063048] done  surprisal_b_exp2_f06: R2 0.5811 (bootstrap sd 0.0290) in 18.2 min
+=== 2026-09-24 19:52:49  [45063048] start eig_code_exp2_f06
+=== 2026-09-24 20:44:41  [45063048] done  eig_code_exp2_f06: R2 0.2648 (bootstrap sd 0.0071) in 51.9 min
+=== 2026-09-24 20:44:43  [45063048] start eig_code_exp1_f07
+=== 2026-09-24 21:39:26  [45063048] done  eig_code_exp1_f07: R2 0.2159 (bootstrap sd 0.0041) in 54.7 min
+=== 2026-09-24 21:39:26  [45063048] start kl_exp2_f07
+=== 2026-09-24 21:43:43  [45063048] done  kl_exp2_f07: R2 0.4784 (bootstrap sd 0.0108) in 4.3 min
+=== 2026-09-24 21:43:44  [45063048] start v31_mi_concept_exp1_f08
+=== 2026-09-24 22:04:30  [45063048] done  v31_mi_concept_exp1_f08: R2 0.8476 (bootstrap sd 0.0150) in 20.8 min
+=== 2026-09-24 22:04:31  [45063048] start surprisal_b_exp1_f08
+=== 2026-09-24 22:31:28  [45063048] done  surprisal_b_exp1_f08: R2 0.8311 (bootstrap sd 0.0414) in 26.9 min
+=== 2026-09-24 22:31:32  [45063048] start kl_exp1_f08
+=== 2026-09-24 22:40:18  [45063048] done  kl_exp1_f08: R2 0.2908 (bootstrap sd 0.0048) in 8.8 min
+=== 2026-09-24 22:40:19  [45063048] start v31_mi_concept_exp2_f08
+=== 2026-09-24 22:57:50  [45063048] done  v31_mi_concept_exp2_f08: R2 0.8291 (bootstrap sd 0.0216) in 17.5 min
+=== 2026-09-24 22:57:50  [45063048] start surprisal_b_exp2_f08
+=== 2026-09-24 23:18:20  [45063048] done  surprisal_b_exp2_f08: R2 0.6275 (bootstrap sd 0.0295) in 20.5 min
+=== 2026-09-24 23:18:24  [45063048] start kl_exp2_f08
+=== 2026-09-24 23:23:52  [45063048] done  kl_exp2_f08: R2 0.4953 (bootstrap sd 0.0108) in 5.5 min
+=== 2026-09-24 23:23:52  [45063048] no tasks left for this worker
+=== 2026-09-24 23:23:52  done
