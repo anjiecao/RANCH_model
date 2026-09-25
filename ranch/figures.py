@@ -22,7 +22,8 @@ from .settings import spec, settings_table
 from .world import World
 
 GF = f"{data.ROOT}/granch_fast"
-LABEL = {"eig_code": "implemented EIG", "kl": "KL", "mi": "true EIG", "surprisal_b": "surprisal", "mi_concept": "concept EIG"}
+LABEL = {"eig_code": "implemented EIG", "kl": "KL", "mi": "true EIG", "surprisal_b": "surprisal", "mi_concept": "concept EIG",
+         "kl_concept": "concept KL"}
 TT = {"background": "Familiar", "deviant": "Novel"}
 
 

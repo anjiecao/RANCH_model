@@ -151,6 +151,14 @@ def test_lesion_kinds_match_phase1d_configs():
     assert np.allclose(pipeline.W_ADULT["lesion_adults"]["mi"], P1D.W_ADU)
 
 
+def test_every_selected_variable_has_a_figure_label():
+    """The figures stage labels every variable the winners stages select (the kl_concept of 2026-09-23 had none, and a
+    full pipeline run died in its last stage: the Sherlock smoke of 2026-09-24)."""
+    from ranch import figures
+    variables = set(selection.INFANT_METRICS["selfcons"]) | set(selection.ADULT_METRICS)
+    assert variables <= set(figures.LABEL), variables - set(figures.LABEL)
+
+
 def test_figure_data_from_winners_tables(tmp_path, emb):
     """figures.infant_curves / adult_curves read the winners tables; mechanism and channels run."""
     from ranch import figures
